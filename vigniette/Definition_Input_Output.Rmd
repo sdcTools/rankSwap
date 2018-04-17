@@ -1,0 +1,54 @@
+---
+title: "Targeted Rank Swapping in C++"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Function Definitions
+
+### rankSwap()
+Applies targeted rank swapping on data set.
+
+
+#### Input
++ Data Input: Personfile as 2-dim array or numeric matrix containing households identifier, geographic regions and risk variables. Each column contains only numeric values, character columns need to be coded to integer.
++ Geographic Hierarchy: integer vector containing column indices for gegraphic hierarchy stored in data input. Order of indices defines gegraphic hierarchy. Is read from left to right meaning that the most left indices corresponds to the highest hierarchy level and the most right corresponds to the lowest hierarchy level.
++ Risk Variables: integer vector containing column indices for risk variables stored in data input. 
++ Household ID: integer, index of column containing household identifier in data input.
++ Swapping Rate: double between 0 and 1 determinig the proportion of swaps in each region.
++ Seed: integer, set seed for random number generator
+
+#### Output
++ Data containing household identifier and **NEW** geographic levels. Houshold identifier is unique in the output.
+For example:
+
+| HHID | GEO 1 | GEO 2 | GEO 3 | GEO 4 |
+|------|-------|-------|-------|-------|
+| 1    |  1    |  3     |  4   | 10    |
+|  2   |  5    |  2     |  2   | 8     |
+|      |       |        |      |       | 
+|  n   |  6    |  4     |  5   |  1    |
+
+
+### diagnostics()
+Runs diagnostics after targeted rank swapping.
+
+#### Input
++ original Data Input: Personfile containing households identifier and geographic regions
++ rank swapped Data: output of rankSwap().
+
+#### Output
++ Rectangular Table containing the complete geographic hierarchy as well as the number of households and persons and number of households and persons swapped.
+For example:
+
+| GEO 1 | GEO 2 | GEO 3 | GEO 4 | N Households | N Persons | Households swapped | Persons swapped|
+|-------|-------|-------|-------|--------------|-----------|--------------------|----------------|
+|  1    |  1     |  1   | 1    |   1000         |  4000     |   100             |  380           | 
+|  1    |  1     |  1   | 2     |  5000         | 10000     |  500              | 1200            |
+|  1    |  1     |  1   | 3     |  20000        |  75000    |  2000             | 6200            |
+|       |        |      |       |               |           |                   |                 |
+|  6    |  10     |  15   |  20 |   2100       |      3800 |      210           |   350          |
+
