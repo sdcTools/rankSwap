@@ -1,8 +1,8 @@
 ---
 title: "Targeted Rank Swapping in C++"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
