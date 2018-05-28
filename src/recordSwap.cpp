@@ -2,7 +2,8 @@
 #include <iostream>     
 #include <algorithm>    // std::count
 #include <vector>       // std::vector
-#include <array>
+#include <random>
+#include <queue>
 
 // Enable C++11 via this plugin (Rcpp 0.10.3 or later) - used for R only
 // [[Rcpp::plugins(cpp11)]] 
@@ -47,11 +48,10 @@ std::vector< std::vector<int> > orderData(std::vector< std::vector<int> > data, 
 * Function to define levels 
 */
 // [[Rcpp::export]]
-std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> similar, std::vector<int> risk, int hid, int th) {
+std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th) {
   
   // data: data input
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
-  // similar: column indices in data corresponding to similarity variables which will be considered for swapping similar households
   // risk: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
   // hid: int correspondig to column index in data which holds the household ID
   // th: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
@@ -61,19 +61,18 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   int p = data.size();  // number of columns in data
   int n = data[0].size();  // number of rows in data
   
-  int nsim = similar.size();
   int nhier = hierarchy.size();
   
   ////////////////////////////////////////////////////
   // order data by hid 
-  data = orderData(data,hid);
+  // data = orderData(data,hid); // do this outside the function for testing purposes
   ////////////////////////////////////////////////////
   
   // initialise map
   std::map<std::vector<int>,int> group_count; 
 
-  std::vector<int> loop_index=hierarchy;
-  loop_index.insert(loop_index.end(),similar.begin(),similar.end());
+  std::vector<int> loop_index=risk;
+  loop_index.insert(loop_index.end(),hierarchy.begin(),hierarchy.end());
   int loop_n = loop_index.size();
   // initialise vector for groups
   std::vector<int> groups(loop_n);
@@ -104,7 +103,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   // initialise map with levels for each group
   std::map<std::vector<int>,int> level_number = group_count; 
 
-  for(int i = 0;i<3;i++){
+  for(int i = 0;i<nhier;i++){
     // int i=2;  
     std::map<std::vector<int>,int> group_count_help = group_count;
     if(i>0){
@@ -160,11 +159,138 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
     for(int h=0;h<hsize;h++){
       data_level[i+h] = min_level;
     }
-    i = i+hsize-1;
+    i = i+hsize;
     min_level=nhier; // set min_level to nhier for each hid
   }
-  ////////////////////////////////////////////////////
 
+  ////////////////////////////////////////////////////
   return data_level;
 }
+
+
+/*
+ * Function to set sampling probability 
+ * and reverse sampling probability (for donor sets)
+ */
+std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid){
+  
+  // data: data input
+  // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
+  // risk: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
+  // hid: int correspondig to column index in data which holds the household ID
+
+  // initialise parameters
+  int n = data[0].size();
+  int nhier = hierarchy.size();
+  
+  // initialise probability data
+  // index 0 corresponds to sampling probability for swapping
+  // index 1 corresponds to sampling probability for donor set
+  std::vector< std::vector<double> > prob(2, vector<double>(n));
+  
+  //
+  std::vector<int> loop_index = risk;
+  loop_index.insert(loop_index.end(),hierarchy.begin(),hierarchy.end());
+  int loop_n = loop_index.size();
+  std::vector<int> groups(loop_n);
+  
+  // initialise counts for groups in lowest hierarchy
+  std::map<std::vector<int>,int> group_count; 
+  for(int i=0;i<n;i++){
+    
+    // ... define group
+    for(int j=0;j<loop_n;j++){
+      groups[j] = data[loop_index[j]][i];
+    }
+    
+    // ... count number for each group using std::map
+    group_count[groups]++;
+  }
+  
+  // loop again over data
+  for(int i=0;i<n;i++){
+    
+    // ... define group
+    for(int j=0;j<loop_n;j++){
+      groups[j] = data[loop_index[j]][i];
+    }
+    // define sampling probability
+    prob[0][i] = 1/group_count[groups];
+    if(prob[0][i]<1){
+      prob[1][i] = 1 - prob[0][i];
+    }else{
+      prob[1][i] = 5e-10;
+    }
+  }
+  
+  return prob;
+}
+
+
+
+/*
+ * Function to sample from std::vector<int>
+ */
+// [[Rcpp::export]]
+std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob){
+ 
+ // initialise parameters
+ int n = ID.size();
+ std::vector<int> sampleID(N);
+ std::vector<double> randVal(n);
+ /*
+  * from Package ‘wrswoR’:
+  * We need the last "size" elements of
+  * U ^ (1 / prob) ~ log(U) / prob
+  * ~ -Exp(1) / prob
+  * ~ prob / Exp(1)
+  * Here, ~ means "doesn't change order statistics".
+  */  
+ 
+ random_device rnd_device;
+ std::mt19937_64 mersenne_engine(rnd_device()); // move this outside the function when finished testing!
+ std::exponential_distribution<double> exp_dist(1.0); // initialise lambda para for exp distribution
+ 
+ // generate random numbers
+ auto gen = std::bind(exp_dist, mersenne_engine);
+ // fill vector with random numbers
+ generate(randVal.begin(), randVal.end(), gen);
+
+
+ // get index of N largest elements in randVal
+ // from https://stackoverflow.com/questions/14902876/indices-of-the-k-largest-elements-in-an-unsorted-length-n-array
+ // use priority_queue
+ 
+ std::priority_queue<std::pair<double, int>> q;
+ for (int i = 0; i < n; ++i) {
+   q.push(std::pair<double, int>(randVal[i], i));
+ }
+ // select index of top elements from priority_queue
+ for(int i=0;i<N;i++){
+   sampleID[i] = ID[q.top().second]; //.top() access top element in queue
+   q.pop(); // remove top element in queue
+ }
+
+ return sampleID;
+}
+
+
+/*
+ * Function to define number of draws at each geo hierarchy
+ */
+// [[Rcpp::export]]
+std::vector<int> setNdraw(std::vector< std::vector<int> > data, std::vector<int> hierarchy, double swap){
+  
+  // data: data input
+  // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
+  // swap: double defining the ratio of households to be swapped
+  
+  // initialise parameter
+  int n = data[0].size();
+  int nhier = hierarchy.size();
+  
+  
+} 
+
+
 

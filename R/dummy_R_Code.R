@@ -47,6 +47,7 @@ for( i in 1:length(hierarchy)){
   dat.frame[level==0,level:=as.numeric(i*(N_level<=th))]
   dat.frame[,level:=if(any(level>0)){min(level[level>0])}else{0},by=HHID_ENCODE]
 }
+
 # dat.frame[level==0,level:=3]
 # estimate risk by counts
 dat.frame[,.N,by=list(N_level<=th,level)]
@@ -165,18 +166,52 @@ dat.frame <- dat.frame[HH_SIZE<=8]
 dat.frame[,NUTS1:=as.numeric(factor(NUTS1))]
 dat.frame[,NUTS2:=as.numeric(factor(NUTS2))]
 dat.frame[,NUTS3:=as.numeric(factor(NUTS3))]
-dat.frame[,AGEGROUP:=cut(ALTER,c(-Inf,20,40,60,Inf),right = FALSE)]
+dat.frame[,AGEGROUP:=as.integer(cut(ALTER,c(-Inf,20,40,60,Inf),right = FALSE))]
+dat.frame[,ERW_STATUS:=as.integer(factor(ERW_STATUS))]
+dat.frame[,HHID_ENCODE_new:=.GRP,by=HHID_ENCODE]
+dat.frame[,HHID_ENCODE:=HHID_ENCODE_new]
+dat.frame[,HHID_ENCODE_new:=NULL]
+dat.frame[,HH_SIZE:=.N,by=HHID_ENCODE]
+setkey(dat.frame,HHID_ENCODE)
 
 library(Rcpp)
 sourceCpp("src/recordSwap.cpp")
 
-# c++ code index beginnt mit 0
-a <- setLevels(dat.frame[1:10,.(NUTS1,NUTS2,NUTS3,HH_SIZE)],c(0:2),3,c(0:2),1,3)
+hierarchy <- c("NUTS1","NUTS2","NUTS3")
+risk <- c("AGEGROUP","GESCHL","HH_SIZE","ERW_STATUS")
+swap <- .05 # runif(1)
+seed <- 123456
+hid <- "HHID_ENCODE"
+th <- 3
 
-dat.frame[1:10,.(NUTS1,NUTS2,NUTS3,HH_SIZE)][,.N,by=list(NUTS1,NUTS2,NUTS3,HH_SIZE)]
+# set swap levels for households
+dat.frame[,level:=0]
+for( i in 1:length(hierarchy)){
+  dat.frame[level==0,N_level:=.N,by=c(hierarchy[1:i],risk)]
+  dat.frame[level==0,level:=as.numeric(i*(N_level<=th))]
+  dat.frame[,level:=if(any(level>0)){min(level[level>0])}else{0},by=HHID_ENCODE]
+}
 
-microbenchmark(setLevels(dat.frame[1:10,.(NUTS1,NUTS2,NUTS3,HH_SIZE)],c(0:2),3,c(0:2),1,3),
-               dat.frame[1:10,.(NUTS1,NUTS2,NUTS3,HH_SIZE)][,.N,by=list(NUTS1,NUTS2,NUTS3,HH_SIZE)])
+dat <- dat.frame[,.(NUTS1,NUTS2,NUTS3,HHID_ENCODE,AGEGROUP,GESCHL,ERW_STATUS,HH_SIZE)]
+setLevels(dat[1:1000],0:2,4:7,3,3)
+
+
+
+sourceCpp("src/recordSwap.cpp")
+
+dat[,level:=as.integer(0L)]
+for( i in 1:length(hierarchy)){
+  dat[,N_level:=.N,by=c(hierarchy[1:i],risk)]
+  dat[level==0,level:=i*(N_level<=th)]
+  dat[,level:=if(any(level>0)){min(level[level>0])}else{0L},by=HHID_ENCODE]
+}
+dat[level==0,level:=4]
+dat[,level_cpp:=setLevels(dat,0:2,4:7,3,3)+1]
+dat[level!=level_cpp]
+
+dat[,N_level:=.N,by=c(hierarchy[1],risk)]
+dat[,N_level_cpp:=setLevels(dat,0:2,4:7,3,3)]
+dat[N_level!=N_level_cpp]
 
 
 library(microbenchmark)
@@ -184,3 +219,32 @@ library(microbenchmark)
 microbenchmark(setLevels(dat.frame[,.(NUTS1,NUTS2,NUTS3,HH_SIZE)],c(0:2),3,c(0:2),1,3))
 
 microbenchmark(dat.frame[,.(NUTS1,NUTS2,NUTS3,HH_SIZE)][,as.character(HH_SIZE)])
+
+t <- Sys.time()
+dat[,level:=as.integer(0L)]
+for( i in 1:length(hierarchy)){
+  dat[level==0,N_level:=.N,by=c(hierarchy[1:i],risk)]
+  dat[level==0,level:=i*(N_level<=th)]
+}
+dat[,level:=if(any(level>0)){min(level[level>0])}else{0L},by=HHID_ENCODE]
+Sys.time()-t
+
+t <- Sys.time()
+dat[,level_cpp:=setLevels(dat,0:2,4:7,3,3)+1]
+Sys.time()-t
+
+
+# test sampling function
+sourceCpp("src/recordSwap.cpp")
+
+ID <- 1:10000
+prob <- rnorm(10000,mean=100,sd=20)
+N <- 100
+
+a <- randSample(ID,N,prob)
+a
+
+
+
+# simulate and compare with sample
+# compare only distribution
