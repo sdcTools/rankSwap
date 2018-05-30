@@ -4,6 +4,7 @@
 #include <vector>       // std::vector
 #include <random>
 #include <queue>
+#include <ctime>        // time()
 
 // Enable C++11 via this plugin (Rcpp 0.10.3 or later) - used for R only
 // [[Rcpp::plugins(cpp11)]] 
@@ -62,11 +63,6 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   int n = data[0].size();  // number of rows in data
   
   int nhier = hierarchy.size();
-  
-  ////////////////////////////////////////////////////
-  // order data by hid 
-  // data = orderData(data,hid); // do this outside the function for testing purposes
-  ////////////////////////////////////////////////////
   
   // initialise map
   std::map<std::vector<int>,int> group_count; 
@@ -247,15 +243,14 @@ std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob
   * Here, ~ means "doesn't change order statistics".
   */  
  
- random_device rnd_device;
- std::mt19937_64 mersenne_engine(rnd_device()); // move this outside the function when finished testing!
+ std::mt19937_64 mersenne_engine; // move this outside the function when finished testing!
+ mersenne_engine.seed(time(NULL)); // set random seed according to time
  std::exponential_distribution<double> exp_dist(1.0); // initialise lambda para for exp distribution
  
- // generate random numbers
- auto gen = std::bind(exp_dist, mersenne_engine);
- // fill vector with random numbers
- generate(randVal.begin(), randVal.end(), gen);
-
+ // fill vector with prob/(random number)
+ for(int i=0;i<n;i++){
+   randVal[i] = prob[i]/exp_dist(mersenne_engine);
+ }
 
  // get index of N largest elements in randVal
  // from https://stackoverflow.com/questions/14902876/indices-of-the-k-largest-elements-in-an-unsorted-length-n-array
@@ -291,6 +286,61 @@ std::vector<int> setNdraw(std::vector< std::vector<int> > data, std::vector<int>
   
   
 } 
+
+
+/*
+ * Function to perform record swapping
+ */
+std::vector<vector<int>> recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
+                                    std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swap){
+  
+  // data: data input
+  // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
+  // similar: column indices in data corresponding to variables (household/personal) which should be considered when swapping,
+  // e.g. swapping onlys household with same houshoeld size 
+  // risk: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
+  // hid: int correspondig to column index in data which holds the household ID
+  // th: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
+  // swap: double defining the ratio of households to be swapped
+  
+  
+  // initialise parameter
+  int n = data[0].size();
+  std::vector<int> levels(n);
+  std::vector< std::vector<double> > prob(2, vector<double>(n));
+  ////////////////////////////////////////////////////
+  // order data by hid 
+  data = orderData(data,hid);
+  ////////////////////////////////////////////////////
+  
+  ////////////////////////////////////////////////////
+  // define minimum swap level for each household
+  levels = setLevels(data,hierarchy,risk,hid,th);
+  ////////////////////////////////////////////////////
+    
+  ////////////////////////////////////////////////////
+  // define sampling probabilities
+  prob = setRisk
+  ////////////////////////////////////////////////////
+  
+  ////////////////////////////////////////////////////
+  // define number of swaps on each level (discard this step????)
+  
+  
+  ////////////////////////////////////////////////////
+  // apply swapping algorithm
+  // go from highest to lowest level
+  // swapp at each higher level the number of households that have to be swapped at that level according to "th" (see setLevels())
+  // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
+  // every household can only be swapped once 
+  
+  
+  
+  
+}
+
+
+
 
 
 
