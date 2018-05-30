@@ -1,5 +1,5 @@
 ---
-title: "Targeted Rank Swapping in C++"
+title: "Targeted Record Swapping in C++"
 output:
   html_document: default
   word_document: default
@@ -11,8 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Function Definitions
 
-### *targetRankSwap*()
-Applies targeted rank swapping on data set.
+### *targetRecordSwap*()
+Applies targeted record swapping on data set.
 
 
 #### Input
@@ -40,11 +40,11 @@ For example:
 
 
 ### *diagnostics*()
-Runs diagnostics after targeted rank swapping (this might also be done as a default or optionally directly in the *targetRankSwap* function.
+Runs diagnostics after targeted record swapping (this might also be done as a default or optionally directly in the *targetRecordSwap* function.
 
 #### Input
 + original Data Input: Personfile containing households identifier and geographic regions
-+ rank swapped Data: output of *targetRankSwap*().
++ record swapped Data: output of *targetRecordSwap*().
 
 #### Output
 + Rectangular Table containing the complete geographic hierarchy as well as the number of households and persons and number of households and persons swapped.

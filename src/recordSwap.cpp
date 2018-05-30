@@ -5,6 +5,7 @@
 #include <random>
 #include <queue>
 #include <ctime>        // time()
+#include <set>
 
 // Enable C++11 via this plugin (Rcpp 0.10.3 or later) - used for R only
 // [[Rcpp::plugins(cpp11)]] 
@@ -291,23 +292,6 @@ std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob
 }
 
 
-/*
- * Function to define number of draws at each geo hierarchy
- */
-// [[Rcpp::export]]
-std::vector<int> setNdraw(std::vector< std::vector<int> > data, std::vector<int> hierarchy, double swap){
-  
-  // data: data input
-  // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
-  // swap: double defining the ratio of households to be swapped
-  
-  // initialise parameter
-  int n = data[0].size();
-  int nhier = hierarchy.size();
-  
-  
-} 
-
 
 /*
  * Function to perform record swapping
@@ -356,6 +340,8 @@ std::vector<vector<int>> recordSwap(std::vector< std::vector<int> > data, std::v
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
   
+  //start at first hierarchy level
+  // use std::set for hierarchy levels
   
   
   
