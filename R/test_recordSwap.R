@@ -115,11 +115,16 @@ microbenchmark(cpp=randSample(ID,N,prob),
                sample_int_crank(n,N,prob))
 # simulate and compare with sample
 # compare only distribution
-b <- 1e5
+sourceCpp("src/recordSwap.cpp")
+n <- 1000
+N <- 10
+b <- 1e4
 ID <- 1:n
+seed.base <- 1:1e6
+
 prob <- c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20))
 out_mat <- replicate(b,{
-  cpp_samp <- randSample(1:n,N,prob)
+  cpp_samp <- randSample(1:n,N,prob,seed=sample(seed.base,1))
   R_samp <- sample(1:n,N,prob=prob)
   wrswoR_samp <- sample_int_crank(n,N,prob)
   cbind(cpp_samp,R_samp,wrswoR_samp)
@@ -139,9 +144,8 @@ out_data <- rbindlist(out_data)
 # out_data_count <- out_data[,.N,by=list(value,method)]
 
 library(ggplot2)
-p1 <- ggplot(out_data,aes(value))+
+ggplot(out_data,aes(value))+
   geom_density(aes(color=method))
-plot(p1)
 
 
 sourceCpp("src/recordSwap.cpp")
@@ -152,4 +156,28 @@ N <- 5
 randSample(ID,N,prob)
 
 prob/rexp(n)
+
+
+#
+# test risk calculations
+#
+sourceCpp("src/recordSwap.cpp")
+dat <- create.dat(1000000)
+hierarchy <- c("nuts1","nuts2","nuts3")
+risk <- c("ageGroup","geschl","hsize","national")
+
+dat[,risk:=1/.N,by=c(hierarchy,risk)]
+dat[,risk:=max(risk),by=hid]
+dat[,antirisk:=1-risk,by=hid]
+dat[antirisk==0,antirisk:=5e-10,by=hid] # small probability
+
+prob.risk <- setRisk(dat,0:2,4:7,3)
+prob.risk <- as.data.table(prob.risk)
+
+
+dat[,cpprisk:=prob.risk$V1]
+dat[,cppantirisk:=prob.risk$V2]
+dat[abs(antirisk-cppantirisk)>1e-10]
+
+dat[,N:=.N,by=c(hierarchy,risk)]
 

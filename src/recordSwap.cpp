@@ -168,6 +168,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
  * Function to set sampling probability 
  * and reverse sampling probability (for donor sets)
  */
+// [[Rcpp::export]]
 std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid){
   
   // data: data input
@@ -178,7 +179,9 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
   // initialise parameters
   int n = data[0].size();
   int nhier = hierarchy.size();
-  
+  double risk_value=0;
+  int current_ID;
+  int hsize=0;
   // initialise probability data
   // index 0 corresponds to sampling probability for swapping
   // index 1 corresponds to sampling probability for donor set
@@ -204,19 +207,37 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
   }
   
   // loop again over data
-  for(int i=0;i<n;i++){
+  int i=0;
+  int h=0;
+  while(i<n){
     
-    // ... define group
-    for(int j=0;j<loop_n;j++){
-      groups[j] = data[loop_index[j]][i];
+    current_ID = data[hid][i];
+    while(current_ID==data[hid][i+h]){
+      // ... define group
+      for(int l=0;l<loop_n;l++){
+        groups[l] = data[loop_index[l]][i+h];
+      }
+
+      // select highest risk for hid
+      risk_value = max(risk_value,1.0/group_count[groups]);
+      hsize++;
+      h++;
     }
-    // define sampling probability
-    prob[0][i] = 1/group_count[groups];
-    if(prob[0][i]<1){
-      prob[1][i] = 1 - prob[0][i];
-    }else{
-      prob[1][i] = 5e-10;
+    // assign highst risk and revers risk to all household members
+    for(int j=0;j<hsize;j++){
+      prob[0][i+j] = risk_value;
+      if(risk_value<1){
+        prob[1][i+j] = 1.0 - risk_value;
+      }else{
+        prob[1][i+j] = 5e-10;
+      }
     }
+    
+    // reset parameters
+    i = i+hsize;
+    hsize=0;
+    risk_value = 0;
+    h =0;
   }
   
   return prob;
@@ -225,17 +246,17 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
 
 
 /*
- * Function to sample from std::vector<int>
+ * Function to sample from std::vector<int> given a probability vector
  */
 // [[Rcpp::export]]
-std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob){
+std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob,int seed){
  
  // initialise parameters
  int n = ID.size();
  std::vector<int> sampleID(N);
  std::vector<double> randVal(n);
  /*
-  * from Package ‘wrswoR’:
+  * from R-Package ‘wrswoR’:
   * We need the last "size" elements of
   * U ^ (1 / prob) ~ log(U) / prob
   * ~ -Exp(1) / prob
@@ -244,14 +265,14 @@ std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob
   */  
  
  std::mt19937_64 mersenne_engine; // move this outside the function when finished testing!
- mersenne_engine.seed(time(NULL)); // set random seed according to time
+ mersenne_engine.seed(seed); // set random seed according to time
  std::exponential_distribution<double> exp_dist(1.0); // initialise lambda para for exp distribution
  
  // fill vector with prob/(random number)
  for(int i=0;i<n;i++){
    randVal[i] = prob[i]/exp_dist(mersenne_engine);
  }
-
+ // return randVal;
  // get index of N largest elements in randVal
  // from https://stackoverflow.com/questions/14902876/indices-of-the-k-largest-elements-in-an-unsorted-length-n-array
  // use priority_queue
@@ -308,6 +329,7 @@ std::vector<vector<int>> recordSwap(std::vector< std::vector<int> > data, std::v
   int n = data[0].size();
   std::vector<int> levels(n);
   std::vector< std::vector<double> > prob(2, vector<double>(n));
+  
   ////////////////////////////////////////////////////
   // order data by hid 
   data = orderData(data,hid);
@@ -320,7 +342,7 @@ std::vector<vector<int>> recordSwap(std::vector< std::vector<int> > data, std::v
     
   ////////////////////////////////////////////////////
   // define sampling probabilities
-  prob = setRisk
+  prob = setRisk(data, hierarchy, risk, hid);
   ////////////////////////////////////////////////////
   
   ////////////////////////////////////////////////////

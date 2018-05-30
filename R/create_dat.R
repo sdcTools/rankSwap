@@ -19,7 +19,7 @@ create.dat <- function(N=10000){
   ageGroup <- sample(1:7,length(hsize),replace=TRUE)
   national <- sample(1:5,length(hsize),replace=TRUE)
   
-  dat <- data.table(nuts1,nuts2,nuts3,hsize,hid,ageGroup,geschl,national)
+  dat <- data.table(nuts1,nuts2,nuts3,hid,hsize,ageGroup,geschl,national)
   return(dat)
 }
 
