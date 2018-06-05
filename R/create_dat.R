@@ -7,7 +7,7 @@ create.dat <- function(N=10000){
   nuts1 <- sample(1:5,N,replace=TRUE)
   nuts2 <- sample(1:7,N,replace=TRUE)
   nuts3 <- sample(1:15,N,replace=TRUE)
-  hsize <- sample(1:6,N,replace=TRUE)
+  hsize <- sample(1:3,N,replace=TRUE)
   
   # replicate
   hid <- rep(1:length(hsize),times=hsize)

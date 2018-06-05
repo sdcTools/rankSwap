@@ -181,3 +181,55 @@ dat[abs(antirisk-cppantirisk)>1e-10]
 
 dat[,N:=.N,by=c(hierarchy,risk)]
 
+
+
+#
+# test record swapping
+#
+library(data.table)
+library(Rcpp)
+
+source("R/create_dat.R")
+
+sourceCpp("src/recordSwap.cpp")
+dat <- create.dat(5000)
+hierarchy <- c("nuts1","nuts2","nuts3")
+risk <- c("ageGroup","geschl","hsize","national")
+similar <- c("hsize")
+
+levels <- setLevels(dat,0:2,4:7,3,3)
+table(levels)
+prob <- setRisk(dat,0:2,4:7,3)
+dat[,levels:=levels]
+dat[levels==0,.N,by=nuts1]
+
+a <- recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels)
+a
+
+dat[,hid.first:=c(1,rep(0,.N-1)),by=hid]
+dat[hid.first&levels==0,which=TRUE]
+
+all((dat[hid.first&levels<2,which=TRUE]-1)%in%unlist(a))
+
+
+
+
+all(dat[hid.first&levels==0&nuts1==1,which=TRUE]-1==sort(a))
+
+all(sort(dat[hid.first==1&nuts1!=1,which=TRUE]-1)==sort(a))
+
+all(sort(dat[hid.first==1&nuts1==1,which=TRUE]-1)==sort(a))
+all((dat[levels==0&hid.first==1,which=TRUE]-1)==a)
+
+nrow(dat[,.N,by=list(nuts1,nuts2,nuts3)])==length(recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels))
+
+table(recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels))
+dat[,.N,by=list(nuts1,nuts2,nuts3)][order(nuts2)][,table(nuts2)]
+
+table(recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels))
+dat[,.N,by=list(nuts1,nuts2,nuts3)][,table(N)]
+
+dat[,.N,by=nuts1]
+recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels)
+
+
