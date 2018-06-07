@@ -90,7 +90,7 @@ orderData(dat,4)
 
 microbenchmark(orderData(dat,4),dat[order(hid)])
 
-sourceCpp("diverses/recordSwap.cpp")
+sourceCpp("src/recordSwap.cpp")
 dat <- create.dat()
 dat <- dat[sample(1:.N)]
 a <- setLevels(dat,0:2,3,0:2,4,3)
@@ -124,16 +124,17 @@ seed.base <- 1:1e6
 
 prob <- c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20))
 out_mat <- replicate(b,{
-  cpp_samp <- randSample(1:n,N,prob,seed=sample(seed.base,1))
+  # cpp_samp <- randSample(1:n,N,prob,seed=sample(seed.base,1))
   R_samp <- sample(1:n,N,prob=prob)
   wrswoR_samp <- sample_int_crank(n,N,prob)
-  cbind(cpp_samp,R_samp,wrswoR_samp)
+  cbind(#cpp_samp,
+    R_samp,wrswoR_samp)
 })
-
+out_cpp <- test_randSample(b,1:n,N,prob,seed=1)
 
 out_data <- list()
 for(i in 1:b){
-  out_tmp <- c(out_mat[,1:3,i])
+  out_tmp <- c(out_mat[,1:2,i],out_cpp[[i]])
   out_tmp <- data.table(value=out_tmp,run=i)
   out_tmp[,method:=rep(c("cpp_samp","R_samp","wrswoR_samp"),each=N)]
   out_data <- c(out_data,list(out_tmp))
@@ -192,23 +193,59 @@ library(Rcpp)
 source("R/create_dat.R")
 
 sourceCpp("src/recordSwap.cpp")
-dat <- create.dat(5000)
+set.seed(123456)
+dat <- create.dat(20000)
 hierarchy <- c("nuts1","nuts2","nuts3")
 risk <- c("ageGroup","geschl","hsize","national")
 similar <- c("hsize")
 
-levels <- setLevels(dat,0:2,4:7,3,3)
+levels <- setLevels(dat,0:3,5:8,4,3)
 table(levels)
-prob <- setRisk(dat,0:2,4:7,3)
+prob <- setRisk(dat,0:3,5:8,4)
 dat[,levels:=levels]
-dat[levels==0,.N,by=nuts1]
+dat[levels==1,.N,by=nuts1]
 
-a <- recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels)
-a
+sourceCpp("src/recordSwap.cpp")
+a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
+length(unlist(a))
+
+library(microbenchmark)
+microbenchmark(recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels))
+
+b <- recordSwap(dat,5,0:3,5:7,4,3,.1,prob,levels)
+
+c <- c(a,b)
+dat[!hid%in%dat[a+1]$hid][!duplicated(hid)][nuts1==1&nuts2==1&nuts3==1]
+dat[!hid%in%dat[c+1]$hid][nuts1==1&nuts2==1&nuts3==1&!duplicated(hid)]
+dat[d==0][nuts1==1&nuts2==1&nuts3==1&!duplicated(hid)]
+
+g <- dat[hid.first&nuts1==1&nuts2==1&nuts3==1,which=TRUE]-1
+g <- g[!g%in%a]
+g <- g[!g%in%b]
+
+h <- recordSwap(dat,5,0:3,5:7,4,3,.1,prob,levels)
+sort(a)
+b <- dat[nuts1==1&nuts2==1&nuts3==1&levels==2&!duplicated(hid),which=TRUE]-1
+
+c <- b[!b%in%a] 
+
+d <- recordSwap(dat,5,0:3,5:7,4,3,.1,prob,levels)
+c[!c%in%d]
+
 
 dat[,hid.first:=c(1,rep(0,.N-1)),by=hid]
-dat[hid.first&levels==0,which=TRUE]
+all((dat[hid.first&levels==1,which=TRUE]-1)%in%a)
+which(!(dat[hid.first&levels==1,which=TRUE]-1)%in%a)
 
+c <- replicate(1000,recordSwap(dat,5,0:3,5:7,4,3,.1,prob,levels))
+
+
+check <- table(unlist(a))
+check[check>1]
+
+dat[,hid.first:=c(1,rep(0,.N-1)),by=hid]
+all((dat[hid.first&levels==0,which=TRUE]-1)%in%unlist(a))
+which(!((dat[hid.first&levels<=2,which=TRUE]-1)%in%unlist(a)))
 all((dat[hid.first&levels<2,which=TRUE]-1)%in%unlist(a))
 
 
@@ -232,4 +269,55 @@ dat[,.N,by=list(nuts1,nuts2,nuts3)][,table(N)]
 dat[,.N,by=nuts1]
 recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels)
 
+
+#################################
+# compare R and c++ Version 
+# make various benchmarks
+#
+
+library(data.table)
+library(Rcpp)
+library(microbenchmark)
+set.seed(1234)
+
+source("R/create_dat.R")
+sourceCpp("src/recordSwap.cpp")
+
+dat <- create.dat(10000)
+
+hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
+risk <- c("ageGroup","geschl","hsize","national")
+swap <- .05 # runif(1)
+hid <- "hid"
+th <- 3
+nhier <- length(hierarchy)
+
+levels <- setLevels(dat,0:(nhier-1),5:8,4,th)
+prob <- setRisk(dat,0:(nhier-1),5:8,4)
+
+# prep data for R function
+dat_R <- copy(dat)
+dat_R[,level:=levels]
+dat_R[,risk:=prob[[1]]]
+dat_R[,antirisk:=prob[[2]]]
+dat_R <- unique(dat_R,by="hid")
+
+for(i in 1:length(hierarchy)){
+  if(i==1){
+    dat.draw <- dat_R[,.(drawN=randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
+  }else{
+    # distribute N
+    # take number of risky households into account??????!!!!!!!!
+    dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
+    dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
+    dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
+    dat.draw[,drawN:=randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
+    dat.draw[,N:=NULL]
+  }
+}
+dat_R <- merge(dat_R,dat.draw,by=c(hierarchy,"hsize"))
+
+
+mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap,prob,levels),
+               R=recordSwapR(copy(dat_R),hierarchy))
 
