@@ -283,41 +283,106 @@ set.seed(1234)
 source("R/create_dat.R")
 sourceCpp("src/recordSwap.cpp")
 
-dat <- create.dat(10000)
+set.seed(123456)
+dat <- create.dat(500000)
+microbenchmark(test(dat,c(0:3,5:8)))
 
-hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
-risk <- c("ageGroup","geschl","hsize","national")
-swap <- .05 # runif(1)
-hid <- "hid"
-th <- 3
-nhier <- length(hierarchy)
+microbenchmark(setLevels(dat,0:3,5:8,4,3))
 
-levels <- setLevels(dat,0:(nhier-1),5:8,4,th)
-prob <- setRisk(dat,0:(nhier-1),5:8,4)
 
-# prep data for R function
-dat_R <- copy(dat)
-dat_R[,level:=levels]
-dat_R[,risk:=prob[[1]]]
-dat_R[,antirisk:=prob[[2]]]
-dat_R <- unique(dat_R,by="hid")
+levels <- setLevels(dat,0:3,5:8,4,3)
 
-for(i in 1:length(hierarchy)){
-  if(i==1){
-    dat.draw <- dat_R[,.(drawN=randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
-  }else{
-    # distribute N
-    # take number of risky households into account??????!!!!!!!!
-    dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
-    dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
-    dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
-    dat.draw[,drawN:=randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
-    dat.draw[,N:=NULL]
+
+table(levels)
+prob <- setRisk(dat,0:3,5:8,4)
+
+t <- Sys.time()
+recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
+Sys.time()-t
+t <- Sys.time()
+recordSwapR(copy(dat_R),hierarchy)
+Sys.time()-t
+
+
+microbenchmark(recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels))
+
+microbenchmark(cpp=recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels),
+               R=recordSwapR(copy(dat_R),hierarchy))
+
+
+
+npop <- c(1,2^(1:7))*1e4
+npop <- c(1000,npop)
+hier.types <- 2:4
+
+for(n in npop){
+  for(h in hier.types){
+  dat <- create.dat(n)
+  
+  hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
+  hierarchy <- hierarchy[1:h]
+  risk <- c("ageGroup","geschl","hsize","national")
+  swap <- .05 # runif(1)
+  hid <- "hid"
+  th <- 3
+  nhier <- length(hierarchy)
+  
+  levels <- setLevels(dat,0:(nhier-1),5:8,4,th)
+  prob <- setRisk(dat,0:(nhier-1),5:8,4)
+  
+  # prep data for R function
+  dat_R <- copy(dat)
+  dat_R[,level:=levels]
+  dat_R[,risk:=prob[[1]]]
+  dat_R[,antirisk:=prob[[2]]]
+  dat_R <- unique(dat_R,by="hid")
+  
+  for(i in 1:length(hierarchy)){
+    if(i==1){
+      dat.draw <- dat_R[,.(drawN=randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
+    }else{
+      # distribute N
+      # take number of risky households into account??????!!!!!!!!
+      dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
+      dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
+      dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
+      dat.draw[,drawN:=randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
+      dat.draw[,N:=NULL]
+    }
+  }
+  dat_R <- merge(dat_R,dat.draw,by=c(hierarchy,"hsize"))
+  
+  
+  mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap,prob,levels),
+                       R=recordSwapR(copy(dat_R),hierarchy))
+  } 
+}
+
+
+
+library(ggplot2)
+library(data.table)
+npop <- c(1,2^(1:7))*1e4
+npop <- c(1000,npop)
+hier.types <- 2:4
+bm_data <- list()
+for(i in npop){
+  for(j in hier.types){
+    if(file.exists(paste0("R/benchmark_",i,"_",j,".RData"))){
+      load(paste0("R/benchmark_",i,"_",j,".RData"))
+      bm_data <- c(bm_data,list(mb))
+    }
   }
 }
-dat_R <- merge(dat_R,dat.draw,by=c(hierarchy,"hsize"))
+
+bm_data <- rbindlist(bm_data)
 
 
-mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap,prob,levels),
-               R=recordSwapR(copy(dat_R),hierarchy))
+bm_data <- bm_data[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
+p1 <- ggplot(bm_data,aes(npop,value))+
+  geom_point(aes(color=expr))+ylab("seconds")+
+  facet_grid(hier.levels~.,scales = "free")
+plot(p1)
+
+
 

@@ -4,6 +4,7 @@
 #include <vector>       // std::vector
 #include <random>
 #include <queue>
+#include <valarray>
 
 
 
@@ -84,7 +85,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
     for(int j=0;j<loop_n;j++){
       groups[j] = data[loop_index[j]][i];
     }
-    
+
     // ... count number for each group using std::map
     group_count[groups]++;
     
@@ -100,6 +101,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   // initialise map with levels for each group
   std::map<std::vector<int>,int> level_number = group_count; 
   
+
   for(int i = 0;i<nhier;i++){
     // int i=2;  
     std::map<std::vector<int>,int> group_count_help = group_count;
@@ -132,6 +134,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
       }
     }
   }
+  
   ////////////////////////////////////////////////////
   
   //////////////////////////////////////////////////// 
@@ -141,6 +144,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   
   int i =0;
   int min_level=nhier;
+
   while(i<n){
     
     // get hsize of record i
@@ -159,11 +163,79 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
     i = i+hsize;
     min_level=nhier; // set min_level to nhier for each hid
   }
-  
+
   ////////////////////////////////////////////////////
   return data_level;
 }
 
+/*
+ * Testfunction for performance
+ */
+// [[Rcpp::export]]
+int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
+  
+  // initialise parameters
+  int n = data.size();  // number of columns in data
+  int p = data[0].size();  // number of rows in data
+  
+  int loop_n = loop_index.size();
+  
+  
+  /*
+  std::vector<std::vector<int>> data_new(n,std::vector<int>(p));
+  for(int i=0;i<loop_n;i++){
+    for(int j=0;j<n;j++){
+      data_new[j][loop_index[i]] = data[loop_index[i]][j];
+    }
+  }
+  
+  // initialise map
+  std::map<std::vector<int>,int> group_count; 
+  
+  
+  // initialise vector for groups
+  // initialise map for household size
+  std::map<int,int> map_hsize;
+ 
+  ////////////////////////////////////////////////////
+  // loop over data and ...
+  for(int i=0;i<n;i++){
+    
+    // ... count number for each group using std::map
+    group_count[data_new[i]]++;
+    
+  }
+   */
+
+
+  // initialise map
+  std::map<std::vector<int>,int> group_count; 
+
+  // initialise vector for groups
+  std::vector<int> groups(loop_n);
+  // initialise map for household size
+  std::map<int,int> map_hsize;
+  
+  ////////////////////////////////////////////////////
+  // loop over data and ...
+  for(int i=0;i<n;i++){
+    
+    
+    if(i==0){
+      // ... define group
+      for(int j=0;j<loop_n;j++){
+        groups[j] = data[loop_index[j]][i];
+      }
+    }
+
+    
+    // ... count number for each group using std::map
+    group_count[groups]++;
+
+  }
+
+  return 1;
+}
 
 /*
 * Function to set sampling probability 
@@ -249,7 +321,7 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
 /*
 * Function to sample from std::vector<int> given a probability vector
 */
-std::vector<int> randSample(std::vector<int> ID, int N, std::vector<double> prob, std::mt19937 &mersenne_engine){
+std::vector<int> randSample(std::vector<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine){
   
   // initialise parameters
   int n = ID.size();
@@ -309,6 +381,9 @@ std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, 
   
   return output;
 }
+
+
+
 
 
 /*
@@ -636,7 +711,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       }
     }
   }
- 
+
  
   std::vector<std::vector<int>> out(2);
   out[0] = swappedIndex;
