@@ -322,7 +322,7 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
 * Function to sample from std::vector<int> given a probability vector
 */
 std::vector<int> randSample(std::vector<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine,
-                            std::vector<int> &IDused, std::unordered_set<int> &mustSwap, std::unordered_set<int> &mustSkip){
+                            std::vector<int> &IDused, std::unordered_set<int> &mustSwap){
   
   // initialise parameters
   std::exponential_distribution<double> exp_dist(1.0); // initialise lambda para for exp distribution
@@ -342,25 +342,17 @@ std::vector<int> randSample(std::vector<int> &ID, int N, std::vector<double> &pr
   // use priority_queue
   std::priority_queue<std::pair<double, int>> q;
   std::unordered_set<int> select_mustSwap;
-  if(mustSwap.size()>0){
-    for(int i=0;i<ID.size();i++){
-      if(IDused[ID[i]]==0){
-        if(mustSwap.find(ID[i])!=mustSwap.end()){
-          select_mustSwap.insert(ID[i]);
-        }
-      }
-      if(IDused[ID[i]]==0&&mustSwap.find(ID[i])!=mustSwap.end()){
-        q.push(std::pair<double, int>(prob[i]/exp_dist(mersenne_engine), i));
-      }
-    }
-  }else{
-    for(int i=0;i<ID.size();i++){
-      if(IDused[ID[i]]==0){
-        q.push(std::pair<double, int>(prob[i]/exp_dist(mersenne_engine), i));
+
+  for(int i=0;i<ID.size();i++){
+    if(IDused[ID[i]]==0){
+      if(mustSwap.find(ID[i])!=mustSwap.end()){
+        select_mustSwap.insert(ID[i]);
+      }else{
+        q.push(std::pair<double, int>(prob[ID[i]]/exp_dist(mersenne_engine), i));
       }
     }
   }
-  
+
   
   N = min<int>(q.size(),max<int>(N,select_mustSwap.size()));
   std::vector<int> sampleID(N);
@@ -397,6 +389,7 @@ std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, 
   
   std::vector<int> IDused(ID.size(),0);
   std::unordered_set<int> mustSwap;
+  std::unordered_set<int> mustSkip;
   
   int i=0;
   while(i<B){
@@ -407,7 +400,19 @@ std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, 
   return output;
 }
 
-
+// [[Rcpp::export]]
+std::vector<int> test_stuff(std::vector<int> vec1){
+  
+  std::unordered_set<int> mymap(vec1.begin(),vec1.end());
+  std::vector<int> vec2(vec1.size());
+  
+  for(int i=0;i<vec1.size();i++){
+    if(mymap.find(vec1[i])!=mymap.end()&&vec1[i]!=4){
+      vec2[i] = vec1[i];
+    }
+  }
+  return vec2;
+}
 
 
 
@@ -663,6 +668,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
           }
            */
           std::vector<int> IDswap_draw = x.second;
+          std::unordered_set<int> mustSkip1;
           std::vector<int> IDswap_add = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap);
           for(int i=0;i<IDswap_add.size();i++){
             IDswap[i] = IDswap_add[i];

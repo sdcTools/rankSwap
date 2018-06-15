@@ -483,6 +483,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
   std::vector<int> IDused(n,0); // 0-1 vector if 1 this index was already swapped and cant be swapped again
+  std::unordered_set<int> IDdonor_all; // set for all IDs for quick lookup
   int z=0; // counter used for while() ect...
   int z2=0; // second counter used for lowest hierarchy
   std::vector<int>::iterator IDpos; // iterator used in loops
@@ -507,8 +508,12 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       group_levels[levels[z]].insert(z);
     }
     
+    // create set of IDs for quick lookup
+    IDdonor_all.insert(z);
+    
     // skip all other household member, only need first one
     z += map_hsize[data[hid][z]];
+
   }
   
   // get number of households at lowest level hierarchy
@@ -559,21 +564,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
     }
     /////////////////
 
-    
-    /////////////////
-    // create vector of IDs sorted by hierarchy levels (unordered map)
-    std::unordered_set<int> IDdonor_all;
-    std::vector<int> n_IDdonor(group_hier_help.size()+1);
-    n_IDdonor[0]=0;
-    z=1;
-    for(auto const&x : group_hier_help){
-      
-      // append ID vector for each map element
-      IDdonor_all.insert(x.second.begin(),x.second.end());
-      // get number of elements for each group
-      // n_IDdonor[z]=n_IDdonor[z-1]+x.second.size();
-      // ++z;
-    }
+
     /////////////////
     int sampSize=0;
     int k=1;
