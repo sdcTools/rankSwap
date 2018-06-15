@@ -85,7 +85,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
     for(int j=0;j<loop_n;j++){
       groups[j] = data[loop_index[j]][i];
     }
-
+    
     // ... count number for each group using std::map
     group_count[groups]++;
     
@@ -101,7 +101,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   // initialise map with levels for each group
   std::map<std::vector<int>,int> level_number = group_count; 
   
-
+  
   for(int i = 0;i<nhier;i++){
     // int i=2;  
     std::map<std::vector<int>,int> group_count_help = group_count;
@@ -144,7 +144,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   
   int i =0;
   int min_level=nhier;
-
+  
   while(i<n){
     
     // get hsize of record i
@@ -163,14 +163,14 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
     i = i+hsize;
     min_level=nhier; // set min_level to nhier for each hid
   }
-
+  
   ////////////////////////////////////////////////////
   return data_level;
 }
 
 /*
- * Testfunction for performance
- */
+* Testfunction for performance
+*/
 // [[Rcpp::export]]
 int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
   
@@ -184,9 +184,9 @@ int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
   /*
   std::vector<std::vector<int>> data_new(n,std::vector<int>(p));
   for(int i=0;i<loop_n;i++){
-    for(int j=0;j<n;j++){
-      data_new[j][loop_index[i]] = data[loop_index[i]][j];
-    }
+  for(int j=0;j<n;j++){
+  data_new[j][loop_index[i]] = data[loop_index[i]][j];
+  }
   }
   
   // initialise map
@@ -196,21 +196,21 @@ int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
   // initialise vector for groups
   // initialise map for household size
   std::map<int,int> map_hsize;
- 
+  
   ////////////////////////////////////////////////////
   // loop over data and ...
   for(int i=0;i<n;i++){
-    
-    // ... count number for each group using std::map
-    group_count[data_new[i]]++;
-    
+  
+  // ... count number for each group using std::map
+  group_count[data_new[i]]++;
+  
   }
-   */
-
-
+  */
+  
+  
   // initialise map
   std::map<std::vector<int>,int> group_count; 
-
+  
   // initialise vector for groups
   std::vector<int> groups(loop_n);
   // initialise map for household size
@@ -227,13 +227,13 @@ int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
         groups[j] = data[loop_index[j]][i];
       }
     }
-
+    
     
     // ... count number for each group using std::map
     group_count[groups]++;
-
+    
   }
-
+  
   return 1;
 }
 
@@ -321,10 +321,11 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
 /*
 * Function to sample from std::vector<int> given a probability vector
 */
-std::vector<int> randSample(std::vector<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine,
-                            std::vector<int> &IDused, std::unordered_set<int> &mustSwap){
+std::unordered_set<int> randSample(std::unordered_set<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine,
+                                   std::vector<int> &IDused, std::unordered_set<int> &mustSwap, std::unordered_set<int> &mustSkip){
   
   // initialise parameters
+  std::unordered_set<int> select_mustSwap;
   std::exponential_distribution<double> exp_dist(1.0); // initialise lambda para for exp distribution
   /*
   * from R-Package ‘wrswoR’:
@@ -341,36 +342,24 @@ std::vector<int> randSample(std::vector<int> &ID, int N, std::vector<double> &pr
   // from https://stackoverflow.com/questions/14902876/indices-of-the-k-largest-elements-in-an-unsorted-length-n-array
   // use priority_queue
   std::priority_queue<std::pair<double, int>> q;
-  std::unordered_set<int> select_mustSwap;
-
-  for(int i=0;i<ID.size();i++){
-    if(IDused[ID[i]]==0){
-      if(mustSwap.find(ID[i])!=mustSwap.end()){
-        select_mustSwap.insert(ID[i]);
-      }else{
-        q.push(std::pair<double, int>(prob[ID[i]]/exp_dist(mersenne_engine), i));
+  std::unordered_set<int> sampleID;
+  for(auto s : ID){
+    if(IDused[s]==0){
+      if(mustSwap.find(s)!=mustSwap.end()){
+        sampleID.insert(s);
+      }else if(mustSkip.find(s)==mustSkip.end()){
+        q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
       }
     }
   }
-
   
-  N = min<int>(q.size(),max<int>(N,select_mustSwap.size()));
-  std::vector<int> sampleID(N);
+  // build output vector 
+  N = max(0,min<int>(q.size(),N-select_mustSwap.size()));
   // select index of top elements from priority_queue
-  int j=0;
-  for(auto s: select_mustSwap){
-    if(j<N){
-      sampleID[j] = s;
-      j++;
-    }else{
-     break; 
-    }
-  }
-  for(int i=j;i<N;i++){
-    sampleID[i] = ID[q.top().second]; //.top() access top element in queue
+  for(int i=0;i<N;i++){
+    sampleID.insert(q.top().second); //.top() access top element in queue
     q.pop(); // remove top element in queue
   }
-  
   return sampleID;
 }
 
@@ -388,12 +377,15 @@ std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, 
   mersenne_engine.seed(seed);
   
   std::vector<int> IDused(ID.size(),0);
-  std::unordered_set<int> mustSwap;
-  std::unordered_set<int> mustSkip;
+  std::unordered_set<int> mustSwap,mustSkip;
+  std::unordered_set<int> ID_set(ID.begin(),ID.end());
+  
   
   int i=0;
   while(i<B){
-    output[i] = randSample(ID,N,prob,mersenne_engine,IDused,mustSwap);
+    std::unordered_set<int> outSample = randSample(ID_set,N,prob,mersenne_engine,IDused,mustSwap,mustSkip);
+    std::vector<int> output_i(outSample.begin(),outSample.end());
+    output[i] = output_i;
     ++i;
   }
   
@@ -405,9 +397,12 @@ std::vector<int> test_stuff(std::vector<int> vec1){
   
   std::unordered_set<int> mymap(vec1.begin(),vec1.end());
   std::vector<int> vec2(vec1.size());
+  std::unordered_set<int> fillmymap;
+  
+  fillmymap = mymap;
   
   for(int i=0;i<vec1.size();i++){
-    if(mymap.find(vec1[i])!=mymap.end()&&vec1[i]!=4){
+    if(fillmymap.find(vec1[i])!=fillmymap.end()){
       vec2[i] = vec1[i];
     }
   }
@@ -482,17 +477,14 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   // swapp at each higher level the number of households that have to be swapped at that level according to "th" (see setLevels())
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
-
-  std::map<std::vector<int>,std::vector<int>> group_hier; //
+  
+  std::map<std::vector<int>,std::unordered_set<int>> group_hier; //
   std::unordered_map<int,std::unordered_set<int>> group_levels; // map containing all IDs which must be swapped at a certain level (~key of map)
   std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
   std::vector<int> IDused(n,0); // 0-1 vector if 1 this index was already swapped and cant be swapped again
+  std::unordered_set<int> IDdonor_all; // set for all IDs for quick lookup
   int z=0; // counter used for while() ect...
-  int z2=0; // second counter used for lowest hierarchy
-  std::vector<int>::iterator IDpos; // iterator used in loops
-  int n_swapped_before = 0; // count how many IDs have been swapped in previous iterations (regarding hierarchy)
-  int n_swapped = 0; // number of already swapped units 
   // create map containing subgroups according to hierarchy
   // and IDs of each subgroup
   // use hhsize for this to speed things up
@@ -505,15 +497,19 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
     
     // supply new household index to each group
     // use only indices to speed up construction of output data
-    group_hier[hier_help].push_back(z);
+    group_hier[hier_help].insert(z);
     
     // create map for levels
     if(levels[z]<nhier){
       group_levels[levels[z]].insert(z);
     }
     
+    // create set of IDs for quick lookup
+    IDdonor_all.insert(z);
+    
     // skip all other household member, only need first one
     z += map_hsize[data[hid][z]];
+    
   }
   
   // get number of households at lowest level hierarchy
@@ -528,10 +524,11 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   // start at highest hierarchy
   
   for(int h=0;h<nhier;h++){
-  // int h=3;
+    // int h=3;
     // values of map element that must be swapped at current stage
     // if no elements need to be swapped than skipp this step
     std::unordered_set<int> mustSwap;
+    std::unordered_set<int> mustSwap2;
     if(group_levels.find(h)!=group_levels.end()){
       mustSwap = group_levels[h];
     }else{
@@ -542,81 +539,59 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       }
     }
     
-    std::map<std::vector<int>,std::vector<int>> group_hier_help;
+    std::map<std::vector<int>,unordered_set<int>> group_hier_help;
     hier_help.resize(h+1);
     
     /////////////////
     // get combined map for hierarchy h
     for(auto const&x : group_hier){
-      // discard every index that has already been used
-      // more efficient to do this at this step then later on in the code
-      std::vector<int> IDnotused(x.second.size());
-      z=0;
-      for(int i=0;i<x.second.size();i++){
-        if(IDused[IDnotused[z]]==0){
-          IDnotused[z] = x.second[i];
-          ++z;
-        }
-      }
+      
       // get higher hierarchy
       for(int i=0;i<h+1;i++){
         hier_help[i] = x.first[i];
       }
-      // append ID vector for each map element
-      group_hier_help[hier_help].insert(group_hier_help[hier_help].end(),IDnotused.begin(),IDnotused.begin()+z); 
-
-    }
-    /////////////////
-
-    
-    /////////////////
-    // create vector of IDs sorted by hierarchy levels (unordered map)
-    std::vector<int> IDdonor_all;
-    std::vector<int> n_IDdonor(group_hier_help.size()+1);
-    n_IDdonor[0]=0;
-    z=1;
-    for(auto const&x : group_hier_help){
       
-      // append ID vector for each map element
-      IDdonor_all.insert(IDdonor_all.end(),x.second.begin(),x.second.end());
-      // get number of elements for each group
-      n_IDdonor[z]=n_IDdonor[z-1]+x.second.size();
-      ++z;
+      // discard every index that has already been used
+      // more efficient to do this at this step then later on in the code
+      for(auto s : x.second){
+        if(IDused[s]==0){
+          group_hier_help[hier_help].insert(s);
+        }
+      }
     }
+    /////////////////
+    
+    
     /////////////////
     int sampSize=0;
     int k=1;
     int countUsed=0;
     int countRest=0;
-
+    
     /////////////////
     // loop over levels of hierarchy
     for(auto const&x : group_hier_help){
       // std::vector<int> xfirst = group_hier_help.begin()->first;
       // std::vector<int> xsecond = group_hier_help.begin()->second;
-      
       // get values that need to be swapped at this hierarchy level and which are
       // in this hierarchy stage
-      // loop over values in x.second
-      std::vector<int> IDswap(x.second.size());
-
+      std::unordered_set<int> IDswap;
+      
       if(h<nhier-1){
-        z =0;
         if(mustSwap.size()){
-          for(int i=0;i<x.second.size();i++){
+          // loop over values in x.second
+          for(auto s : x.second){
             // if there are any households that must be swapped due to variable th
-            if(IDused[x.second[i]]==0 && mustSwap.find(x.second[i])!=mustSwap.end()){
-              IDswap[z]=x.second[i];
-              z++;
+            if(IDused[s]==0 && mustSwap.find(s)!=mustSwap.end()){
+              IDswap.insert(s);
             }
           }
         }
-        IDswap.resize(z);
       }else{
         // if at lowest level get number of households that need to be swapped
         // according to swap and check if this number was already reached
         // by previous swappings
-   
+        
         countUsed = n_group[x.first] - x.second.size();
         
         // not enough households have been swapped
@@ -624,110 +599,39 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
         // Number of IDs that need to be swappe - already swapped IDs - IDs that have to be swapped at lowest level:
         countRest = ceil(n_group[x.first]*swaprate) - countUsed;
         if(countRest>0){
-          /*
-          // some IDs must still be swapped
-          // draw using prob from risk
-          std::vector<int> IDswap_draw(x.second.size());
-          // remove all values from IDswap_draw which are already in IDswap
-          // or have already been swapped before
-          z=0;
-          z2=0;
-          if(mustSwap.size()>0){
-            for(int i=0;i<IDswap_draw.size();i++){
-              if(IDused[x.second[i]]==0){
-                if(mustSwap.find(x.second[i])!=mustSwap.end()){
-                  IDswap[z]=x.second[i];
-                  z++;
-                }else{
-                  IDswap_draw[z2] = x.second[i];
-                  z2++;
-                }
-              }
-            }
-          }else{
-            for(int i=0;i<IDswap_draw.size();i++){
-              if(IDused[x.second[i]]==0){
-                IDswap_draw[z2] = x.second[i];
-                z2++;
-              }
-            }
-          }
-          IDswap_draw.resize(z2);
-          IDswap.resize(z);
           
-           // draw from IDswap_draw vector
-          // if IDswap_draw contains any IDs
-          // if this vector is empty then all IDs have already been swapped
-          if(IDswap_draw.size()>0){
-            // create probability vector
-            std::vector<double> prob_draw(IDswap_draw.size(),0.0);
-            std::transform(x.second.begin(),x.second.end(),prob_draw.begin(),[prob](size_t pos){return prob[0][pos];});
-            std::vector<int> IDswap_add = randSample(IDswap_draw,countRest,prob_draw,mersenne_engine,IDused,mustSwap);
-            // append vector to IDwap
-            IDswap.insert(IDswap.end(),IDswap_add.begin(),IDswap_add.end());
-          }
-           */
-          std::vector<int> IDswap_draw = x.second;
-          std::unordered_set<int> mustSkip1;
-          std::vector<int> IDswap_add = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap);
-          for(int i=0;i<IDswap_add.size();i++){
-            IDswap[i] = IDswap_add[i];
-          }
-          IDswap.resize(IDswap_add.size());
+          std::unordered_set<int> mustSkip;
+          std::unordered_set<int> IDswap_draw = x.second;
+          IDswap = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap,mustSkip);
         }
       }
-
       
       // if any IDs need to be swapped:
       if(IDswap.size()>0){
-        // get donor IDs
-        // remove k-th group from IDdonor
-        /*
-        std::vector<int> IDdonor(IDdonor_all.size());
-
-        // use only IDs which have not been used already and skip 
-        z=0;
-        for(int i=0;i<IDdonor_all.size();i++){
-          if(IDused[IDdonor_all[i]]==0 && (i<n_IDdonor[k-1] || i>=n_IDdonor[k])){
-            IDdonor[z] = IDdonor_all[i];
-            z++;
-          }
+        
+        // define sample size
+        sampSize = IDswap.size();
+        std::unordered_set<int> mustSkip2 = x.second;
+        std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2,mustSkip2);
+        sampSize = sampledID.size();
+        // set Index to used
+        std::unordered_set<int>::iterator it1 = IDswap.begin();
+        std::unordered_set<int>::iterator it2 = sampledID.begin();
+        for(;it1!=IDswap.end()&&it2!=sampledID.end();++it1,++it2){
+          IDused[*it1]=1;
+          IDused[*it2]=1;
+          // store results from sampling in swappedIndex and swappedIndexwith
+          swappedIndex[*it1] = *it2;
         }
-        IDdonor.resize(z);
-         */
-        // THIS NEEDS TO BE FIXED ??? NOT ENOUGH DONORS CAN ACTUALLY HAPPEN!?!?!?!?
-        //
-        //if(IDdonor.size()>0){
-          // sample IDswap.size() elements from IDdonor
-          // create sampling probability vector
-          // std::vector<double> prob_donor(IDdonor.size(),0.0);
-          // std::transform(IDdonor.begin(),IDdonor.end(),prob_donor.begin(),[prob](size_t pos){return prob[1][pos];});
-          
-          // number of swaps for donor set
-          // take minimum of number of swaps from IDswap and IDdonor.size()
-          //sampSize = min(IDswap.size(),IDdonor.size());
-          sampSize = IDswap.size();
-          std::vector<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap);
-          
-          // set Index to used
-          for(int i=0;i<sampSize;i++){
-            IDused[sampledID[i]]=1;
-            IDused[IDswap[i]]=1;
-            // store results from sampling in swappedIndex and swappedIndexwith
-            swappedIndex[IDswap[i]] = sampledID[i];
-          }
-        //}
+
       }
       // increment k by one
-      // is needed for discarding subset of donor data
+      // only for testing
       ++k;
       /////////////////
     }
   }
-
-  // resize swappedIndex and swappedIndexwith
-  // will have trailin zeros which are not needed
-/*
+  
   ////////////////////////////////////////////////////
   // Create output using swappedIndex and swappedIndexwith
   std::vector<int> swap_hierarchy(nhier);
@@ -752,7 +656,6 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       }
     }
   }
- */
   // contruct dummy output
   std::vector<std::vector<int>> out(2,std::vector<int>(swappedIndex.size()));
   z=0;
@@ -761,12 +664,12 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
     out[1][z] = x.second;
     z++;
   }
-
+  
   ////////////////////////////////////////////////////
   // Define output
   return out;
-
-
+  
+  
 }
 
 

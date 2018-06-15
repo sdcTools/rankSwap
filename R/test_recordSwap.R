@@ -409,3 +409,14 @@ plot(p1)
 
 
 
+library(Rcpp)
+library(microbenchmark)
+sourceCpp("src/recordSwap.cpp")
+
+vec1 <- 1:1000000
+
+test_stuff(vec1)
+microbenchmark(vec1)
+
+
+
