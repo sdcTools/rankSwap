@@ -290,7 +290,7 @@ source("R/create_dat.R")
 sourceCpp("src/recordSwap.cpp")
 
 set.seed(123456)
-dat <- create.dat(50000)
+dat <- create.dat(500000)
 
 levels <- setLevels(dat,0:3,5:8,4,3)
 table(levels)

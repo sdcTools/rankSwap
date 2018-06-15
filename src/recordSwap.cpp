@@ -523,7 +523,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   // loop over hierarchies 
   // start at highest hierarchy
   
-  for(int h=0;h<nhier;h++){
+  for(int h=0;h<nhier-1;h++){
     // int h=3;
     // values of map element that must be swapped at current stage
     // if no elements need to be swapped than skipp this step
@@ -612,7 +612,8 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
         // define sample size
         sampSize = IDswap.size();
         std::unordered_set<int> mustSkip2 = x.second;
-        std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2,mustSkip2);
+        // std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2,mustSkip2);
+        std::unordered_set<int> sampledID = IDswap;
         sampSize = sampledID.size();
         // set Index to used
         std::unordered_set<int>::iterator it1 = IDswap.begin();
@@ -634,6 +635,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   
   ////////////////////////////////////////////////////
   // Create output using swappedIndex and swappedIndexwith
+  
   std::vector<int> swap_hierarchy(nhier);
   int hsize=0;
   int hsizewith=0;
@@ -656,6 +658,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       }
     }
   }
+  
   // contruct dummy output
   std::vector<std::vector<int>> out(2,std::vector<int>(swappedIndex.size()));
   z=0;
