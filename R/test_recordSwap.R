@@ -122,7 +122,7 @@ b <- 1e4
 ID <- 1:n
 seed.base <- 1:1e6
 
-prob <- c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20))
+prob <- sample(c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20)))
 out_mat <- replicate(b,{
   # cpp_samp <- randSample(1:n,N,prob,seed=sample(seed.base,1))
   R_samp <- sample(1:n,N,prob=prob)
@@ -132,11 +132,14 @@ out_mat <- replicate(b,{
 })
 out_cpp <- test_randSample(b,1:n,N,prob,seed=1)
 
+microbenchmark(cpp=test_randSample(1,1:n,N,prob,seed=1),
+               sample_int_crank(n,N,prob),R=sample(ID,N,prob=prob))
+
 out_data <- list()
 for(i in 1:b){
   out_tmp <- c(out_mat[,1:2,i],out_cpp[[i]])
   out_tmp <- data.table(value=out_tmp,run=i)
-  out_tmp[,method:=rep(c("cpp_samp","R_samp","wrswoR_samp"),each=N)]
+  out_tmp[,method:=rep(c("R_samp","wrswoR_samp","cpp_samp"),each=N)]
   out_data <- c(out_data,list(out_tmp))
 }
 
@@ -194,7 +197,7 @@ source("R/create_dat.R")
 
 sourceCpp("src/recordSwap.cpp")
 set.seed(123456)
-dat <- create.dat(5000)
+dat <- create.dat(50000)
 hierarchy <- c("nuts1","nuts2","nuts3")
 risk <- c("ageGroup","geschl","hsize","national")
 similar <- c("hsize")
@@ -208,6 +211,9 @@ dat[levels==1,.N,by=nuts1]
 sourceCpp("src/recordSwap.cpp")
 a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 a
+length(dat[!duplicated(hid)&nuts1==1,which=TRUE]-1)
+length(sort(a))
+
 length(unlist(a))
 library(microbenchmark)
 microbenchmark(recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels))
@@ -284,16 +290,16 @@ source("R/create_dat.R")
 sourceCpp("src/recordSwap.cpp")
 
 set.seed(123456)
-dat <- create.dat(5000)
+dat <- create.dat(50000)
 
 levels <- setLevels(dat,0:3,5:8,4,3)
 table(levels)
 prob <- setRisk(dat,0:3,5:8,4)
 
 t <- Sys.time()
-recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
+a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 Sys.time()-t
-
+b <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 
 dat_R <- copy(dat)
 dat_R[,level:=levels]
