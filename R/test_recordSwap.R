@@ -116,8 +116,8 @@ microbenchmark(cpp=randSample(ID,N,prob),
 # simulate and compare with sample
 # compare only distribution
 sourceCpp("src/recordSwap.cpp")
-n <- 1000
-N <- 10
+n <- 100000
+N <- 1000
 b <- 1e4
 ID <- 1:n
 seed.base <- 1:1e6

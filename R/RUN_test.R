@@ -72,7 +72,7 @@ recordSwapR <- function(dat,hierarchy){
 }
 ###
 
-npop <- c(1,2^(1:7))*1e4
+npop <- c(1,2^(1:5))*1e4
 npop <- c(1000,npop)
 hier.types <- 2:4
 
@@ -116,7 +116,7 @@ for(n in npop){
     
     
     mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap,prob,levels),
-                         R=recordSwapR(copy(dat_R),hierarchy),times = 10)
+                         R=recordSwapR(copy(dat_R),hierarchy),times=10)
     mb <- as.data.table(mb)
     mb[,npop:=n]
     mb[,hier.levels:=h]
