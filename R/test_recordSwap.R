@@ -292,12 +292,12 @@ sourceCpp("src/recordSwap.cpp")
 set.seed(123456)
 dat <- create.dat(500000)
 
-levels <- setLevels(dat,0:3,5:8,4,3)
+levels <- setLevels(dat,0:3,5,4,3)
 table(levels)
-prob <- setRisk(dat,0:3,5:8,4)
+prob <- setRisk(dat,0:3,5,4)
 
 t <- Sys.time()
-a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
+a <- recordSwap(dat,5,0:3,5,4,3,.1,prob,levels)
 Sys.time()-t
 b <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 

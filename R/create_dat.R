@@ -5,9 +5,9 @@
 # create dummy data
 create.dat <- function(N=10000){
   nuts1 <- sample(1:5,N,replace=TRUE)
-  nuts2 <- sample(1:7,N,replace=TRUE)
-  nuts3 <- sample(1:4,N,replace=TRUE)
-  nuts4 <- sample(1:7,N,replace=TRUE)
+  nuts2 <- sample(1:10,N,replace=TRUE)
+  nuts3 <- sample(1:15,N,replace=TRUE)
+  nuts4 <- sample(1:25,N,replace=TRUE)
   hsize <- sample(1:6,N,replace=TRUE)
   
   # replicate

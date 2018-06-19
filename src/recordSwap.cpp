@@ -615,7 +615,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
         
         // not enough households have been swapped
         // when checking at lowest level
-        // Number of IDs that need to be swappe - already swapped IDs - IDs that have to be swapped at lowest level:
+        // Number of IDs that need to be swapped - already swapped IDs - IDs that have to be swapped at lowest level:
         countRest = ceil(n_group[x.first]*swaprate) - countUsed;
         if(countRest>0){
           
