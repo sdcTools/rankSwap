@@ -299,7 +299,11 @@ prob <- setRisk(dat,0:3,5,4)
 t <- Sys.time()
 a <- recordSwap(dat,5,0:3,5,4,3,.1,prob,levels)
 Sys.time()-t
+
+sourceCpp("src/recordSwap_old.cpp")
+t <- Sys.time()
 b <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
+Sys.time()-t
 
 dat_R <- copy(dat)
 dat_R[,level:=levels]
@@ -385,7 +389,7 @@ for(n in npop){
 
 library(ggplot2)
 library(data.table)
-npop <- c(1,2^(1:7))*1e4
+npop <- c(1,2^(1:5))*1e4
 npop <- c(1000,npop)
 hier.types <- 2:4
 bm_data <- list()

@@ -326,10 +326,10 @@ struct Comp{
   const std::vector<double>& _v;
 };
 /*
- * Function to sample from std::vector<int> given a probability vector
- */
+* Function to sample from std::vector<int> given a probability vector
+*/
 std::unordered_set<int> randSample(std::unordered_set<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine,
-                                   std::vector<int> &IDused, std::unordered_set<int> &mustSwap, std::unordered_set<int> &mustSkip){
+                                   std::vector<int> &IDused, std::unordered_set<int> &mustSwap){
   
   // initialise parameters
   std::exponential_distribution<double> exp_dist(1.0); // initialise lambda para for exp distribution
@@ -349,29 +349,29 @@ std::unordered_set<int> randSample(std::unordered_set<int> &ID, int N, std::vect
   // use priority_queue
   std::priority_queue<std::pair<double, int>> q;
   std::unordered_set<int> sampleID;
-
+  
   /*
   for(int i=0;i<ID.size();i++){
-    if(IDused[ID[i]]==0){
-      if(mustSwap.find(ID[i])!=mustSwap.end()){
-        sampleID.insert(ID[i]);
-      }else if(mustSkip.find(ID[i])==mustSkip.end()){
-        //q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
-        
-      }
-    }
+  if(IDused[ID[i]]==0){
+  if(mustSwap.find(ID[i])!=mustSwap.end()){
+  sampleID.insert(ID[i]);
+  }else if(mustSkip.find(ID[i])==mustSkip.end()){
+  //q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
+  
   }
-   */
+  }
+  }
+  */
   for(auto s : ID){
     if(IDused[s]==0){
       if(mustSwap.find(s)!=mustSwap.end()){
         sampleID.insert(s);
-      }else if(mustSkip.find(s)==mustSkip.end()){
+      }else{
         q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
       }
     }
   }
-
+  
   // build output vector 
   N = max(0,min<int>(q.size(),N-sampleID.size()));
   // select index of top elements from priority_queue
@@ -396,13 +396,13 @@ std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, 
   mersenne_engine.seed(seed);
   
   std::vector<int> IDused(ID.size(),0);
-  std::unordered_set<int> mustSwap,mustSkip;
+  std::unordered_set<int> mustSwap;
   std::unordered_set<int> ID_set(ID.begin(),ID.end());
   
   
   int i=0;
   while(i<B){
-    std::unordered_set<int> outSample = randSample(ID_set,N,prob,mersenne_engine,IDused,mustSwap,mustSkip);
+    std::unordered_set<int> outSample = randSample(ID_set,N,prob,mersenne_engine,IDused,mustSwap);
     std::vector<int> output_i(outSample.begin(),outSample.end());
     output[i] = output_i;
     ++i;
@@ -456,6 +456,8 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   // set random seed according to input parameter
   std::mt19937 mersenne_engine;
   mersenne_engine.seed(seed);
+  // initialise lambda para for exp distribution
+  std::exponential_distribution<double> exp_dist(1.0);
   
   // std::vector<int> levels(n);
   // std::vector< std::vector<double> > prob(2, vector<double>(n));
@@ -503,6 +505,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
   std::vector<int> IDused(n,0); // 0-1 vector if 1 this index was already swapped and cant be swapped again
   std::unordered_set<int> IDdonor_all; // set for all IDs for quick lookup
+  std::map<double,int> samp_order, samp_order_donor;
   int z=0; // counter used for while() ect...
   // create map containing subgroups according to hierarchy
   // and IDs of each subgroup
@@ -525,6 +528,12 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
     
     // create set of IDs for quick lookup
     IDdonor_all.insert(z);
+    
+    // create map for random numbers (ordered)
+    // makes sampling in each iteration obsolete
+    // look up in these maps instead
+    // samp_order[prob[0][z]/exp_dist(mersenne_engine)] = z;
+    samp_order_donor[prob[1][z]/exp_dist(mersenne_engine)] = z;
     
     // skip all other household member, only need first one
     z += map_hsize[data[hid][z]];
@@ -596,7 +605,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       // in this hierarchy stage
       std::unordered_set<int> IDswap;
       
-      if(h<nhier-1){
+      if(h<(nhier-1)){
         if(mustSwap.size()){
           // loop over values in x.second
           for(auto s : x.second){
@@ -619,9 +628,9 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
         countRest = ceil(n_group[x.first]*swaprate) - countUsed;
         if(countRest>0){
           
-          std::unordered_set<int> mustSkip;
           std::unordered_set<int> IDswap_draw = x.second;
-          IDswap = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap,mustSkip);
+          // apply sampling here -> should be quick because IDswap_draw will not be extremely large
+          IDswap = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap);
         }
       }
       
@@ -630,10 +639,20 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
         
         // define sample size
         sampSize = IDswap.size();
-        std::unordered_set<int> mustSkip2 = x.second;
-        std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2,mustSkip2);
+        std::unordered_set<int> sampledID;
+        z =0;
+        for(auto s : samp_order_donor){
+          if(IDused[s.second]==0 && x.second.find(s.second)==x.second.end()){
+            sampledID.insert(s.second);
+            z++;
+            if(z==sampSize){
+              break;
+            }
+          }
+        }
+        // std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2);
         // std::unordered_set<int> sampledID = IDswap;
-        sampSize = sampledID.size();
+        // sampSize = sampledID.size();
         // set Index to used
         std::unordered_set<int>::iterator it1 = IDswap.begin();
         std::unordered_set<int>::iterator it2 = sampledID.begin();
@@ -643,7 +662,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
           // store results from sampling in swappedIndex and swappedIndexwith
           swappedIndex[*it1] = *it2;
         }
-
+        
       }
       // increment k by one
       // only for testing

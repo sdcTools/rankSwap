@@ -73,7 +73,7 @@ recordSwapR <- function(dat,hierarchy){
 ###
 
 npop <- c(1,2^(1:5))*1e4
-npop <- c(1000,npop)
+npop <- c(1000,npop,500000)
 hier.types <- 2:4
 
 mb_all <- list()
