@@ -116,15 +116,17 @@ for(n in npop){
     
     
     mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap,prob,levels),
-                         R=recordSwapR(copy(dat_R),hierarchy),times=10)
+                         # R=recordSwapR(copy(dat_R),hierarchy),
+                         times=100)
     mb <- as.data.table(mb)
     mb[,npop:=n]
     mb[,hier.levels:=h]
-    save(mb,file=paste0("R/benchmark_",n,"_",h,".RData"))
+    # save(mb,file=paste0("R/benchmark_",n,"_",h,".RData"))
     mb_all <- c(mb_all,list(mb))
   } 
 }
 
 
 mb_all <- rbindlist(mb_all)
-save(mb_all,file="R/benchmark.RData")
+# save(mb_all,file="R/benchmark.RData")
+save(mb_all,file="R/benchmark_cpp.RData")

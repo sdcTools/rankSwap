@@ -290,14 +290,14 @@ source("R/create_dat.R")
 sourceCpp("src/recordSwap.cpp")
 
 set.seed(123456)
-dat <- create.dat(500000)
+dat <- create.dat(9000000)
 
-levels <- setLevels(dat,0:3,5,4,3)
+levels <- setLevels(dat,0:3,5:8,4,3)
 table(levels)
-prob <- setRisk(dat,0:3,5,4)
+prob <- setRisk(dat,0:3,5:8,4)
 
 t <- Sys.time()
-a <- recordSwap(dat,5,0:3,5,4,3,.1,prob,levels)
+a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 Sys.time()-t
 
 sourceCpp("src/recordSwap_old.cpp")
@@ -411,6 +411,12 @@ p1 <- ggplot(bm_data,aes(npop,value))+
   facet_grid(hier.levels~.,scales = "free")
 plot(p1)
 
+
+load("R/benchmark_cpp.RData")
+bm_data <- mb_all[,.(value=mean(time/1e9)),by=list(hier.levels,expr,npop)]
+p1 <- ggplot(bm_data,aes(npop,value))+
+  geom_point(aes(color=factor(hier.levels)))+ylab("seconds")
+plot(p1)
 
 
 library(Rcpp)
