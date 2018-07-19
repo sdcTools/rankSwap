@@ -1,24 +1,26 @@
+library(wrswoR)
+library(microbenchmark)
 ##########################################################
 # Test-File for record swapping
 # tests for all functions in recordSwap.h
 #
 
 
-library(data.table)
-library(Rcpp)
-library(wrswoR)
+# library(data.table)
+# library(Rcpp)
+# library(wrswoR)
 set.seed(1234)
 
-source("R/create_dat.R")
-sourceCpp("src/recordSwap.cpp")
+# source("R/create_dat.R")
+# sourceCpp("src/recordSwap.cpp")
 
-dat <- create.dat(100000)
+dat <- recordSwapping:::create.dat(100000)
 
 ###############################
 # test set level function
 # test if outcome is same
 test.fun <- function(){
-  dat <- create.dat()
+  dat <- recordSwapping:::create.dat()
   hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
   risk <- c("hsize","ageGroup","geschl","national")
   th <- 3
@@ -30,7 +32,7 @@ test.fun <- function(){
   dat[level==0,level:=5]
   dat[,level:=min(level),by=hid]
   
-  dat[,test:=setLevels(dat,0:3,5:8,4,3)+1]
+  dat[,test:=recordSwapping:::setLevels_cpp(dat,0:3,5:8,4,3)+1]
   
   if(nrow(dat[test!=level])>0){
     return(FALSE)
@@ -50,18 +52,16 @@ test <- replicate(1000,{
   dat <- create.dat()
   dat_orig <- copy(dat)
   dat <- dat[sample(1:.N)]
-  dat <- orderData(dat,4)
+  dat <- recordSwapping:::orderData_cpp(dat,4)
   dat <- as.data.table(dat)
   setnames(dat,colnames(dat),colnames(dat_orig))
   all.equal(dat[,.(hid)],dat_orig[,.(hid)])
 })
 
-table(test)
 ###############################
 
 ###############################
 # test sampling function
-sourceCpp("src/recordSwap.cpp")
 n <- 100000
 N <- 1000
 b <- 1e4
@@ -72,11 +72,11 @@ prob <- sample(c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20)))
 out_mat <- replicate(b,{
   # cpp_samp <- randSample(1:n,N,prob,seed=sample(seed.base,1))
   R_samp <- sample(1:n,N,prob=prob)
-  wrswoR_samp <- sample_int_crank(n,N,prob)
+  wrswoR_samp <- wrswoR::sample_int_crank(n,N,prob)
   cbind(#cpp_samp,
     R_samp,wrswoR_samp)
 })
-out_cpp <- test_randSample(b,1:n,N,prob,seed=1)
+out_cpp <- recordSwapping:::test_randSample_cpp(b,1:n,N,prob,seed=1)
 
 out_data <- list()
 for(i in 1:b){
@@ -96,7 +96,6 @@ ggplot(out_data,aes(value))+
 ###############################
 # test swapping outcome
 #
-sourceCpp("src/recordSwap.cpp")
 b <- 500
 all_hid <- rep(FALSE,b)
 all_swapped <- rep(FALSE,b)
@@ -104,8 +103,8 @@ all_swapped <- rep(FALSE,b)
 for(i in 1:b){
   dat <- create.dat(50000)
   dat_R <- copy(dat)
-  levels <- setLevels(dat,0:3,5:8,4,3)
-  prob <- setRisk(dat,0:3,5:8,4)
+  levels <- recordSwapping:::setLevels_cpp(dat,0:3,5:8,4,3)
+  prob <- recordSwapping:::setRisk_cpp(dat,0:3,5:8,4)
   dat_R[,level:=levels]
   dat_R[,risk:=prob[[1]]]
   dat_R[,antirisk:=prob[[2]]]
@@ -114,14 +113,14 @@ for(i in 1:b){
   swap <- .1
   for(i in 1:length(hierarchy)){
     if(i==1){
-      dat.draw <- dat_R[,.(drawN=randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
+      dat.draw <- dat_R[,.(drawN=recordSwapping:::randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
     }else{
       # distribute N
       # take number of risky households into account??????!!!!!!!!
       dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
       dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
       dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
-      dat.draw[,drawN:=randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
+      dat.draw[,drawN:=recordSwapping:::randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
       dat.draw[,N:=NULL]
     }
   }
@@ -150,22 +149,16 @@ table(all_hid)
 
 
 
-sourceCpp("src/recordSwap.cpp")
 swap_cpp <- recordSwap(dat,5,0:3,5:8,4,3,.1)
 
-library(data.table)
-library(Rcpp)
 set.seed(1234)
 
-source("R/create_dat.R")
 
-dat <- create.dat(1000000)
-
-sourceCpp("diverses/recordSwap.cpp")
+dat <- recordSwapping:::create.dat(1000000)
 
 
 # Test c++ functions
-setLevels(dat,0:2,3,0:2,1,3)
+recordSwapping:::setLevels_cpp(dat,0:2,3,0:2,1,3)
 
 hierarchy <- c("nuts1","nuts2","nuts3")
 th <- 3
@@ -182,52 +175,45 @@ dat[1:100,.N,by=list(nuts1,nuts2,nuts3,hsize)]
 
 
 
-dat <- create.dat(1000000)
+dat <- recordSwapping:::create.dat(1000000)
 
 
 
 #
 # test ordering
 #
-sourceCpp("diverses/recordSwap.cpp")
 
 
-
-
-dat <- create.dat()
+dat <- recordSwapping:::create.dat()
 dat_orig <- copy(dat)
 dat <- dat[sample(1:.N)]
-orderData(dat,4)
+recordSwapping:::orderData_cpp(dat,4)
 
 
-microbenchmark(orderData(dat,4),dat[order(hid)])
+microbenchmark(recordSwapping:::orderData_cpp(dat,4),dat[order(hid)])
 
-sourceCpp("src/recordSwap.cpp")
-dat <- create.dat()
+dat <- recordSwapping:::create.dat()
 dat <- dat[sample(1:.N)]
-a <- setLevels(dat,0:2,3,0:2,4,3)
+a <- recordSwapping:::setLevels_cpp(dat,0:2,3,0:2,4,3)
 as.data.table(a)
 
 
 # test sampling function
-sourceCpp("src/recordSwap.cpp")
-library(wrswoR)
 n <- 10000
 ID <- 1:n
 prob <- c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20))
 N <- 100
 
-a <- randSample(ID,N,prob)
-b <- sample_int_crank(n,N,prob)
+a <- recordSwapping:::randSample_(ID,N,prob)
+b <- wrswoR::sample_int_crank(n,N,prob)
 
 b <- sample(ID,N,prob=prob)
 microbenchmark(cpp=randSample(ID,N,prob),R=sample(ID,N,prob=prob),
-               sample_int_crank(n,N,prob))
+               wrswoR::sample_int_crank(n,N,prob))
 microbenchmark(cpp=randSample(ID,N,prob),
-               sample_int_crank(n,N,prob))
+               wrswoR::sample_int_crank(n,N,prob))
 # simulate and compare with sample
 # compare only distribution
-sourceCpp("src/recordSwap.cpp")
 n <- 100000
 N <- 1000
 b <- 1e4
@@ -238,14 +224,14 @@ prob <- sample(c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20)))
 out_mat <- replicate(b,{
   # cpp_samp <- randSample(1:n,N,prob,seed=sample(seed.base,1))
   R_samp <- sample(1:n,N,prob=prob)
-  wrswoR_samp <- sample_int_crank(n,N,prob)
+  wrswoR_samp <- wrswoR::sample_int_crank(n,N,prob)
   cbind(#cpp_samp,
     R_samp,wrswoR_samp)
 })
 out_cpp <- test_randSample(b,1:n,N,prob,seed=1)
 
 microbenchmark(cpp=test_randSample(1,1:n,N,prob,seed=1),
-               sample_int_crank(n,N,prob),R=sample(ID,N,prob=prob))
+               wrswoR::sample_int_crank(n,N,prob),R=sample(ID,N,prob=prob))
 
 out_data <- list()
 for(i in 1:b){
@@ -263,13 +249,11 @@ library(ggplot2)
 ggplot(out_data,aes(value))+
   geom_density(aes(color=method))
 
-
-sourceCpp("src/recordSwap.cpp")
 n <- 20
 ID <- 1:n
 prob <- c(1/rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20))
 N <- 5
-randSample(ID,N,prob)
+recordSwapping:::randSample_cpp(ID,N,prob)
 
 prob/rexp(n)
 
@@ -277,8 +261,7 @@ prob/rexp(n)
 #
 # test risk calculations
 #
-sourceCpp("src/recordSwap.cpp")
-dat <- create.dat(1000000)
+dat <- recordSwapping:::create.dat(1000000)
 hierarchy <- c("nuts1","nuts2","nuts3")
 risk <- c("ageGroup","geschl","hsize","national")
 
@@ -287,7 +270,7 @@ dat[,risk:=max(risk),by=hid]
 dat[,antirisk:=1-risk,by=hid]
 dat[antirisk==0,antirisk:=5e-10,by=hid] # small probability
 
-prob.risk <- setRisk(dat,0:2,4:7,3)
+prob.risk <- recordSwapping:::setRisk_cpp(dat,0:2,4:7,3)
 prob.risk <- as.data.table(prob.risk)
 
 
@@ -302,32 +285,24 @@ dat[,N:=.N,by=c(hierarchy,risk)]
 #
 # test record swapping
 #
-library(data.table)
-library(Rcpp)
-
-source("R/create_dat.R")
-
-sourceCpp("src/recordSwap.cpp")
 set.seed(123456)
-dat <- create.dat(50000)
+dat <- recordSwapping:::create.dat(50000)
 hierarchy <- c("nuts1","nuts2","nuts3")
 risk <- c("ageGroup","geschl","hsize","national")
 similar <- c("hsize")
 
-levels <- setLevels(dat,0:3,5:8,4,3)
+levels <- recordSwapping:::setLevels_cpp(dat,0:3,5:8,4,3)
 table(levels)
-prob <- setRisk(dat,0:3,5:8,4)
+prob <- recordSwapping:::setRisk_cpp(dat,0:3,5:8,4)
 dat[,levels:=levels]
 dat[levels==1,.N,by=nuts1]
 
-sourceCpp("src/recordSwap.cpp")
 a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 a
 length(dat[!duplicated(hid)&nuts1==1,which=TRUE]-1)
 length(sort(a))
 
 length(unlist(a))
-library(microbenchmark)
 microbenchmark(recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels))
 
 b <- recordSwap(dat,5,0:3,5:7,4,3,.1,prob,levels)
@@ -393,29 +368,22 @@ recordSwap(dat,4,0:2,4:7,3,3,.1,prob,levels)
 # make various benchmarks
 #
 
-library(data.table)
-library(Rcpp)
-library(microbenchmark)
-set.seed(1234)
-
-source("R/create_dat.R")
-sourceCpp("src/recordSwap.cpp")
 
 set.seed(123456)
-dat <- create.dat(9000000)
+dat <- recordSwapping:::create.dat(9000000)
 
-levels <- setLevels(dat,0:3,5:8,4,3)
+levels <- recordSwapping:::setLevels_cpp(dat,0:3,5:8,4,3)
 table(levels)
-prob <- setRisk(dat,0:3,5:8,4)
+prob <- recordSwapping:::setRisk_cpp(dat,0:3,5:8,4)
 
 t <- Sys.time()
 a <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
 Sys.time()-t
 
-sourceCpp("src/recordSwap_old.cpp")
-t <- Sys.time()
-b <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
-Sys.time()-t
+# sourceCpp("src/recordSwap_old.cpp")
+# t <- Sys.time()
+# b <- recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels)
+# Sys.time()-t
 
 dat_R <- copy(dat)
 dat_R[,level:=levels]
@@ -426,14 +394,14 @@ hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
 swap <- .1
 for(i in 1:length(hierarchy)){
   if(i==1){
-    dat.draw <- dat_R[,.(drawN=randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
+    dat.draw <- dat_R[,.(drawN=recordSwapping:::randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
   }else{
     # distribute N
     # take number of risky households into account??????!!!!!!!!
     dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
     dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
     dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
-    dat.draw[,drawN:=randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
+    dat.draw[,drawN:=recordSwapping:::randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
     dat.draw[,N:=NULL]
   }
 }
@@ -466,8 +434,8 @@ for(n in npop){
   th <- 3
   nhier <- length(hierarchy)
   
-  levels <- setLevels(dat,0:(nhier-1),5:8,4,th)
-  prob <- setRisk(dat,0:(nhier-1),5:8,4)
+  levels <- recordSwapping:::setLevels_cpp(dat,0:(nhier-1),5:8,4,th)
+  prob <- recordSwapping:::setRisk_cpp(dat,0:(nhier-1),5:8,4)
   
   # prep data for R function
   dat_R <- copy(dat)
@@ -485,7 +453,7 @@ for(n in npop){
       dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
       dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
       dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
-      dat.draw[,drawN:=randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
+      dat.draw[,drawN:=recordSwapping:::randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
       dat.draw[,N:=NULL]
     }
   }
@@ -531,10 +499,6 @@ p1 <- ggplot(bm_data,aes(npop,value))+
 plot(p1)
 
 
-library(Rcpp)
-library(microbenchmark)
-sourceCpp("src/recordSwap.cpp")
-
 vec1 <- 1:1000000
 
 test_stuff(vec1)
@@ -547,13 +511,12 @@ microbenchmark(vec1)
 #
 # test ordering
 #
-sourceCpp("diverses/recordSwap.cpp")
 
 test <- replicate(1000,{
-  dat <- create.dat()
+  dat <- recordSwapping:::create.dat()
   dat_orig <- copy(dat)
   dat <- dat[sample(1:.N)]
-  dat <- orderData(dat,4)
+  dat <- recordSwapping:::orderData_cpp(dat,4)
   dat <- as.data.table(dat)
   setnames(dat,colnames(dat),colnames(dat_orig))
   all.equal(dat,dat_orig)
