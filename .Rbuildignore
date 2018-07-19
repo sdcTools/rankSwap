@@ -1,0 +1,11 @@
+.travis.yml
+.git
+^.*\.Rproj$
+^\.Rproj\.user$
+^notes_and_testdata$
+docs
+src/recordSwap/*.o
+src/recordSwap/*.so
+src/recordSwap/compile.sh
+src/*.o
+src/*.so

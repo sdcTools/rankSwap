@@ -4,13 +4,14 @@
 #include <random>
 #include <queue>
 #include <array>
-
+#include <map>
+#include <unordered_set>
+#include <unordered_map>
 using namespace std;
 
 /*
 * Function to reorder data-set given one index vector 
 */
-// [[Rcpp::export]]
 std::vector< std::vector<int> > orderData(std::vector< std::vector<int> > &data, int orderIndex){
   
   // initialise ordering vector
@@ -43,7 +44,6 @@ std::vector< std::vector<int> > orderData(std::vector< std::vector<int> > &data,
 /*
 * Function to define levels 
 */
-// [[Rcpp::export]]
 std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th) {
   
   // data: data input
@@ -164,7 +164,6 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
 /*
 * Testfunction for performance
 */
-// [[Rcpp::export]]
 int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
   
   // initialise parameters
@@ -234,7 +233,6 @@ int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
 * Function to set sampling probability 
 * and reverse sampling probability (for donor sets)
 */
-// [[Rcpp::export]]
 std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid){
   
   // data: data input
@@ -340,7 +338,7 @@ std::unordered_set<int> randSample(std::unordered_set<int> &ID, int N, std::vect
   // get index of N largest elements in randVal
   // from https://stackoverflow.com/questions/14902876/indices-of-the-k-largest-elements-in-an-unsorted-length-n-array
   // use priority_queue
-  std::priority_queue<std::pair<double, int>> q;
+  std::priority_queue<std::pair<double, int> > q;
   std::unordered_set<int> sampleID;
   
   /*
@@ -379,10 +377,9 @@ std::unordered_set<int> randSample(std::unordered_set<int> &ID, int N, std::vect
 * test random sampling and seed
 * used to check of state of RNG changes successfully with function calls
 */
-// [[Rcpp::export]]
-std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, std::vector<double> prob,int seed){
+std::vector<std::vector<int> > test_randSample(int B,std::vector<int> ID, int N, std::vector<double> prob,int seed){
   
-  std::vector<std::vector<int>> output(B,std::vector<int>(N));
+  std::vector<std::vector<int> > output(B,std::vector<int>(N));
   // set random seed according to input parameter and
   // initialize random number generator with seed
   std::mt19937 mersenne_engine;
@@ -404,7 +401,6 @@ std::vector<std::vector<int>> test_randSample(int B,std::vector<int> ID, int N, 
   return output;
 }
 
-// [[Rcpp::export]]
 std::vector<int> test_stuff(std::vector<int> vec1){
   
   std::unordered_set<int> mymap(vec1.begin(),vec1.end());
@@ -426,8 +422,7 @@ std::vector<int> test_stuff(std::vector<int> vec1){
 /*
 * Function to perform record swapping
 */
-// [[Rcpp::export]]
-std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
+std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
                                          std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
                                          int seed = 123456){
   
@@ -492,8 +487,8 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
   
-  std::map<std::vector<int>,std::unordered_set<int>> group_hier; //
-  std::unordered_map<int,std::unordered_set<int>> group_levels; // map containing all IDs which must be swapped at a certain level (~key of map)
+  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
+  std::unordered_map<int,std::unordered_set<int> > group_levels; // map containing all IDs which must be swapped at a certain level (~key of map)
   std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
   std::vector<int> IDused(n,0); // 0-1 vector if 1 this index was already swapped and cant be swapped again
@@ -560,7 +555,7 @@ std::vector<std::vector<int>> recordSwap(std::vector< std::vector<int> > data, s
       }
     }
     
-    std::map<std::vector<int>,unordered_set<int>> group_hier_help;
+    std::map<std::vector<int>,unordered_set<int> > group_hier_help;
     hier_help.resize(h+1);
     
     /////////////////

@@ -1,0 +1,25 @@
+Package: recordSwapping
+Type: Package
+Title: Record Swapping
+Version: 0.1.0
+Date: 2018-07-19
+Authors@R: c(
+  person("Johannes", "Gussenbauer", email="Johannes.Gussenbauer@statistik.gv.at", role = c("aut", "cre")),
+  person("Bernhard", "Meindl", email = "Bernhard.Meindl@statistik.gv.at", role = c("aut")),
+  person("Alexander", "Kowarik", email="Alexander.Kowarik@statistik.gv.at", role = "aut"))
+Maintainer: Matthias Templ <matthias.templ@gmail.com>
+Description: Method developed by....
+LazyData: TRUE
+ByteCompile: TRUE
+LinkingTo: Rcpp
+Depends:
+    R (>= 3.4),data.table
+Suggests:
+    testthat,microbenchmark,wrswoR
+Imports:
+    Rcpp
+License: GPL-2
+URL: https://github.com/sdcTools/recordSwapping
+RoxygenNote: 6.0.1
+VignetteBuilder: knitr
+SystemRequirements: C++11
