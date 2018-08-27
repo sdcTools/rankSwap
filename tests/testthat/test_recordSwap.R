@@ -1,5 +1,6 @@
 library(wrswoR)
 library(microbenchmark)
+library(recordSwapping)
 ##########################################################
 # Test-File for record swapping
 # tests for all functions in recordSwap.h
@@ -418,13 +419,13 @@ microbenchmark(cpp=recordSwap(dat,5,0:3,5:8,4,3,.1,prob,levels),
 
 
 
-npop <- c(1,2^(1:7))*1e4
+npop <- c(1,2^(1:6))*1e4
 npop <- c(1000,npop)
 hier.types <- 2:4
 
 for(n in npop){
   for(h in hier.types){
-  dat <- create.dat(n)
+  dat <- recordSwapping:::create.dat(n)
   
   hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
   hierarchy <- hierarchy[1:h]
@@ -446,7 +447,7 @@ for(n in npop){
   
   for(i in 1:length(hierarchy)){
     if(i==1){
-      dat.draw <- dat_R[,.(drawN=randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
+      dat.draw <- dat_R[,.(drawN=recordSwapping:::randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
     }else{
       # distribute N
       # take number of risky households into account??????!!!!!!!!
@@ -460,8 +461,8 @@ for(n in npop){
   dat_R <- merge(dat_R,dat.draw,by=c(hierarchy,"hsize"))
   
   
-  mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap,prob,levels),
-                       R=recordSwapR(copy(dat_R),hierarchy))
+  mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap),
+                       R=recordSwapR(copy(dat_R),hierarchy),times=50)
   } 
 }
 
