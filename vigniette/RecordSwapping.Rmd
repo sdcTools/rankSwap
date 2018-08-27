@@ -1,0 +1,33 @@
+---
+title: "Targeted record swapping"
+author: "Statistic Austria"
+date: "27 8 2018"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Implementation
+
++ On [https://github.com/sdcTools/recordSwapping](https://github.com/sdcTools/recordSwapping)
++ C++ contained inside dummy-R-Package (src/recordSwap/)
++ R-Code was just used for testing
++ C++ Code does not depend on R installment or any R-Functions
++ C++ Code uses only stl container
+    
+    + no need (yet?) to use more specialized libraries
+
+## Differences to SAS Code
+
++ Functionality does differ from original SAS-Code
+
+    + also because the implementation is then more straightforward
+
+
+## Benchmark 
+
+
+
+
