@@ -18,7 +18,7 @@ set.seed(1234)
 
 npop <- c(1,2^(1:5))*1e4
 # npop <- c(1000,npop)
-npop <- c(1000,npop,500000,1e6,2e6)
+npop <- c(1000,npop,500000,1e6)
 hier.types <- 2:4
 
 mb_all <- list()
@@ -62,7 +62,7 @@ for(n in npop){
     
     mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap),
                          # R=recordSwapR(copy(dat_R),hierarchy),
-                         times=50)
+                         times=100)
     mb <- as.data.table(mb)
     mb[,npop:=n]
     mb[,hier.levels:=h]
