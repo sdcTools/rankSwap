@@ -492,6 +492,14 @@ p1 <- ggplot(bm_data,aes(npop,value))+
   facet_grid(hier.levels~.,scales = "free")
 plot(p1)
 
+load("R/benchmark.RData")
+bm_data <- mb_all[,.(value=mean(time/1e9)),by=list(hier.levels,expr,npop)]
+p1 <- ggplot(bm_data,aes(npop,value))+
+  geom_point(aes(color=factor(expr)))+ylab("seconds")+
+  facet_grid(hier.levels~.,scales="free")
+plot(p1)
+
+
 
 load("R/benchmark_cpp.RData")
 bm_data <- mb_all[,.(value=mean(time/1e9)),by=list(hier.levels,expr,npop)]

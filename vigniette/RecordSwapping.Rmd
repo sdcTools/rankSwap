@@ -1,86 +1,164 @@
 ---
-title: "Targeted record swapping"
-author: "Statistic Austria"
-date: "27 8 2018"
-output: beamer_presentation
+title: "Targeted Record Swapping"
+author: "Johannes Gussenbauer"
+date: "3 9 2018"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+library(data.table)
+library(recordSwapping)
+library(ggplot2)
 ```
 
-## Implementation
+## Overview
 
-+ On [https://github.com/sdcTools/recordSwapping](https://github.com/sdcTools/recordSwapping)
-+ C++ contained inside dummy-R-Package (src/recordSwap/)
-+ R-Code was just used for testing
-+ C++ Code does not depend on R installment or any R-Functions
-+ C++ Code uses only stl containers
+This is the vignette for the R-Package *recordSwapping* which can be used to apply the record swapping algorithm to a micro data set.
+The implementation of the procedure was done purely in C++ and is based on the SAS code on targeted record swapping from ONS (https://ec.europa.eu/eurostat/cros/content/2-record-swapping_en). 
+There are however substantial differences between the SAS- and C++-Code. Some of these differences are the result of improving the run-time for the C++ implementation. In the next section the differences between the 2 implementations are presented further.
+. The R-Package is just as a front end to easily call the procedures und for testing purposes.
+
+
+## Functionality
+The targeted record swapping can be applied with the function `recordSwap()`. All other functions in the package are called from inside `recordSwap()` and are only exportet for testing purposes. The function has the following arguments:
+
+```{rcpp,include=TRUE,eval=FALSE}
+recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
+               std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
+               int seed = 123456)
+```
+
++ **data** micro data containing ONLY integer values, rectangular table format.
++ **similar** column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations
++ **hierarchy** column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
++ **risk** column indices of variables in \code{data} which will be considered for estimating the risk.
++ **hid** column index in \code{data} which refers to the household identifier.
++ **th** integer defining the threshhold of high risk households (k-anonymity).
++ **swaprate** double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
++ **seed** integer defining the seed for the random number generator, for reproducability.
+
+
+### Some differences to SAS-Code
+
+#### Riskdefinition
+
++ **C++-Code**: Risk is calculated using counts over the geographic hierarchies (`hierarchy`) and the combination of all risk variables.
++ **SAS-Code**: Risk is calculated using counts for each geographic hierarchy (`hierarchy`) and risk variable seperately. These risks are then combined to produce a single risk value for each record.
+
+#### Sampling probability
+
++ **C++-Code**: Sampling probability is directly derived from the counts over the risk and geographic variables, by 
+$$
+p_i=\frac{1}{counts_i}
+$$
+where $counts_i$ is the number of counts for record $i$. The probability,$p^d_i$ for sampling donor records for the procedure is defined by
+
+$$
+p^d_i = max(1-p_i,5^{-10})
+$$
+
++ **SAS-Code**: Sampling probability is derived from the multiple factors.
     
-    + no need (yet?) to use more specialized libraries
+$$
+p_i = \begin{cases}
+0.999 \quad \text{for low risk household} \\
+\frac{b\cdot N_{high}}{SA\cdot c-b\cdot c} \quad \text{for }b>0 \\
+\frac{0.2\cdot N_{high}}{SA\cdot c-0.2\cdot c} \quad \text{for }b=0 \\
+\frac{0.1\cdot N_{high}}{SA\cdot c-0.1\cdot c} \quad \text{for }b<0
+\end{cases}
+$$
+where 
+$$
+b = SA - N_{high}\\
+c = N_{netto} - N_{high}
+$$
+with $SA$ as the sample size, $N_{high}$ as the number of high risk households in the geographic area and $N_{netto}$ the number of non-imputed records in the geographic area.
 
 
-## Parameter
+#### Swapping Records
 
-+ Rectangular Data Set
-+ Variables which define *similar* households, like household size ect...
++ **C++-Code**: Swaps are made in every hierarchy level and records wich do not fullfill the k-anonymity are swapped. The donor set of records to be swapped with is always made out of every record wich do not belong to the same geographic area as the swapped households. At the lowest hierarchy level an additional number of households is swapped such that the proportion of households swapped is equal the number in `swaprate`. If the proportion of already swapped households succeeds this values then only records wich do not fullfill the k-anonymity are swapped.
 
-    + Used so that only *similar* households are swapped with each other
-    
-+ Risk-Variables to calculate Risk (now only 1/counts)
-+ Households ID
-+ Minimum number of counts for non-high risk households
-+ Swaprate value between 0 and 1
-+ Seed for random number generator
++ **SAS-Code** Swaps are made in every hierarchy level and depending on the sampling probability high risk households are more likely to be swapped than low risk households, but they are not mandatorilly swapped. The number of swappes in each hierachy level is defined by the number of high risk records and total number records in the geographic area.
+For instance having the geographic hierarchy county > municipality > district, the number of Swaps in the municipality $m$ of county $n$ is defined by
+
+$$
+SWAP_m = \frac{SIZE_m+RISK_m}{2}
+$$
+where $SIZE_m$ can be derived by using the reciprocal number of households of each municipality in county $n$.
+
+$$
+SIZE_m = \frac{N_m^{-1}}{\sum_iN_i^{-1}}\cdot s_mN_n
+$$
+with $N_m$ as the number of households in municipality $m$, $s$ the global swaprate and $N_n$ as the number of households in county $n$.
+$RISK_m$ can be derived using the proportion of of high risk households in each municipality
+
+$$
+RISK_m = \frac{H_m}{\sum_iH_i}\cdot s_mN_n
+$$
+
+with $H_m$ as the proportion of high risk households in municipality $m$.
+
+## Application
+
+The package was tested on randomly generated data, which contained 4 geographic levels and some other soziodemographic variables.
+```{r}
+dat <- recordSwapping:::create.dat(N=500000)
+dat
+```
+
+Applying the record swapping to dat could look like this
+
+```{r}
+th <- 3
+swaprate <- .05
+dat_swapped <- as.data.table(recordSwap(dat,5,0:3,5:8,4,th,swaprate))
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+dat_swapped
+```
+
+Here the procedure was applied to `dat`
+
++ using every hierarchy level, `nuts1` to `nuts4` 
++ using `hsize` as the similarity variable (so only households with the same households size are swapped)
++ using `hsize`, `ageGroup`, `geschl` and `national` as risk variables
++ setting the k-anonymity rule to 3
++ setting the swaprate to 0.05
+
+Please note, that in C++ indexing starts with 0 but in R it starts with 1. Therefore the position of columns in `dat` are specified by `5`,`0:3`,ect...
 
 
-## Parameter
+## Benchmarking
 
-+ Describtion of C++ Code:
+The function applied on randomly generated household data with $n=10^3,10^4,2\cdot 10^4,8\cdot 10^4,1.6\cdot 10^5,3.2\cdot 10^5,5\cdot 10^5,10^6$ households.
+The parameter `swaprate` was set to 0.05 and the paramter `th` was set 3. In addition the targeted record swapping was applied using 2, 3 and 4 hierarchy levels.
+Using all 4 hierarchy levels results in over 18000 distinct geographic areas.
+Figure 1 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 4 hierarchy levels the runtime is at roughly 32 Seconds. 
 
-    1. Define risk for each household and over which geographic hierarchy the household needs to be swapped
-    2. Start at highest hierarchy and swapp all households with high risk at the highest hierarchy
-        
-        + Randomly draw donor set of households which does not belong to the current geography
-        
-    3. At the lowest hierarchy level determine number of households which need to be swapped (according to swaprate)
-    4. If already more households with high risk have been swapped here do not additionally swap mroe households
-    5. Otherwise swap more households so that at least swaprate*Populationsize households have been swapped
+```{r benchmark,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center"}
+npop <- c(1,2^(1:5))*1e4
+npop <- c(1000,npop,500000,1e6)
+hier <- 2:4
+mb_all <- list()
+for(i in npop){
+  for(j in hier){
+    load(paste0("../R/benchmark_",i,"_",j,".RData"))
+    mb_all <- c(mb_all,list(mb))
+  }
+}
+mb_all <- rbindlist(mb_all)
 
-## Differences to SAS Code
-
-+ Functionality does differ from original SAS-Code
-
-    + also because the implementation is more straightforward then 
-
-+ Define Risk
-
-    + SAS-Code: per risk variable and geographic variable
-    + C++-Code: combination of all risk variables per geographic variable
-
-## Differences to SAS Code (2)
-
-+ Swap Records
-
-    + SAS-Code: Swaps occur in every gegraphic hierarchy; swap and donor households are sampled in each hierarchy level
-    + C++-Code: Swaps occur mainly in lowest hierachy; high risk households are always swapped; in lowest hierachy if any, the remaining number of households is swapped
-
-+ Donor households
-
-    + SAS-Code: Households with high risks are preferred in donor set
-    + C++-Code: Households with low risks are preferred in donor set
+mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
+mb_all[,Hierarchy.Levels:=factor(hier.levels)]
+p1 <- ggplot(mb_all,aes(npop,value))+
+  geom_point(aes(color=Hierarchy.Levels))+
+  geom_line(aes(color=Hierarchy.Levels),alpha=0.4)+
+  ylab("seconds")+
+  xlab("Number of Households")
+plot(p1)
+```
 
 
-## Differences to SAS Code (3)
 
-+ Number of Swaps
-
-    + SAS-Code: Number of swaps is distributed among lower level geo-hierarchies taking into account number of high risk households
-    + C++-Code: Number of swaps proportional to population size according to swaprate
-
-+ Probability
-
-    + SAS-Code: determined using number of high risk households, sampling size and non imputed households
-    + C++-Code: only inverse number of counts
 
 
