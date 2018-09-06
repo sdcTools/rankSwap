@@ -2,18 +2,23 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @title Targeted Record Swapping
-#' Applies targeted record swapping on micro data considering the identification risk of each record as well the geographic topology.
+#' 
+#' @description Applies targeted record swapping on micro data considering the identification risk of each record as well the geographic topology.
 #'  
-#' @details The procedure accepts a rectanglar data set containing all necessary information for the record swapping, e.g parameter \code{hid}, \code{similar}, \code{hierarchy}, ect...
+#' @details The procedure accepts a rectanglar data set containing all necessary information for the record swapping, e.g parameter \code{hid}, \code{similar}, \code{hierarchy}, ect... \cr 
 #' First the micro data in \code{data} is ordered by \code{hid} and the identification risk is calculated for each record. As of right now only counts is used as 
-#' identification risk and the inverse of counts is used as sampling probability.
+#' identification risk and the inverse of counts is used as sampling probability. \cr
+#' \cr 
 #' In addition each record gets an index corresponding to the hierarchy level over which the household must be swapped. For instance having a geographic hierarchy
 #' of county > municipality > district the risk is calculated for each geographic variable and defined risk variables. If a record falls below \code{th} for hierachy county then this record
-#' needs to be swapped accross counties.
+#' needs to be swapped accross counties. \cr
+#' \cr 
 #' After that the targeted record swapping is applied starting from the highest to the lowest hierarchy level and cycling through all possible geographic areas at each hierarchy level, e.g every county, every municipality in ever county, ect...
-#' At each geographic area a set of values is created for records to be swapped. In all but the lowest hierarchy level this is made out of all records which do not fullfill the k-anonymity and have not already been swapped.
+#' At each geographic area a set of values is created for records to be swapped.\cr
+#' In all but the lowest hierarchy level this is made out of all records which do not fullfill the k-anonymity and have not already been swapped.
 #' Those records are swapped with records not belonging to the same geographic area, which have not already been swapped before hand. Swapping referes to the interchange of geographic variables defined in \code{hierarchy}.
-#' When a record is swapped all other record containing the same \code{hid} are swapped as well.
+#' When a record is swapped all other record containing the same \code{hid} are swapped as well. \cr
+#' \cr 
 #' At the lowest hierarchy level in every geographic area the set of records to be swapped is made up of all records which do not fullfill the k-anonymity as well as the remaining numer of records such
 #' that the proportion of swapped records of the geographic area is equal to \code{swaprate}. If, due to the k-anonymity condition, more records have already been swapped in this geographic area then only the 
 #' records which do not fullfill the k-anonymity are swapped.
@@ -33,9 +38,9 @@ recordSwap_cpp <- function(data, similar, hierarchy, risk, hid, th, swaprate, se
 }
 
 #' @title Define Swap-Levels
-#' Define hierarchy levels over which record needs to be swapped according to risk variables.
 #' 
-#' @details 
+#' @description Define hierarchy levels over which record needs to be swapped according to risk variables.
+#' 
 #' 
 #' @param data micro data set containing only numeric values.
 #' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
@@ -49,7 +54,8 @@ setLevels_cpp <- function(data, hierarchy, risk, hid, th) {
 }
 
 #' @title Reorder data
-#' Reorders the data according to a column in the data set. This procedure is used inside \code{\link{recordSwap_cpp}} to speed up performance.
+#' 
+#' @description Reorders the data according to a column in the data set. This procedure is used inside \code{\link{recordSwap_cpp}} to speed up performance.
 #' 
 #' @param data micro data set containing only numeric values.
 #' @param orderIndex column index in \code{data} refering to the column by which data should be ordered.
@@ -64,7 +70,8 @@ test_randSample_cpp <- function(B, ID, N, prob, seed) {
 }
 
 #' @title Calculate Risk
-#' Calculate risk and sampling probabilities for records to be swapped and donor records. Sampling probabilities are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
+#' 
+#' @description Calculate risk and sampling probabilities for records to be swapped and donor records. Sampling probabilities are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
 #' The sampling probabilities for the donor records are defined by \eqn{\max{1-1/counts,5e-10}}.
 #' 
 #' @param data micro data set containing only numeric values.

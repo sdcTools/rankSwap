@@ -8,10 +8,8 @@
 #' @param dat 
 #' @param hierarchy 
 #'
-#' @return
 #' @export
-#'
-#' @examples
+
 recordSwapR <- function(dat,hierarchy){
   
   dat[,SELECTED:=0]

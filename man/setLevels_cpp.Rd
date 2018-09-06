@@ -2,8 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{setLevels_cpp}
 \alias{setLevels_cpp}
-\title{Define Swap-Levels
-Define hierarchy levels over which record needs to be swapped according to risk variables.}
+\title{Define Swap-Levels}
 \usage{
 setLevels_cpp(data, hierarchy, risk, hid, th)
 }
@@ -21,6 +20,6 @@ setLevels_cpp(data, hierarchy, risk, hid, th)
 \value{
 Integer vector with hierarchy level over which record needs to be swapped with.
 }
-\details{
-
+\description{
+Define hierarchy levels over which record needs to be swapped according to risk variables.
 }

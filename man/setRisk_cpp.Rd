@@ -2,9 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{setRisk_cpp}
 \alias{setRisk_cpp}
-\title{Calculate Risk
-Calculate risk and sampling probabilities for records to be swapped and donor records. Sampling probabilities are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
-The sampling probabilities for the donor records are defined by \eqn{\max{1-1/counts,5e-10}}.}
+\title{Calculate Risk}
 \usage{
 setRisk_cpp(data, hierarchy, risk, hid)
 }
@@ -16,4 +14,8 @@ setRisk_cpp(data, hierarchy, risk, hid)
 \item{risk}{column indices of variables in \code{data} which will be considered for estimating the risk.}
 
 \item{hid}{column index in \code{data} which refers to the household identifier.}
+}
+\description{
+Calculate risk and sampling probabilities for records to be swapped and donor records. Sampling probabilities are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
+The sampling probabilities for the donor records are defined by \eqn{\max{1-1/counts,5e-10}}.
 }

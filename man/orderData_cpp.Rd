@@ -2,8 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{orderData_cpp}
 \alias{orderData_cpp}
-\title{Reorder data
-Reorders the data according to a column in the data set. This procedure is used inside \code{\link{recordSwap_cpp}} to speed up performance.}
+\title{Reorder data}
 \usage{
 orderData_cpp(data, orderIndex)
 }
@@ -14,4 +13,7 @@ orderData_cpp(data, orderIndex)
 }
 \value{
 ordered data set.
+}
+\description{
+Reorders the data according to a column in the data set. This procedure is used inside \code{\link{recordSwap_cpp}} to speed up performance.
 }
