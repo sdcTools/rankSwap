@@ -21,11 +21,11 @@ create.dat <- function(N=10000){
   nuts3 <- rep(nuts3,times=hsize)
   nuts4 <- rep(nuts4,times=hsize)
   hsize <- rep(hsize,times=hsize)
-  geschl <- sample(c(1,2),length(hsize),replace=TRUE)
+  gender <- sample(c(1,2),length(hsize),replace=TRUE)
   ageGroup <- sample(1:7,length(hsize),replace=TRUE)
   national <- sample(1:5,length(hsize),replace=TRUE)
   
-  dat <- data.table(nuts1,nuts2,nuts3,nuts4,hid,hsize,ageGroup,geschl,national)
+  dat <- data.table(nuts1,nuts2,nuts3,nuts4,hid,hsize,ageGroup,gender,national)
   return(dat)
 }
 

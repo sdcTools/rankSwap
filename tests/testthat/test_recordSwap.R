@@ -148,9 +148,26 @@ for(i in 1:b){
 table(all_swapped)
 table(all_hid)
 
+library(recordSwapping)
 
+swap_cpp <- recordSwap(dat,5,0:3,5:8,4,0,.1)
 
-swap_cpp <- recordSwap(dat,5,0:3,5:8,4,3,.1)
+dat <- recordSwapping:::create.dat(N=500000)
+levels <- recordSwapping:::setLevels_cpp(dat,0:2,5:7,4,3)
+table(levels)
+th <- 3
+swaprate <- .05
+dat_swapped <- as.data.table(recordSwap(dat,5,0:2,5:7,4,th,swaprate))
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+dat_swapped
+
+dat_comp <- unique(dat[,.(paste(geo=nuts1,nuts2,nuts3,nuts4,sep="_"),hid=hid)])
+dat_comp_swapped <- unique(dat_swapped[,.(paste(geo=nuts1,nuts2,nuts3,nuts4,sep="_"),hid=hid)])
+dat_comp
+
+dat_comp_merge <- merge(dat_comp,dat_comp_swapped,by="hid")
+dat_comp_merge[V1.x!=V1.y]
+
 
 set.seed(1234)
 

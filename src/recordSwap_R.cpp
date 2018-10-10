@@ -26,7 +26,7 @@ using namespace Rcpp;
 //' When a record is swapped all other record containing the same \code{hid} are swapped as well. \cr
 //' \cr 
 //' At the lowest hierarchy level in every geographic area the set of records to be swapped is made up of all records which do not fullfill the k-anonymity as well as the remaining numer of records such
-//' that the proportion of swapped records of the geographic area is equal to \code{swaprate}. If, due to the k-anonymity condition, more records have already been swapped in this geographic area then only the 
+//' that the proportion of swapped records of the geographic area is equal to \code{swaprate}. k-anonymity is implemented in the sense that a household will be swapped if \code{counts<=th}. If, due to the k-anonymity condition, more records have already been swapped in this geographic area then only the 
 //' records which do not fullfill the k-anonymity are swapped.
 //' 
 //' @param data micro data set containing only integer values.
@@ -40,10 +40,11 @@ using namespace Rcpp;
 //' 
 //' @return Returns data set with swapped records.
 // [[Rcpp::export]]
-std::vector<std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar,
+std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar,
                                           std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
                                           int seed = 123456){
-  std::vector<std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
+  //std::vector<std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
+  std::vector< std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
   return output;
 }
 

@@ -33,9 +33,12 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
 + **hierarchy** column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
 + **risk** column indices of variables in \code{data} which will be considered for estimating the risk.
 + **hid** column index in \code{data} which refers to the household identifier.
-+ **th** integer defining the threshhold of high risk households (k-anonymity).
++ **th** integer defining the threshhold of high risk households (k-anonymity). Right now this is implemented as `th <= counts`.
 + **swaprate** double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
 + **seed** integer defining the seed for the random number generator, for reproducability.
+
+**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses the first column and `data[0][0]` the first entry in the first column.
+
 
 
 ### Some differences to SAS-Code
@@ -98,13 +101,13 @@ $$
 where $SIZE_m$ can be derived by using the reciprocal number of households of each municipality in county $n$.
 
 $$
-SIZE_m = \frac{N_m^{-1}}{\sum_iN_i^{-1}}\cdot s_mN_n
+SIZE_m = \frac{N_m^{-1}}{\sum_iN_i^{-1}}\cdot sN_n
 $$
 with $N_m$ as the number of households in municipality $m$, $s$ the global swaprate and $N_n$ as the number of households in county $n$.
 $RISK_m$ can be derived using the proportion of of high risk households in each municipality
 
 $$
-RISK_m = \frac{H_m}{\sum_iH_i}\cdot s_mN_n
+RISK_m = \frac{H_m}{\sum_iH_i}\cdot sN_n
 $$
 
 with $H_m$ as the proportion of high risk households in municipality $m$.
@@ -122,21 +125,47 @@ Applying the record swapping to dat could look like this
 ```{r}
 th <- 3
 swaprate <- .05
-dat_swapped <- as.data.table(recordSwap(dat,5,0:3,5:8,4,th,swaprate))
+dat_swapped <- as.data.table(recordSwap(dat,5,0:2,5:7,4,th,swaprate))
 setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
 dat_swapped
 ```
 
 Here the procedure was applied to `dat`
 
-+ using every hierarchy level, `nuts1` to `nuts4` 
++ using every hierarchy level, `nuts1` to `nuts3` 
 + using `hsize` as the similarity variable (so only households with the same households size are swapped)
-+ using `hsize`, `ageGroup`, `geschl` and `national` as risk variables
++ using `hsize`, `ageGroup`, `gender` as risk variables
 + setting the k-anonymity rule to 3
 + setting the swaprate to 0.05
 
 Please note, that in C++ indexing starts with 0 but in R it starts with 1. Therefore the position of columns in `dat` are specified by `5`,`0:3`,ect...
 
+If `th <- 0` only the swaprate is considered. Then at most `th*100`% of the households are swapped. If the sample is very small the actual number of swaps can be smaller, however this can only happen if some regions have a very small number of households e.g. 1,2,3,...
+
+```{r}
+th <- 0
+swaprate <- .05
+dat_swapped <- as.data.table(recordSwap(dat,5,0:2,5:7,4,th,swaprate))
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+dat_swapped
+```
+
+Comparing number of swapped households
+
+```{r}
+dat_comp <- unique(dat[,.(paste(geo=nuts1,nuts2,nuts3,nuts4,sep="_"),hid=hid)])
+dat_comp_swapped <- unique(dat_swapped[,.(paste(geo=nuts1,nuts2,nuts3,nuts4,sep="_"),hid=hid)])
+dat_comp
+
+dat_comp_merge <- merge(dat_comp,dat_comp_swapped,by="hid")
+
+# number of swapped households
+nrow(dat_comp_merge[V1.x!=V1.y])
+```
+```{r}
+# swaprate times number of households in data
+swaprate*nrow(dat[!duplicated(hid)])
+```
 
 ## Benchmarking
 

@@ -341,34 +341,24 @@ std::unordered_set<int> randSample(std::unordered_set<int> &ID, int N, std::vect
   std::priority_queue<std::pair<double, int> > q;
   std::unordered_set<int> sampleID;
   
-  /*
-  for(int i=0;i<ID.size();i++){
-  if(IDused[ID[i]]==0){
-  if(mustSwap.find(ID[i])!=mustSwap.end()){
-  sampleID.insert(ID[i]);
-  }else if(mustSkip.find(ID[i])==mustSkip.end()){
-  //q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
-  
-  }
-  }
-  }
-  */
   for(auto s : ID){
     if(IDused[s]==0){
       if(mustSwap.find(s)!=mustSwap.end()){
         sampleID.insert(s);
-      }else{
+      }else if(N>0){
         q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
       }
     }
   }
   
-  // build output vector 
-  N = max(0,min<int>(q.size(),N-sampleID.size()));
-  // select index of top elements from priority_queue
-  for(int i=0;i<N;i++){
-    sampleID.insert(q.top().second); //.top() access top element in queue
-    q.pop(); // remove top element in queue
+  // build output vector
+  if(N>0){
+    N = max(0,min<int>(q.size(),N-sampleID.size()));
+    // select index of top elements from priority_queue
+    for(int i=0;i<N;i++){
+      sampleID.insert(q.top().second); //.top() access top element in queue
+      q.pop(); // remove top element in queue
+    }
   }
   return sampleID;
 }
@@ -422,7 +412,7 @@ std::vector<int> test_stuff(std::vector<int> vec1){
 /*
 * Function to perform record swapping
 */
-std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
+std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
                                          std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
                                          int seed = 123456){
   
@@ -447,12 +437,15 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
   // initialise lambda para for exp distribution
   std::exponential_distribution<double> exp_dist(1.0);
   
+  // initialize random number generator rounding up and down in the procedure
+  std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
+  
   std::vector<int> levels(n);
   std::vector< std::vector<double> > prob(2, vector<double>(n));
   
   ////////////////////////////////////////////////////
   // order data by hid 
-  // orderData(data,hid);
+  orderData(data,hid);
   ////////////////////////////////////////////////////
   
   ////////////////////////////////////////////////////
@@ -493,8 +486,11 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
   std::vector<int> IDused(n,0); // 0-1 vector if 1 this index was already swapped and cant be swapped again
   std::unordered_set<int> IDdonor_all; // set for all IDs for quick lookup
-  std::map<double,int> samp_order, samp_order_donor;
+  std::map<double,int> samp_order_donor;
   int z=0; // counter used for while() ect...
+  int nhid = 0;
+  
+  /////////////////////////////
   // create map containing subgroups according to hierarchy
   // and IDs of each subgroup
   // use hhsize for this to speed things up
@@ -520,25 +516,75 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
     // create map for random numbers (ordered)
     // makes sampling in each iteration obsolete
     // look up in these maps instead
-    // samp_order[prob[0][z]/exp_dist(mersenne_engine)] = z;
     samp_order_donor[prob[1][z]/exp_dist(mersenne_engine)] = z;
     
+    // count number of households
+    nhid++;
     // skip all other household member, only need first one
     z += map_hsize[data[hid][z]];
     
   }
+  /////////////////////////////
   
-  // get number of households at lowest level hierarchy
+  /////////////////////////////
+  // get number of households to be swapped at the lowest level hierarchy
   // this is only used at lowest hierarchy level
-  std::map<std::vector<int>,int> n_group;
-  for(auto const&x : group_hier){
-    n_group[x.first]=x.second.size();
+  // get total number of swaps according to swaprate
+  // swaprate/2 ensures that in the end this percentage of households is swapped
+  // so 1 swap is counted double since with each swap 2 households are swapped
+  int total_swaps = 0; 
+  if(runif01(mersenne_engine)==0){
+    total_swaps = ceil(nhid*(swaprate/2));
+  }else{
+    total_swaps = floor(nhid*(swaprate/2));
   }
-  
+
+  // distribute them among smallest hierarchy level
+  std::map<std::vector<int>,int> draw_group;
+  std::map<std::vector<int>,int> n_group;
+  double draw_excess_help = 0;
+  double x_excess = 0;
+  for(auto const&x : group_hier){
+    n_group[x.first] = x.second.size(); // this is needed later on
+    
+    x_excess = (double)x.second.size()/(double)nhid*(double)total_swaps;
+
+    draw_group[x.first]=floor(x_excess);
+    
+    x_excess = x_excess-floor(x_excess);
+    draw_excess_help = draw_excess_help + x_excess;
+  }
+  int draw_excess = std::round(draw_excess_help);
+  // randomly shuffeld index vector
+  // this is similar to randomly round up and down in each group so on average swaprate will be reached
+  std::vector<int> add_extra(group_hier.size());
+  std::iota(add_extra.begin(),add_extra.end(),0);
+  std::shuffle(add_extra.begin(),add_extra.end(),mersenne_engine);
+  std::sort(add_extra.begin(),add_extra.begin()+draw_excess); // sort first draw_excess elemets in vector
+
+  // pick first draw_excess values at add one to them
+  z = 0;
+  int v = 0;
+  // certain groups will get one more draw
+  for(auto const&x : draw_group){
+    if(add_extra[v]==z){
+      draw_group[x.first]++;
+      v++;
+    }
+    if(v>(draw_excess-1)){
+      break;
+    }
+    z++;
+  }
+
+  /////////////////////////////
+  int check_donor = 0;
+  int check_sample =0;
+
+  /////////////////////////////
   // Procedure for swapping starts here:
   // loop over hierarchies 
   // start at highest hierarchy
-  
   for(int h=0;h<nhier;h++){
     // int h=3;
     // values of map element that must be swapped at current stage
@@ -580,10 +626,8 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
     
     /////////////////
     int sampSize=0;
-    int k=1;
     int countUsed=0;
     int countRest=0;
-    
     /////////////////
     // loop over levels of hierarchy
     for(auto const&x : group_hier_help){
@@ -593,7 +637,9 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
       // in this hierarchy stage
       std::unordered_set<int> IDswap;
       
+      
       if(h<(nhier-1)){
+        // in all but the last hierarchy level do the follwing: 
         if(mustSwap.size()){
           // loop over values in x.second
           for(auto s : x.second){
@@ -604,6 +650,7 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
           }
         }
       }else{
+        // in the last hierarchy level do the following:
         // if at lowest level get number of households that need to be swapped
         // according to swap and check if this number was already reached
         // by previous swappings
@@ -613,15 +660,16 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
         // not enough households have been swapped
         // when checking at lowest level
         // Number of IDs that need to be swapped - already swapped IDs - IDs that have to be swapped at lowest level:
-        countRest = ceil(n_group[x.first]*swaprate) - countUsed;
-        if(countRest>0){
-          
-          std::unordered_set<int> IDswap_draw = x.second;
-          // apply sampling here -> should still be quick because IDswap_draw will not be extremely large
-          IDswap = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap);
-        }
+        countRest = draw_group[x.first] - countUsed;
+        countRest = std::max(0,countRest);
+        
+        std::unordered_set<int> IDswap_draw = x.second;
+        
+        // apply sampling here -> should still be quick because IDswap_draw will not be extremely large
+        // in randSample households that must be swapped are automatically choosen
+        IDswap = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap);
       }
-      
+
       // if any IDs need to be swapped:
       if(IDswap.size()>0){
         
@@ -629,6 +677,7 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
         sampSize = IDswap.size();
         std::unordered_set<int> sampledID;
         z =0;
+        
         for(auto s : samp_order_donor){
           if(IDused[s.second]==0 && x.second.find(s.second)==x.second.end()){
             sampledID.insert(s.second);
@@ -652,13 +701,10 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
         }
         
       }
-      // increment k by one
-      // only for testing
-      ++k;
       /////////////////
     }
   }
-  
+
   ////////////////////////////////////////////////////
   // Create output using swappedIndex
   
@@ -687,21 +733,6 @@ std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, 
   }
   
   return data;
-  
-  /*
-  // construct dummy output
-  std::vector<std::vector<int>> out(2,std::vector<int>(swappedIndex.size()));
-  z=0;
-  for(auto const&x : swappedIndex){
-    out[0][z] = x.first;
-    out[1][z] = x.second;
-    z++;
-  }
-  
-  ////////////////////////////////////////////////////
-  // Define output
-  return out;
-  */
   
 }
 

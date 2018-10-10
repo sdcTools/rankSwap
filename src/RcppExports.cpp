@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // recordSwap_cpp
-std::vector<std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, int seed);
+std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, int seed);
 RcppExport SEXP _recordSwapping_recordSwap_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

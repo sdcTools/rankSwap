@@ -13,7 +13,7 @@
 #' \cr 
 #' After that the targeted record swapping is applied starting from the highest to the lowest hierarchy level and cycling through all possible geographic areas at each hierarchy level, e.g every county, every municipality in ever county, ect...
 #' At each geographic area a set of values is created for records to be swapped.\cr
-#' In all but the lowest hierarchy level this is made out of all records which do not fullfill the k-anonymity and have not already been swapped.
+#' In all but the lowest hierarchy level this is made out of all records which do not fullfill the k-anonymity and have not already been swapped. k-anonymity is implemented in the sense that a household will be swapped if \code{counts<=th}.
 #' Those records are swapped with records not belonging to the same geographic area, which have not already been swapped before hand. Swapping referes to the interchange of geographic variables defined in \code{hierarchy}.
 #' When a record is swapped all other record containing the same \code{hid} are swapped as well. \cr
 #' \cr 
