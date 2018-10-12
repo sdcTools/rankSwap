@@ -412,8 +412,9 @@ std::vector<int> test_stuff(std::vector<int> vec1){
 /*
 * Function to perform record swapping
 */
-std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
-                                         std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
+std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar,
+                                         std::vector<int> hierarchy, std::vector<int> risk_variables, int hid, int k_anonymity, double swaprate,
+                                         double risk_threshold, std::vector<std::vector<double>> risk,
                                          int seed = 123456){
   
   // data: data input
@@ -426,10 +427,18 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // swaprate: double defining the ratio of households to be swapped
   // seed: integer seed for random number generator
   
+  for(int i=0;i<similar.size();i++){
+    cout<<"profile "<<i<<endl;
+    for(int j=0;j<similar[i].size;j++){
+      cout<<simlar[i][j]<<endl;
+    }
+  }
   
+  return similar;
   // initialise parameters
   int n = data[0].size();
   int nhier = hierarchy.size();
+  std::vector IDnotUsed;
   // needed for running random number generator and
   // set random seed according to input parameter
   std::mt19937 mersenne_engine;
@@ -678,15 +687,53 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         std::unordered_set<int> sampledID;
         z =0;
         
-        for(auto s : samp_order_donor){
-          if(IDused[s.second]==0 && x.second.find(s.second)==x.second.end()){
-            sampledID.insert(s.second);
-            z++;
-            if(z==sampSize){
-              break;
+        // select donor based on similarity constrains
+        // iterate over both unordered sets
+        z =0;
+        bool similar_true=true; 
+        std::vector used_IDswap(IDswap.size);
+        int index_IDswap=0;
+        for(auto s_samp : IDswap){
+          // find donor for s_samp.second
+          // iterate over similarity profiles and
+          // iterate over unordered donor set
+          for(int profile=0;profile<similar.size();profile++){
+            for(auto s_donor : samp_order_donor){
+              // if was not used and it is not in the same hierarchy ~ x.second.find(s.second)==x.second.end()
+              // it is a possible donor
+              if(IDused[s_donor.second]==0 && x.second.find(s_donor.second)==x.second.end()){
+                // s_samp.second is similar to s_donor.second
+                // by using similarity indices of the profile
+                for(int sim=0;sim<similar[0].size;sim++){
+                  if(data[similar[profile][sim]][x.second]!=data[similar[profile][sim]][s.second]){
+                    // similarity variables do not match
+                    // set similar_true=false and break loop
+                    similar_true=false;
+                    break;
+                  }
+                }
+                if(similar_true){
+                  sampledID.insert(s.second);
+                  used_IDswap[index_IDswap] = 1;
+                  IDused[s_donor.second] = 1;
+                  z++;
+                  if(z==sampSize){
+                    goto endloop;
+                  }
+                }
+              }
             }
           }
+          
+          // build string if no donor was present for specific user
+          if(used_IDswap[index_IDswap]==0){
+            IDnotUsed.insert(data[hid][s_samp.second]);
+          }
+          index_IDswap++;
         }
+        endloop:
+
+        
         // std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2);
         // std::unordered_set<int> sampledID = IDswap;
         // sampSize = sampledID.size();
