@@ -34,5 +34,10 @@
 #' 
 #' @export recordSwap
 recordSwap <- function(data, similar, hierarchy, risk, hid, th, swaprate, seed = 123456L){
-  recordSwap_cpp(data, similar, hierarchy, risk, hid, th, swaprate, seed)
+
+  # default values since those parameters are not used yet
+  risk_threshold <- 0
+  risk <- data.frame(rnorm(10))
+  
+  recordSwap_cpp(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, riks, seed)
 }

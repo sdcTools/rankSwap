@@ -6,20 +6,22 @@
 using namespace Rcpp;
 
 // recordSwap_cpp
-std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, int seed);
-RcppExport SEXP _recordSwapping_recordSwap_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
+std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid, int k_anonymity, double swaprate, double risk_threshold, std::vector<std::vector<double>> risk, int seed);
+RcppExport SEXP _recordSwapping_recordSwap_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hierarchySEXP, SEXP risk_variablesSEXP, SEXP hidSEXP, SEXP k_anonymitySEXP, SEXP swaprateSEXP, SEXP risk_thresholdSEXP, SEXP riskSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type similar(similarSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<int>> >::type similar(similarSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type risk(riskSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type risk_variables(risk_variablesSEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
-    Rcpp::traits::input_parameter< int >::type th(thSEXP);
+    Rcpp::traits::input_parameter< int >::type k_anonymity(k_anonymitySEXP);
     Rcpp::traits::input_parameter< double >::type swaprate(swaprateSEXP);
+    Rcpp::traits::input_parameter< double >::type risk_threshold(risk_thresholdSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<double>> >::type risk(riskSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(recordSwap_cpp(data, similar, hierarchy, risk, hid, th, swaprate, seed));
+    rcpp_result_gen = Rcpp::wrap(recordSwap_cpp(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -81,7 +83,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 8},
+    {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 10},
     {"_recordSwapping_setLevels_cpp", (DL_FUNC) &_recordSwapping_setLevels_cpp, 5},
     {"_recordSwapping_orderData_cpp", (DL_FUNC) &_recordSwapping_orderData_cpp, 2},
     {"_recordSwapping_test_randSample_cpp", (DL_FUNC) &_recordSwapping_test_randSample_cpp, 5},

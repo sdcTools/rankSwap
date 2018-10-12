@@ -44,13 +44,13 @@ std::vector< std::vector<int> > orderData(std::vector< std::vector<int> > &data,
 /*
 * Function to define levels 
 */
-std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th) {
+std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid, int k_anonymity) {
   
   // data: data input
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
-  // risk: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
+  // risk_variables: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
   // hid: int correspondig to column index in data which holds the household ID
-  // th: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
+  // k_anonymity: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
   
   
   // initialise parameters
@@ -62,7 +62,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   // initialise map
   std::map<std::vector<int>,int> group_count; 
   
-  std::vector<int> loop_index=risk;
+  std::vector<int> loop_index=risk_variables;
   loop_index.insert(loop_index.end(),hierarchy.begin(),hierarchy.end());
   int loop_n = loop_index.size();
   // initialise vector for groups
@@ -89,7 +89,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
   
   ////////////////////////////////////////////////////
   // iterate over level_count and 
-  // set level number for group if Number of obs in group <= th
+  // set level number for group if Number of obs in group <= k_anonymity
   ////////////////////////////////////////////////////
   // initialise map with levels for each group
   std::map<std::vector<int>,int> level_number = group_count; 
@@ -118,7 +118,7 @@ std::vector<int> setLevels(std::vector< std::vector<int> > data, std::vector<int
     }
     
     for(auto const& x : group_count_help){ // -> loop over map entries
-      if(x.second <= th){ // -> x.second = number of obs
+      if(x.second <= k_anonymity){ // -> x.second = number of obs
         level_number[x.first] = nhier-i-1;
       }else{
         if(i==0){
@@ -233,11 +233,11 @@ int test(std::vector< std::vector<int> > data, std::vector<int> loop_index) {
 * Function to set sampling probability 
 * and reverse sampling probability (for donor sets)
 */
-std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid){
+std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid){
   
   // data: data input
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
-  // risk: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
+  // risk_variables: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
   // hid: int correspondig to column index in data which holds the household ID
   
   // initialise parameters
@@ -252,7 +252,7 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
   std::vector< std::vector<double> > prob(2, vector<double>(n));
   
   //
-  std::vector<int> loop_index = risk;
+  std::vector<int> loop_index = risk_variables;
   loop_index.insert(loop_index.end(),hierarchy.begin(),hierarchy.end());
   int loop_n = loop_index.size();
   std::vector<int> groups(loop_n);
@@ -421,16 +421,16 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
   // similar: column indices in data corresponding to variables (household/personal) which should be considered when swapping,
   // e.g. swapping onlys household with same houshoeld size 
-  // risk: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
+  // risk_variables: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
   // hid: int correspondig to column index in data which holds the household ID
-  // th: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
+  // k_anonymity: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
   // swaprate: double defining the ratio of households to be swapped
   // seed: integer seed for random number generator
   
   for(int i=0;i<similar.size();i++){
     cout<<"profile "<<i<<endl;
-    for(int j=0;j<similar[i].size;j++){
-      cout<<simlar[i][j]<<endl;
+    for(int j=0;j<similar[i].size();j++){
+      cout<<similar[i][j]<<endl;
     }
   }
   
@@ -438,7 +438,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // initialise parameters
   int n = data[0].size();
   int nhier = hierarchy.size();
-  std::vector IDnotUsed;
+  std::vector<int> IDnotUsed;
   // needed for running random number generator and
   // set random seed according to input parameter
   std::mt19937 mersenne_engine;
@@ -459,12 +459,12 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   
   ////////////////////////////////////////////////////
   // define minimum swap level for each household
-  levels = setLevels(data,hierarchy,risk,hid,th);
+  levels = setLevels(data,hierarchy,risk_variables,hid,k_anonymity);
   ////////////////////////////////////////////////////
   
   ////////////////////////////////////////////////////
   // define sampling probabilities
-  prob = setRisk(data, hierarchy, risk, hid);
+  prob = setRisk(data, hierarchy, risk_variables, hid);
   ////////////////////////////////////////////////////
   
   ////////////////////////////////////////////////////
@@ -485,7 +485,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   ////////////////////////////////////////////////////
   // apply swapping algorithm
   // go from highest to lowest level
-  // swapp at each higher level the number of households that have to be swapped at that level according to "th" (see setLevels())
+  // swapp at each higher level the number of households that have to be swapped at that level according to "k_anonymity" (see setLevels())
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
   
@@ -652,7 +652,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         if(mustSwap.size()){
           // loop over values in x.second
           for(auto s : x.second){
-            // if there are any households that must be swapped due to variable th
+            // if there are any households that must be swapped due to variable k_anonymity
             if(IDused[s]==0 && mustSwap.find(s)!=mustSwap.end()){
               IDswap.insert(s);
             }
@@ -691,21 +691,21 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         // iterate over both unordered sets
         z =0;
         bool similar_true=true; 
-        std::vector used_IDswap(IDswap.size);
+        std::vector<int> used_IDswap(IDswap.size());
         int index_IDswap=0;
-        for(auto s_samp : IDswap){
-          // find donor for s_samp.second
+        for(auto index_samp : IDswap){
+          // find donor for index_samp
           // iterate over similarity profiles and
           // iterate over unordered donor set
           for(int profile=0;profile<similar.size();profile++){
-            for(auto s_donor : samp_order_donor){
+            for(auto index_donor : samp_order_donor){
               // if was not used and it is not in the same hierarchy ~ x.second.find(s.second)==x.second.end()
               // it is a possible donor
-              if(IDused[s_donor.second]==0 && x.second.find(s_donor.second)==x.second.end()){
-                // s_samp.second is similar to s_donor.second
+              if(IDused[index_donor.second]==0 && x.second.find(index_donor.second)==x.second.end()){
+                // index_samp is similar to index_donor.second
                 // by using similarity indices of the profile
-                for(int sim=0;sim<similar[0].size;sim++){
-                  if(data[similar[profile][sim]][x.second]!=data[similar[profile][sim]][s.second]){
+                for(int sim=0;sim<similar[0].size();sim++){
+                  if(data[similar[profile][sim]][index_samp]!=data[similar[profile][sim]][index_donor.second]){
                     // similarity variables do not match
                     // set similar_true=false and break loop
                     similar_true=false;
@@ -713,9 +713,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
                   }
                 }
                 if(similar_true){
-                  sampledID.insert(s.second);
+                  sampledID.insert(index_donor.second);
                   used_IDswap[index_IDswap] = 1;
-                  IDused[s_donor.second] = 1;
+                  IDused[index_donor.second] = 1;
                   z++;
                   if(z==sampSize){
                     goto endloop;
@@ -726,9 +726,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
           }
           
           // build string if no donor was present for specific user
-          if(used_IDswap[index_IDswap]==0){
-            IDnotUsed.insert(data[hid][s_samp.second]);
-          }
+//          if(used_IDswap[index_IDswap]==0){
+//            IDnotUsed.insert(data[hid][index_samp]);
+//          }
           index_IDswap++;
         }
         endloop:

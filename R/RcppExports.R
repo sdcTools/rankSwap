@@ -24,17 +24,19 @@
 #' records which do not fullfill the k-anonymity are swapped.
 #' 
 #' @param data micro data set containing only integer values.
-#' @param similar column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations
+#' @param similar vector of vector where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations
 #' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-#' @param risk column indices of variables in \code{data} which will be considered for estimating the risk.
+#' @param risk_variables column indices of variables in \code{data} which will be considered for estimating the risk.
 #' @param hid column index in \code{data} which refers to the household identifier.
-#' @param th integer defining the threshhold of high risk households (k-anonymity).
+#' @param k_anonymity integer defining the threshhold of high risk households (k-anonymity). This is used as k_anonymity <= counts.
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
+#' @param risk_threshold double indicating risk threshold above every household needs to be swapped.
+#' @param risk vector of vectors containing risks of each individual in each hierarchy level.
 #' @param seed integer defining the seed for the random number generator, for reproducability.
 #' 
 #' @return Returns data set with swapped records.
-recordSwap_cpp <- function(data, similar, hierarchy, risk, hid, th, swaprate, seed = 123456L) {
-    .Call(`_recordSwapping_recordSwap_cpp`, data, similar, hierarchy, risk, hid, th, swaprate, seed)
+recordSwap_cpp <- function(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed = 123456L) {
+    .Call(`_recordSwapping_recordSwap_cpp`, data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed)
 }
 
 #' @title Define Swap-Levels
