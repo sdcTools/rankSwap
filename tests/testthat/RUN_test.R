@@ -29,13 +29,13 @@ for(n in npop){
     
     hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
     hierarchy <- hierarchy[1:h]
-    risk <- c("ageGroup","geschl","hsize","national")
-    swap <- .05 # runif(1)
+    risk_variables <- c("ageGroup","geschl","hsize","national")
+    swaprate <- .05 # runif(1)
     hid <- "hid"
-    th <- 3
+    k_anonymity <- 3
     nhier <- length(hierarchy)
-    
-    levels <- recordSwapping:::setLevels_cpp(dat,0:(nhier-1),5:8,4,th)
+    similar <- list(c(5))
+    levels <- recordSwapping:::setLevels_cpp(dat,0:(nhier-1),5:8,4,k_anonymity)
     prob <- recordSwapping:::setRisk_cpp(dat,0:(nhier-1),5:8,4)
     
     # prep data for R function
@@ -61,7 +61,7 @@ for(n in npop){
     dat_R <- merge(dat_R,dat.draw,by=c(hierarchy,"hsize"))
     
     
-    mb <- microbenchmark(cpp=recordSwap(dat,5,0:(nhier-1),5:8,4,th,swap),
+    mb <- microbenchmark(cpp=recordSwap(dat,similar,0:(nhier-1),5:8,4,th,swap),
                          # R=recordSwapR(copy(dat_R),hierarchy),
                          times=times)
     mb <- as.data.table(mb)

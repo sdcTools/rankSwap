@@ -24,7 +24,7 @@
 #' @param data micro data set containing only integer values.
 #' @param similar column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations
 #' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-#' @param risk column indices of variables in \code{data} which will be considered for estimating the risk.
+#' @param risk_variables column indices of variables in \code{data} which will be considered for estimating the risk.
 #' @param hid column index in \code{data} which refers to the household identifier.
 #' @param th integer defining the threshhold of high risk households (k-anonymity).
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
@@ -33,11 +33,15 @@
 #' @return Returns data set with swapped records.
 #' 
 #' @export recordSwap
-recordSwap <- function(data, similar, hierarchy, risk, hid, th, swaprate, seed = 123456L){
+recordSwap <- function(data, similar, hierarchy, risk_variables, hid, th, swaprate, seed = 123456L){
 
   # default values since those parameters are not used yet
   risk_threshold <- 0
   risk <- data.frame(rnorm(10))
   
-  recordSwap_cpp(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, riks, seed)
+  if(any(c(similar, hierarchy, risk_variables, hid)>=ncol(data))){
+    stop("Indices higher than column number in data")
+  }
+  
+  recordSwap_cpp(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed)
 }

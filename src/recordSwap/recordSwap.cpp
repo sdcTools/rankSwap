@@ -426,15 +426,8 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // k_anonymity: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
   // swaprate: double defining the ratio of households to be swapped
   // seed: integer seed for random number generator
+
   
-  for(int i=0;i<similar.size();i++){
-    cout<<"profile "<<i<<endl;
-    for(int j=0;j<similar[i].size();j++){
-      cout<<similar[i][j]<<endl;
-    }
-  }
-  
-  return similar;
   // initialise parameters
   int n = data[0].size();
   int nhier = hierarchy.size();
@@ -467,10 +460,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   prob = setRisk(data, hierarchy, risk_variables, hid);
   ////////////////////////////////////////////////////
   
-  ////////////////////////////////////////////////////
-  // define number of swaps on each level (discard this step????)
-  
-  
+
   ////////////////////////////////////////////////////
   // this part will be moved further up after testing
   // initialise map for household size
@@ -547,7 +537,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   }else{
     total_swaps = floor(nhid*(swaprate/2));
   }
-
+  // cout << "total swaps:" << total_swaps<<endl;
   // distribute them among smallest hierarchy level
   std::map<std::vector<int>,int> draw_group;
   std::map<std::vector<int>,int> n_group;
@@ -563,6 +553,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     x_excess = x_excess-floor(x_excess);
     draw_excess_help = draw_excess_help + x_excess;
   }
+  // cout <<"draw_excess_help:" << draw_excess_help << endl;
   int draw_excess = std::round(draw_excess_help);
   // randomly shuffeld index vector
   // this is similar to randomly round up and down in each group so on average swaprate will be reached
@@ -574,18 +565,21 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // pick first draw_excess values at add one to them
   z = 0;
   int v = 0;
+  int count_swaps=0;
   // certain groups will get one more draw
   for(auto const&x : draw_group){
     if(add_extra[v]==z){
       draw_group[x.first]++;
       v++;
     }
-    if(v>(draw_excess-1)){
-      break;
-    }
+    count_swaps = count_swaps+draw_group[x.first];
+    // if(v>(draw_excess-1)){
+    //   break;
+    // }
     z++;
   }
-
+    
+  // cout<<"count_swaps "<<count_swaps<<endl;  
   /////////////////////////////
   int check_donor = 0;
   int check_sample =0;
@@ -599,7 +593,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     // values of map element that must be swapped at current stage
     // if no elements need to be swapped than skipp this step
     std::unordered_set<int> mustSwap;
-    std::unordered_set<int> mustSwap2;
+
     if(group_levels.find(h)!=group_levels.end()){
       mustSwap = group_levels[h];
     }else{
@@ -704,6 +698,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
               if(IDused[index_donor.second]==0 && x.second.find(index_donor.second)==x.second.end()){
                 // index_samp is similar to index_donor.second
                 // by using similarity indices of the profile
+                similar_true=true;
                 for(int sim=0;sim<similar[0].size();sim++){
                   if(data[similar[profile][sim]][index_samp]!=data[similar[profile][sim]][index_donor.second]){
                     // similarity variables do not match
@@ -719,24 +714,26 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
                   z++;
                   if(z==sampSize){
                     goto endloop;
+                  }else{
+                    goto next_index_samp;
                   }
                 }
               }
             }
           }
-          
+          next_index_samp:
           // build string if no donor was present for specific user
-//          if(used_IDswap[index_IDswap]==0){
-//            IDnotUsed.insert(data[hid][index_samp]);
-//          }
+          if(used_IDswap[index_IDswap]==0){
+            IDnotUsed.push_back(data[hid][index_samp]);
+          }
           index_IDswap++;
         }
         endloop:
-
         
-        // std::unordered_set<int> sampledID = randSample(IDdonor_all,sampSize,prob[1],mersenne_engine,IDused,mustSwap2);
-        // std::unordered_set<int> sampledID = IDswap;
-        // sampSize = sampledID.size();
+        for(int i=0;i<IDnotUsed.size();i++){
+           // cout<<IDnotUsed[i]<<endl;
+        }
+        
         // set Index to used
         std::unordered_set<int>::iterator it1 = IDswap.begin();
         std::unordered_set<int>::iterator it2 = sampledID.begin();
