@@ -26,17 +26,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // setLevels_cpp
-std::vector<int> setLevels_cpp(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th);
-RcppExport SEXP _recordSwapping_setLevels_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP) {
+std::vector<int> setLevels_cpp(std::vector< std::vector<double> > risk, double risk_threshold);
+RcppExport SEXP _recordSwapping_setLevels_cpp(SEXP riskSEXP, SEXP risk_thresholdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type risk(riskSEXP);
-    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
-    Rcpp::traits::input_parameter< int >::type th(thSEXP);
-    rcpp_result_gen = Rcpp::wrap(setLevels_cpp(data, hierarchy, risk, hid, th));
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> > >::type risk(riskSEXP);
+    Rcpp::traits::input_parameter< double >::type risk_threshold(risk_thresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(setLevels_cpp(risk, risk_threshold));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -53,38 +50,38 @@ BEGIN_RCPP
 END_RCPP
 }
 // test_randSample_cpp
-std::vector<std::vector<int> > test_randSample_cpp(int B, std::vector<int> ID, int N, std::vector<double> prob, int seed);
-RcppExport SEXP _recordSwapping_test_randSample_cpp(SEXP BSEXP, SEXP IDSEXP, SEXP NSEXP, SEXP probSEXP, SEXP seedSEXP) {
+std::vector<int> test_randSample_cpp(std::vector<int> ID, int N, std::vector<double> prob, std::vector<int> IDused, int seed);
+RcppExport SEXP _recordSwapping_test_randSample_cpp(SEXP IDSEXP, SEXP NSEXP, SEXP probSEXP, SEXP IDusedSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type B(BSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type ID(IDSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type IDused(IDusedSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_randSample_cpp(B, ID, N, prob, seed));
+    rcpp_result_gen = Rcpp::wrap(test_randSample_cpp(ID, N, prob, IDused, seed));
     return rcpp_result_gen;
 END_RCPP
 }
 // setRisk_cpp
-std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid);
-RcppExport SEXP _recordSwapping_setRisk_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP) {
+std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid);
+RcppExport SEXP _recordSwapping_setRisk_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP risk_variablesSEXP, SEXP hidSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type risk(riskSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type risk_variables(risk_variablesSEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
-    rcpp_result_gen = Rcpp::wrap(setRisk_cpp(data, hierarchy, risk, hid));
+    rcpp_result_gen = Rcpp::wrap(setRisk_cpp(data, hierarchy, risk_variables, hid));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 10},
-    {"_recordSwapping_setLevels_cpp", (DL_FUNC) &_recordSwapping_setLevels_cpp, 5},
+    {"_recordSwapping_setLevels_cpp", (DL_FUNC) &_recordSwapping_setLevels_cpp, 2},
     {"_recordSwapping_orderData_cpp", (DL_FUNC) &_recordSwapping_orderData_cpp, 2},
     {"_recordSwapping_test_randSample_cpp", (DL_FUNC) &_recordSwapping_test_randSample_cpp, 5},
     {"_recordSwapping_setRisk_cpp", (DL_FUNC) &_recordSwapping_setRisk_cpp, 4},

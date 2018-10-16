@@ -56,16 +56,14 @@ std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > d
 //' @description Define hierarchy levels over which record needs to be swapped according to risk variables.
 //' 
 //' 
-//' @param data micro data set containing only numeric values.
-//' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-//' @param risk column indices of variables in \code{data} which will be considered for estimating the risk.
-//' @param hid column index in \code{data} which refers to the household identifier.
-//' @param th integer defining the threshhold of high risk households (k-anonymity).
+//' @param risk vector of vectors containing risks of each individual in each hierarchy level. risk[0] returns the vector of risks for the first unit over all hierarchy levels.
+//' risk[1] the vectir if risks for all hierarchy level of unit 2, and so on.
+//' @param risk_threshold double defining the risk threshold beyond which a record/household needs to be swapped. This is understood as risk>=risk_threshhold.
 //' 
 //' @return Integer vector with hierarchy level over which record needs to be swapped with.
 // [[Rcpp::export]]
-std::vector<int> setLevels_cpp(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th) {
-  std::vector<int> output = setLevels(data,hierarchy,risk,hid,th);
+std::vector<int> setLevels_cpp(std::vector< std::vector<double> > risk, double risk_threshold) {
+  std::vector<int> output = setLevels(risk, risk_threshold);
   return output;
 }
 
@@ -84,24 +82,24 @@ std::vector< std::vector<int> > orderData_cpp(std::vector< std::vector<int> > &d
 }
 
 // [[Rcpp::export]]
-std::vector<std::vector<int> > test_randSample_cpp(int B,std::vector<int> ID, int N, std::vector<double> prob,int seed){
-  std::vector<std::vector<int> > output = test_randSample(B,ID,N,prob,seed);
+std::vector<int> test_randSample_cpp(std::vector<int> ID, int N, std::vector<double> prob, std::vector<int> IDused, int seed){
+  std::vector<int> output = test_randSample(ID,N,prob,IDused,seed);
   return output;
 }
 
 //' @title Calculate Risk
 //' 
-//' @description Calculate risk and sampling probabilities for records to be swapped and donor records. Sampling probabilities are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
-//' The sampling probabilities for the donor records are defined by \eqn{\max{1-1/counts,5e-10}}.
+//' @description Calculate risk for records to be swapped and donor records.  Risks are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
+//' This risk will be used as sampling probability for both sampling set and donor set.
 //' 
 //' @param data micro data set containing only numeric values.
 //' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-//' @param risk column indices of variables in \code{data} which will be considered for estimating the risk.
+//' @param risk_variables column indices of variables in \code{data} which will be considered for estimating the risk.
 //' @param hid column index in \code{data} which refers to the household identifier.
 //' 
 // [[Rcpp::export]]
-std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid){
-  std::vector< std::vector<double> > output = setRisk(data,hierarchy,risk,hid);
+std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid){
+  std::vector< std::vector<double> > output = setRisk(data,hierarchy,risk_variables,hid);
   return output;
 }
 // 
