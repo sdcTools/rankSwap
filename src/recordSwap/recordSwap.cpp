@@ -239,7 +239,6 @@ std::vector<int> test_randSample(std::vector<int> ID, int N, std::vector<double>
  * Function to distribute n draws over a given number of groups
  * the distribution is always proportional pro group size
  */
-
 std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
                                                                                          int &nhid, double &swaprate,
                                                                                          std::uniform_int_distribution<std::mt19937::result_type> &runif01,
@@ -304,6 +303,184 @@ std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vect
   return draw_group;
 }
 
+
+/*
+ * Function to test distributeDraws()
+ * this is again needed because one cannot map to all C++ containers from R objects, for instance std::unordered_set<int>
+ */
+std::vector< std::vector<int> > test_distributeDraws(std::vector< std::vector<int> > data,
+                                                     std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
+  
+  // define parameter
+  int n = data.size();
+  int nhier = hierarchy.size();
+  int nhid = 0;
+  int currentID = -1;
+  
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  // initialize random number generator for distributeDraws()
+  std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
+  
+  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
+  std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
+  
+  for(int i=0;i<n;i++){
+    
+    if(currentID==data[i][hid]){
+      continue; // go to next iteration if statement is true
+    }
+    
+    currentID = data[i][hid];
+    // ... define hierarchy group
+    for(int j=0;j<nhier;j++){
+      hier_help[j] = data[i][hierarchy[j]];
+    }
+    
+    // supply new household index to each group
+    // use only indices to speed up construction of output data
+    group_hier[hier_help].insert(i);
+    
+    // count number of households
+    nhid++;
+    // skip all other household member, only need first one
+  }
+
+  std::map<std::vector<int>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
+                                                                              runif01, mersenne_engine);
+  
+  
+  // iterate over map to generate output
+  // implementation good enough for testing purposes
+  std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+2));
+  int z = 0;
+  for(auto const&x : draw_group){
+    for(int j=0;j<(nhier+2);j++){
+      if(j<nhier){
+        output[z][j] = x.first[j];
+      }else if(j==nhier){
+        output[z][j] = x.second.first;
+      }else{
+        output[z][j] = x.second.second;
+      }
+    }
+    z++;
+  }
+  return output;
+}
+
+
+
+/*
+ * Function to sample from donor set
+ * this is done differently than the inital sampling to make procedure more efficient
+ */
+std::unordered_set<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<std::vector<int>> &similar,
+                                    std::unordered_set<int> &IDswap, std::unordered_set<int> &IDswap_pool,
+                                    std::map<double,int> &IDdonor_pool, std::vector<int> &IDused, std::vector<int> &IDnotUsed, int &hid){
+  
+  // data: data input data.size() ~ number of records - data.[0].size ~ number of varaibles per record
+  // similar: column indices in data corresponding to variables (household/personal) which should be considered when swapping,
+  // e.g. swapping onlys household with same houshoeld size 
+  // IDswap: unordered set containing household IDs to be swapped
+  // IDswap_pool: unordered set containing sampling pool from which IDswap was drawn
+  // IDdono_pool: map containing every possible donor ID (ordered by sampling probability in ascending order)
+  // IDused: integer vector which takes on 1 if ID was sampled
+  // IDnotUsed: integer vector which stores each ID for which a donor could not have been found
+  
+  // define parameter
+  std::unordered_set<int> IDdonor; // output
+  bool similar_true=true; 
+  int index_IDswap=0; // help variable to see if a donor was found
+  std::vector<int> used_IDswap(IDswap.size()); // help vector to get indices of IDs for which no donor was found
+  int index_donor = 0;
+
+  // select donor based on similarity constrains
+  // iterate over both unordered sets
+  // iterate over IDdonor_pool in reverse order since it is sorted in ascending order by risk
+  for(auto index_samp : IDswap){
+    // find donor for index_samp
+    // iterate over similarity profiles
+    for(int profile=0;profile<similar.size();profile++){
+      
+      // iterate over complete donor set in reverse order
+      for( auto it = IDdonor_pool.end();it!=IDdonor_pool.begin(); ){
+        // it->second access the value
+        // it->first access the key
+        it--; // decrement iterator first since you loop from the back
+        index_donor = it->second;
+        // if was not used and it is not in the same hierarchy ~ IDswap_pool.find(s.second)==IDswap_pool.end()
+        // it is a possible donor
+        if(IDused[index_donor]==0 && IDswap_pool.find(index_donor)==IDswap_pool.end()){
+          // index_samp is similar to index_donor
+          // by using similarity indices of the profile
+          similar_true=true;
+          for(int sim=0;sim<similar[profile].size();sim++){
+            if(data[index_samp][similar[profile][sim]]!=data[index_donor][similar[profile][sim]]){
+              // similarity variables do not match
+              // set similar_true=false and break loop
+              similar_true=false;
+              break;
+            }
+          }
+          if(similar_true){
+            IDdonor.insert(index_donor);
+            used_IDswap[index_IDswap] = 1;
+            IDused[it->second] = 1;
+            // if index_donor was used
+            // remove it from IDdonor_pool and do not increment it
+            IDdonor_pool.erase(it);
+            goto next_index_samp;
+          }
+        }
+      }
+    }
+    next_index_samp:
+      // build string if no donor was present for specific user
+      if(used_IDswap[index_IDswap]==0){
+        IDnotUsed.push_back(data[index_samp][hid]);
+      }
+      index_IDswap++;
+  }
+
+  return IDdonor;  
+}
+
+/*
+ * Function to test sampleDonor
+ */
+std::vector<int> test_sampleDonor(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, int hid,
+                                  std::vector<int> IDswap_vec, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
+  
+  
+  // generate paramters
+  int n = data.size();
+  std::vector<int> IDused(n);
+  std::vector<int> IDnotUsed;
+  std::unordered_set<int> IDswap(IDswap_vec.begin(),IDswap_vec.end());
+  std::unordered_set<int> IDswap_pool(IDswap_pool_vec.begin(),IDswap_pool_vec.end());
+  
+  // generate IDdonor_pool
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  // initialise lambda para for exp distribution
+  std::exponential_distribution<double> exp_dist(1.0);
+  std::map<double,int> IDdonor_pool;
+  for(int i=0; i<n; i++){
+    IDdonor_pool[prob[i]/exp_dist(mersenne_engine)] = i;
+  }
+  
+  std::unordered_set<int> ID_sampleDonor = sampleDonor(data, similar, IDswap, IDswap_pool,
+                                                       IDdonor_pool, IDused, IDnotUsed, hid);
+  
+  std::vector<int> IDdonor(ID_sampleDonor.begin(),ID_sampleDonor.end());
+  
+  return IDdonor;
+  
+}
+
+
+
 /*
 * Function to perform record swapping
 */
@@ -326,7 +503,6 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   
   // initialise parameters
   int n = data.size();
-  cout << n << endl;
   int nhier = hierarchy.size();
   std::vector<int> IDnotUsed;
   // needed for running random number generator and
@@ -411,7 +587,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     
     // ... define hierarchy group
     for(int j=0;j<nhier;j++){
-      hier_help[j] = data[hierarchy[j]][z];
+      hier_help[j] = data[z][hierarchy[j]];
     }
     
     // supply new household index to each group
@@ -430,14 +606,14 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     // makes sampling in each iteration obsolete
     // look up in these maps instead
     for(int j=0;j<nhier;j++){
-      samp_order_donor[j][prob[j][z]/exp_dist(mersenne_engine)] = z;
+      samp_order_donor[j][prob[z][j]/exp_dist(mersenne_engine)] = z;
     }
 
     
     // count number of households
     nhid++;
     // skip all other household member, only need first one
-    z += map_hsize[data[hid][z]];
+    z += map_hsize[data[z][hid]];
     
   }
   /////////////////////////////
@@ -445,6 +621,8 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   /////////////////////////////
   // get number of households to be swapped at the lowest level hierarchy
   // this is only used at lowest hierarchy level
+  // draw_group[].first -> number of households in lowest level hierarchy
+  // draw_group[].second -> number of swaps in lowest level hierarchy
   std::map<std::vector<int>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
                                                                               runif01, mersenne_engine);
   
@@ -496,7 +674,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     int countRest=0;
     /////////////////
     // loop over levels of hierarchy
-    for(auto const&x : group_hier_help){
+    for(auto &x : group_hier_help){
       // std::vector<int> xfirst = group_hier_help.begin()->first;
       // std::vector<int> xsecond = group_hier_help.begin()->second;
       // get values that need to be swapped at this hierarchy level and which are
@@ -539,58 +717,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       // if any IDs need to be swapped:
       if(IDswap.size()>0){
         
-        // define sample size
-        sampSize = IDswap.size();
-        std::unordered_set<int> sampledID;
-        z =0;
-        
-        // select donor based on similarity constrains
-        // iterate over both unordered sets
-        bool similar_true=true; 
-        std::vector<int> used_IDswap(IDswap.size());
-        int index_IDswap=0;
-        for(auto index_samp : IDswap){
-          // find donor for index_samp
-          // iterate over similarity profiles and
-          // iterate over unordered donor set
-          for(int profile=0;profile<similar.size();profile++){
-            for(auto index_donor : samp_order_donor[h]){
-              // if was not used and it is not in the same hierarchy ~ x.second.find(s.second)==x.second.end()
-              // it is a possible donor
-              if(IDused[index_donor.second]==0 && x.second.find(index_donor.second)==x.second.end()){
-                // index_samp is similar to index_donor.second
-                // by using similarity indices of the profile
-                similar_true=true;
-                for(int sim=0;sim<similar[0].size();sim++){
-                  if(data[index_samp][similar[profile][sim]]!=data[index_donor.second][similar[profile][sim]]){
-                    // similarity variables do not match
-                    // set similar_true=false and break loop
-                    similar_true=false;
-                    break;
-                  }
-                }
-                if(similar_true){
-                  sampledID.insert(index_donor.second);
-                  used_IDswap[index_IDswap] = 1;
-                  IDused[index_donor.second] = 1;
-                  z++;
-                  if(z==sampSize){
-                    goto endloop;
-                  }else{
-                    goto next_index_samp;
-                  }
-                }
-              }
-            }
-          }
-          next_index_samp:
-            // build string if no donor was present for specific user
-            if(used_IDswap[index_IDswap]==0){
-              IDnotUsed.push_back(data[hid][index_samp]);
-            }
-            index_IDswap++;
-        }
-        endloop:
+
+        std::unordered_set<int> IDdonor = sampleDonor(data, similar, IDswap, x.second,
+                                            samp_order_donor[h], IDused, IDnotUsed, hid);
           
         for(int i=0;i<IDnotUsed.size();i++){
             // cout<<IDnotUsed[i]<<endl;
@@ -598,8 +727,8 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
           
         // set Index to used
         std::unordered_set<int>::iterator it1 = IDswap.begin();
-        std::unordered_set<int>::iterator it2 = sampledID.begin();
-        for(;it1!=IDswap.end()&&it2!=sampledID.end();++it1,++it2){
+        std::unordered_set<int>::iterator it2 = IDdonor.begin();
+        for(;it1!=IDswap.end()&&it2!=IDdonor.end();++it1,++it2){
           IDused[*it1]=1;
           IDused[*it2]=1;
           // store results from sampling in swappedIndex 

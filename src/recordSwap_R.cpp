@@ -102,10 +102,35 @@ std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > da
   std::vector< std::vector<double> > output = setRisk(data,hierarchy,risk_variables,hid);
   return output;
 }
-// 
-// // [[Rcpp::export]]
-// std::unordered_set<int> randSample_cpp(std::unordered_set<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine,
-//                                    std::vector<int> &IDused, std::unordered_set<int> &mustSwap){
-//   std::unordered_set<int> output = randSample(ID,N,prob,mersenne_engine,IDused,mustSwap)
-//   return output;
-// }
+
+
+// [[Rcpp::export]]
+std::vector<std::vector<int>> test_distributeDraws_cpp(std::vector< std::vector<int> > data,
+                                                                   std::vector<int> hierarchy,  int hid, double swaprate, int seed = 123456){
+  
+  std::vector<std::vector<int>> output = test_distributeDraws(data,hierarchy,hid,swaprate,seed);
+  return output;
+}
+
+
+// [[Rcpp::export]]
+std::vector<int> test_sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, int hid,
+                                                   std::vector<int> IDswap_vec, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
+  
+  std::vector<int> output = test_sampleDonor(data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed);
+  return output;
+}
+
+// [[Rcpp::export]]
+int test_unorderedSet(std::vector<int> x){
+  
+  std::unordered_set<int> x_set;
+  for(int i=0;i<x.size();i++){
+    x_set.insert(x[i]);
+  }
+  
+  for(auto i : x_set){
+    cout<<i<<endl;
+  }
+}
+

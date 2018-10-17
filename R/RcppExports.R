@@ -83,3 +83,15 @@ setRisk_cpp <- function(data, hierarchy, risk_variables, hid) {
     .Call(`_recordSwapping_setRisk_cpp`, data, hierarchy, risk_variables, hid)
 }
 
+test_distributeDraws_cpp <- function(data, hierarchy, hid, swaprate, seed = 123456L) {
+    .Call(`_recordSwapping_test_distributeDraws_cpp`, data, hierarchy, hid, swaprate, seed)
+}
+
+test_sampleDonor_cpp <- function(data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed = 123456L) {
+    .Call(`_recordSwapping_test_sampleDonor_cpp`, data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed)
+}
+
+test_unorderedSet <- function(x) {
+    .Call(`_recordSwapping_test_unorderedSet`, x)
+}
+

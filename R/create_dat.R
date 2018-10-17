@@ -48,7 +48,7 @@ randomRound <- function(x){
     }
   }else{
     
-    x_diff <- sum(x)-floor(x)
+    x_diff <- sum(x)-sum(floor(x))
     up_down <- rep(FALSE,length(x))
     up_down[1:x_diff] <- TRUE
     

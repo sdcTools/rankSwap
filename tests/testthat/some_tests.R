@@ -125,20 +125,95 @@ ggplot(out_data,aes(value))+
 # test distribution of swaprate  
 # at lowest level
 # 
+dat <- recordSwapping:::create.dat(100000)
+dat_t <- transpose(dat)
+hierarchy <- 0:3
+swaprate <- .1
+hid <- 4
 
+seed.base <- 1:1e6
+distdraw <- as.data.table(recordSwapping:::test_distributeDraws_cpp(dat_t,hierarchy,hid,swaprate,sample(seed.base,1)))
+distdraw <- transpose(distdraw)
+
+# compare with R solution
+hier <- colnames(dat)[hierarchy+1]
+distdrawR <- dat[!duplicated(hid),.(ngroup=.N),by=c(hier)]
+distdrawR[,draw:=recordSwapping:::randomRound(ngroup*(swaprate/2))]
+
+setnames(distdraw,colnames(distdraw),colnames(distdrawR))
+
+comp_dist <- distdraw[distdrawR,,on=c(hier)]
+
+cond1 <- nrow(comp_dist[ngroup!=i.ngroup])==0
+cond2 <- comp_dist[,sum(draw)==sum(i.draw)]
+cond3 <- nrow(comp_dist[abs(draw-i.draw)>1])==0
+
+cond1&cond2&cond3
 
 ############################
 # test sampling of donor
 # make this more modular and more efficient
 # sampling in different hierarchies should be easy when using just the std::vector<std::vector<double>> risk
 # 
+dat <- recordSwapping:::create.dat(10000)
+dat[,hid:=.I]
+dat_t <- transpose(dat)
+hierarchy <- 0
+risk_variables <- 5:8
+hid <- 4
+similar <- list(c(5))
+risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
+dat$prob <- unlist(transpose(risk))
+
+
+
+nsamp <- 3000
+swap_pool <- sample(unique(dat$nuts1),1)
+IDswap_vec <- dat[nuts1==swap_pool,sample(.I,nsamp)]-1 
+IDswap_pool_vec <- dat[nuts1==swap_pool,which=TRUE]-1
+
+sim_names <- colnames(dat)[unlist(similar)+1]
+n_by_similar <- dat[IDswap_vec+1,.N,by=c(sim_names)]
+dat <- n_by_similar[dat,,on=c(sim_names)]
+
+
+b <- 1000
+out_mat <- replicate(b,{
+  seed <- sample(1:1e6,1)
+  set.seed(seed)
+  IDdonor <- recordSwapping:::test_sampleDonor_cpp(dat_t,similar,hid,IDswap_vec,IDswap_pool_vec, dat$prob,seed)
+  IDdonor_R <- dat[nuts1!=swap_pool,sample(.I-1,N[1],prob=prob),by=c(sim_names)][,V1]
+  cbind(IDdonor,
+        IDdonor_R)
+})
+out_data <- list()
+for(i in 1:b){
+  out_tmp <- out_mat[,1:2,i]
+  out_tmp <- data.table(value=out_tmp,run=i)
+  out_data <- c(out_data,list(out_tmp))
+}
+
+out_data <- rbindlist(out_data)
+out_data <- melt(out_data,id.vars="run")
+
+library(ggplot2)
+ggplot(out_data,aes(value))+
+  geom_density(aes(color=variable))
 
 
 ############################
 # check recordSwap as a whole
 # 
-#
-#
+dat <- recordSwapping:::create.dat(100000)
+dat_t <- transpose(dat)
+hierarchy <- 0
+risk_variables <- 5:8
+k_anonymity <- 3
+swaprata <- .1
+hid <- 4
+similar <- list(c(5))
+
+
 
 
 dat <- recordSwapping:::create.dat(100000)

@@ -78,6 +78,49 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_distributeDraws_cpp
+std::vector<std::vector<int>> test_distributeDraws_cpp(std::vector< std::vector<int> > data, std::vector<int> hierarchy, int hid, double swaprate, int seed);
+RcppExport SEXP _recordSwapping_test_distributeDraws_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP hidSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
+    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
+    Rcpp::traits::input_parameter< double >::type swaprate(swaprateSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_distributeDraws_cpp(data, hierarchy, hid, swaprate, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_sampleDonor_cpp
+std::vector<int> test_sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, int hid, std::vector<int> IDswap_vec, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
+RcppExport SEXP _recordSwapping_test_sampleDonor_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hidSEXP, SEXP IDswap_vecSEXP, SEXP IDswap_pool_vecSEXP, SEXP probSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<int>> >::type similar(similarSEXP);
+    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type IDswap_vec(IDswap_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type IDswap_pool_vec(IDswap_pool_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_sampleDonor_cpp(data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_unorderedSet
+int test_unorderedSet(std::vector<int> x);
+RcppExport SEXP _recordSwapping_test_unorderedSet(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_unorderedSet(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 10},
@@ -85,6 +128,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_orderData_cpp", (DL_FUNC) &_recordSwapping_orderData_cpp, 2},
     {"_recordSwapping_test_randSample_cpp", (DL_FUNC) &_recordSwapping_test_randSample_cpp, 5},
     {"_recordSwapping_setRisk_cpp", (DL_FUNC) &_recordSwapping_setRisk_cpp, 4},
+    {"_recordSwapping_test_distributeDraws_cpp", (DL_FUNC) &_recordSwapping_test_distributeDraws_cpp, 5},
+    {"_recordSwapping_test_sampleDonor_cpp", (DL_FUNC) &_recordSwapping_test_sampleDonor_cpp, 7},
+    {"_recordSwapping_test_unorderedSet", (DL_FUNC) &_recordSwapping_test_unorderedSet, 1},
     {NULL, NULL, 0}
 };
 
