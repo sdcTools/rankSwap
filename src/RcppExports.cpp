@@ -110,14 +110,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test_unorderedSet
-int test_unorderedSet(std::vector<int> x);
-RcppExport SEXP _recordSwapping_test_unorderedSet(SEXP xSEXP) {
+// test_prioqueue
+std::vector<int> test_prioqueue(std::vector<int> x_vec, std::vector<double> prob, std::vector<int> mustSwap_vec, int n, int seed);
+RcppExport SEXP _recordSwapping_test_prioqueue(SEXP x_vecSEXP, SEXP probSEXP, SEXP mustSwap_vecSEXP, SEXP nSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<int> >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_unorderedSet(x));
+    Rcpp::traits::input_parameter< std::vector<int> >::type x_vec(x_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type mustSwap_vec(mustSwap_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_prioqueue(x_vec, prob, mustSwap_vec, n, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_comparator
+std::vector<int> test_comparator(std::vector<int> x_vec, std::vector<double> prob, std::vector<int> mustSwap_vec, int n, int seed);
+RcppExport SEXP _recordSwapping_test_comparator(SEXP x_vecSEXP, SEXP probSEXP, SEXP mustSwap_vecSEXP, SEXP nSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type x_vec(x_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type mustSwap_vec(mustSwap_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_comparator(x_vec, prob, mustSwap_vec, n, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -130,7 +149,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_setRisk_cpp", (DL_FUNC) &_recordSwapping_setRisk_cpp, 4},
     {"_recordSwapping_test_distributeDraws_cpp", (DL_FUNC) &_recordSwapping_test_distributeDraws_cpp, 5},
     {"_recordSwapping_test_sampleDonor_cpp", (DL_FUNC) &_recordSwapping_test_sampleDonor_cpp, 7},
-    {"_recordSwapping_test_unorderedSet", (DL_FUNC) &_recordSwapping_test_unorderedSet, 1},
+    {"_recordSwapping_test_prioqueue", (DL_FUNC) &_recordSwapping_test_prioqueue, 5},
+    {"_recordSwapping_test_comparator", (DL_FUNC) &_recordSwapping_test_comparator, 5},
     {NULL, NULL, 0}
 };
 

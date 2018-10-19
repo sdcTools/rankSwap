@@ -89,7 +89,9 @@ b <- 1e3
 ID <- 1:n
 seed.base <- 1:1e6
 IDused <- rep(0,n)
-IDused[sample(ID[1:(max(ID)-Nused)],1):Nused] <- 1
+
+startpoint <- sample(ID[1:(max(ID)-Nused)],1)
+IDused[startpoint:(startpoint+Nused-1)] <- 1
 
 prob <- sample(c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20)))
 
@@ -118,6 +120,8 @@ library(ggplot2)
 ggplot(out_data,aes(value))+
   geom_density(aes(color=variable))
 
+ggplot(out_data,aes(value))+
+  geom_histogram(aes(fill=variable),position = "dodge")
 
 #########
 # test drawDistribution()
@@ -148,3 +152,50 @@ drawDistrubtionTRUE <- replicate(B,{
   cond1&cond2&cond3
 })
 table(drawDistrubtionTRUE)
+
+
+#########
+# test sampleDonor()
+
+dat <- recordSwapping:::create.dat(10000)
+dat[,hid:=.I]
+dat_t <- transpose(dat)
+hierarchy <- 0
+risk_variables <- 5:8
+hid <- 4
+similar <- list(c(5))
+risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
+dat$prob <- unlist(transpose(risk))
+
+nsamp <- 300
+swap_pool <- sample(unique(dat$nuts1),1)
+IDswap_vec <- dat[nuts1==swap_pool,sample(.I,nsamp)]-1 
+IDswap_pool_vec <- dat[nuts1==swap_pool,which=TRUE]-1
+
+sim_names <- colnames(dat)[unlist(similar)+1]
+n_by_similar <- dat[IDswap_vec+1,.N,by=c(sim_names)]
+dat <- n_by_similar[dat,,on=c(sim_names)]
+
+
+b <- 5000
+out_mat <- replicate(b,{
+  seed <- sample(1:1e6,1)
+  set.seed(seed)
+  IDdonor <- recordSwapping:::test_sampleDonor_cpp(dat_t,similar,hid,IDswap_vec,IDswap_pool_vec, dat$prob,seed)
+  IDdonor_R <- dat[nuts1!=swap_pool,sample(.I-1,N[1],prob=prob),by=c(sim_names)][,V1]
+  cbind(IDdonor,
+        IDdonor_R)
+})
+out_data <- list()
+for(i in 1:b){
+  out_tmp <- out_mat[,1:2,i]
+  out_tmp <- data.table(value=out_tmp,run=i)
+  out_data <- c(out_data,list(out_tmp))
+}
+
+out_data <- rbindlist(out_data)
+out_data <- melt(out_data,id.vars="run")
+
+library(ggplot2)
+ggplot(out_data,aes(value))+
+  geom_density(aes(color=variable))

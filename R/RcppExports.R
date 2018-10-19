@@ -91,7 +91,11 @@ test_sampleDonor_cpp <- function(data, similar, hid, IDswap_vec, IDswap_pool_vec
     .Call(`_recordSwapping_test_sampleDonor_cpp`, data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed)
 }
 
-test_unorderedSet <- function(x) {
-    .Call(`_recordSwapping_test_unorderedSet`, x)
+test_prioqueue <- function(x_vec, prob, mustSwap_vec, n, seed) {
+    .Call(`_recordSwapping_test_prioqueue`, x_vec, prob, mustSwap_vec, n, seed)
+}
+
+test_comparator <- function(x_vec, prob, mustSwap_vec, n, seed) {
+    .Call(`_recordSwapping_test_comparator`, x_vec, prob, mustSwap_vec, n, seed)
 }
 

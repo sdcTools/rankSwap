@@ -122,15 +122,74 @@ std::vector<int> test_sampleDonor_cpp(std::vector< std::vector<int> > data, std:
 }
 
 // [[Rcpp::export]]
-int test_unorderedSet(std::vector<int> x){
+std::vector<int> test_prioqueue(std::vector<int> x_vec,std::vector<double> prob,std::vector<int> mustSwap_vec,int n,int seed){
+
+  std::unordered_set<int> mustSwap(mustSwap_vec.begin(),mustSwap_vec.end());
+  std::unordered_set<int> x(x_vec.begin(),x_vec.end());
   
-  std::unordered_set<int> x_set;
-  for(int i=0;i<x.size();i++){
-    x_set.insert(x[i]);
+  std::priority_queue<std::pair<double, int> > q;
+  std::vector<int> sampleID(x.size());
+  std::exponential_distribution<double> exp_dist(1.0);
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+
+  int z=0;
+  for(auto s : x){
+    if(mustSwap.find(s)!=mustSwap.end()){
+      sampleID[z] = s;
+      z++;
+    }else{
+      q.push(std::pair<double, int>(prob[s]/exp_dist(mersenne_engine), s));
+    }
   }
   
-  for(auto i : x_set){
-    cout<<i<<endl;
+  n = max(0,min<int>(q.size(),n-z));
+  sampleID.resize(n+z);
+
+  // select index of top elements from priority_queue
+  for(int i=0;i<n;i++){
+    sampleID[i+z] = q.top().second; //.top() access top element in queue
+    q.pop(); // remove top element in queue
   }
+
+  return sampleID;
 }
 
+
+
+struct Comp{
+  Comp(const std::vector<double>& v ) : _v(v) {}
+  // Inverted comparison!
+  bool operator ()(int a, int b) { return _v[a] > _v[b]; }
+  const std::vector<double>& _v;
+};
+
+// [[Rcpp::export]]
+std::vector<int> test_comparator(std::vector<int> x_vec,std::vector<double> prob,std::vector<int> mustSwap_vec, int n, int seed){
+  
+  std::unordered_set<int> mustSwap(mustSwap_vec.begin(),mustSwap_vec.end());
+  std::unordered_set<int> x(x_vec.begin(),x_vec.end());
+  
+  std::exponential_distribution<double> exp_dist(1.0);
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  int N = x.size();
+
+  // apply prob[i]/exp_dist(mersenne_engine) over whole prob vector
+  std::for_each(prob.begin(),prob.end(), [&exp_dist, &mersenne_engine](double& d) {d = d/exp_dist(mersenne_engine);});
+  // define highest sampling value and give all elements in mustSwap this probabilits (they will always be selected)
+  std::vector<int> x_return(x.begin(),x.end());
+  int z=0;
+  for(int i=0;i<N;i++){
+    if(mustSwap.find(x_return[i])!=mustSwap.end()){
+      iter_swap(x_return.begin() + z, x_return.begin() + i);
+      z++;
+    }
+  }
+
+  // sort x by prob
+  std::partial_sort(x_return.begin()+z,x_return.begin()+n-z,x_return.end(),Comp(prob));
+  x_return.resize(n);
+  
+  return x_return;
+}

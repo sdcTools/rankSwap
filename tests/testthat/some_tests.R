@@ -30,7 +30,7 @@ table(orderTRUE)
 # if not supplied by user this can be done by using k anonymity
 # risk will be setup
 # then sampling probability ~ risk
-dat <- recordSwapping:::create.dat(100000)
+dat <- recordSwapping:::create.dat(50000)
 dat_t <- transpose(dat)
 hierarchy <- 0:3
 risk_variables <- 5:8
@@ -50,7 +50,22 @@ for(i in 1:length(hierarchy)){
 }
 all.equal(risk_direct,risk,check.attributes=FALSE)
 
-
+microbenchmark(cpp={
+  risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
+#  risk <- as.data.table(transpose(risk))
+#  risk <- cbind(hid=dat$hid,risk)
+},
+R={
+  risk_direct <- dat[,.(hid)]
+  for(i in 1:length(hierarchy)){
+    by.cols <- colnames(dat)[c(risk_variables,hierarchy)+1]
+    by.cols <- by.cols[1:(length(risk_variables)+i)]
+    risk_i <- dat[,.(hid,1/.N),by=c(by.cols)]
+    risk_i <- unique(risk_i[,.(max(V2)),by=hid])
+    setnames(risk_i,"V1",paste0("V",i))
+    risk_direct <- merge(risk_direct,risk_i)
+  }
+})
 ############################
 # test setLevels
 # set swap levels for person which does not fullfill risk threshold
@@ -93,9 +108,12 @@ b <- 1e4
 ID <- 1:n
 seed.base <- 1:1e6
 IDused <- rep(0,n)
-IDused[sample(ID,Nused)] <- 1
+startpoint <- sample(ID[1:(max(ID)-Nused)],1)
+IDused[startpoint:(startpoint+Nused-1)] <- 1
 
 prob <- sample(c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20)))
+
+microbenchmark(cpp_samp = recordSwapping:::test_randSample_cpp(1:n,N,prob,IDused,seed=sample(seed.base,1)))
 
 out_mat <- replicate(b,{
   cpp_samp <- recordSwapping:::test_randSample_cpp(1:n,N,prob,IDused,seed=sample(seed.base,1))
@@ -165,8 +183,6 @@ similar <- list(c(5))
 risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
 dat$prob <- unlist(transpose(risk))
 
-
-
 nsamp <- 3000
 swap_pool <- sample(unique(dat$nuts1),1)
 IDswap_vec <- dat[nuts1==swap_pool,sample(.I,nsamp)]-1 
@@ -206,15 +222,74 @@ ggplot(out_data,aes(value))+
 # 
 dat <- recordSwapping:::create.dat(100000)
 dat_t <- transpose(dat)
-hierarchy <- 0
-risk_variables <- 5:8
+hierarchy <- 0:2
+risk_variables <- 6:7
 k_anonymity <- 3
-swaprata <- .1
+swaprate <- .1
 hid <- 4
 similar <- list(c(5))
 
+risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
+risk_threshold <- 1/k_anonymity
+level_cpp <- recordSwapping:::setLevels_cpp(risk,risk_threshold)
+table(level_cpp)
+
+a <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+
+############################
+# some additional tests
+N <- 10000
+n <- 500
+x <- sample(1:N)
+x <- 1:N
+mustSwap <- c(1:100)
+prob <- c(rnorm(N-n,mean=5),rnorm(n,mean=30))
+seed <- sample(1:1e6,1)
+recordSwapping:::test_comparator(x,prob,mustSwap,n,seed)
+seed <- sample(1:1e6,1)
+recordSwapping:::test_prioqueue(x,prob,mustSwap,n,seed)
+c <- sample(x,n,prob=prob)
+a <- recordSwapping:::test_comparator(x,prob,mustSwap,n,seed)
+b <- recordSwapping:::test_prioqueue(x,prob,mustSwap,n,seed)
+
+microbenchmark(comp=recordSwapping:::test_comparator(x,prob,mustSwap,n,seed),
+               queue=recordSwapping:::test_prioqueue(x,prob,mustSwap,n,seed),
+               R=sample(x,n,prob=prob)
+               # wrswoR = x[wrswoR::sample_int_crank(N,n,prob)]
+               )
+
+b <- 1000
+out_mat <- replicate(b,{
+  seed <- sample(1:1e6,1)
+  comp <- recordSwapping:::test_comparator(x,prob,mustSwap,n,seed)
+  queue <- recordSwapping:::test_prioqueue(x,prob,mustSwap,n,seed)
+  R <- sample(x,n,prob=prob)
+  wrswoR <-  x[wrswoR::sample_int_crank(N,n,prob)]
+  cbind(comp,queue,R,wrswoR)
+})
+
+out_data <- list()
+for(i in 1:b){
+  out_tmp <- out_mat[,1:4,i]
+  out_tmp <- data.table(value=out_tmp,run=i)
+  out_data <- c(out_data,list(out_tmp))
+}
+
+out_data <- rbindlist(out_data)
+out_data <- melt(out_data,id.vars="run")
+out_data
+library(ggplot2)
+ggplot(out_data[variable%in%c("value.comp","value.queue")],aes(value))+
+  geom_density(aes(color=variable))
 
 
+
+
+
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
 
 dat <- recordSwapping:::create.dat(100000)
 
