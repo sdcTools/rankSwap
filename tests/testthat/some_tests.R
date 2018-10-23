@@ -223,7 +223,7 @@ ggplot(out_data,aes(value))+
 dat <- recordSwapping:::create.dat(100000)
 dat_t <- transpose(dat)
 hierarchy <- 0:2
-risk_variables <- 6:7
+risk_variables <- 5:6
 k_anonymity <- 3
 swaprate <- .1
 hid <- 4
@@ -234,7 +234,73 @@ risk_threshold <- 1/k_anonymity
 level_cpp <- recordSwapping:::setLevels_cpp(risk,risk_threshold)
 table(level_cpp)
 
-a <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+# run recordSwap()
+dat_swapped <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+
+# run recordSwap() with
+# k_anonymity=0
+k_anonymity <- 0
+dat_swapped <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.2
+swaprate <- .2
+dat_swapped <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.2
+swaprate <- .2
+dat_swapped <- recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.1
+# and 1 hierarchy level
+hierarchy <- 0
+swaprate <- 0.1
+dat_swapped <- recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+
 
 ############################
 # some additional tests

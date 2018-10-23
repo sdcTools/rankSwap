@@ -572,7 +572,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   std::map<int,std::map<double,int>> samp_order_donor;
   int z=0; // counter used for while() ect...
   int nhid = 0;
-  
+
   /////////////////////////////
   // create map containing subgroups according to hierarchy
   // and IDs of each subgroup
@@ -624,6 +624,14 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   int check_donor = 0;
   int check_sample = 0;
   
+  /////////
+  // this is needed only for the lowest hierarchy
+  // will be changed for the final version
+  std::vector<double> prob_help(n);
+  for(int i=0;i<n;i++){
+    prob_help[i] = prob[i][nhier-1];
+  }
+  
   /////////////////////////////
   // Procedure for swapping starts here:
   // loop over hierarchies 
@@ -633,7 +641,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     // values of map element that must be swapped at current stage
     // if no elements need to be swapped than skipp this step
     std::unordered_set<int> mustSwap;
-    cout<<"level: "<<h<<endl;
+    cout<<"swapping in level: "<<h<<endl;
     if(group_levels.find(h)!=group_levels.end()){
       mustSwap = group_levels[h];
     }
@@ -687,7 +695,6 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
               IDswap[z]=s;
               z++;
             }
-            cout<<"must swapping done"<<endl;
           }
           IDswap.resize(z);
         }else{
@@ -711,21 +718,18 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         
         // apply sampling here -> should still be quick because IDswap_draw will not be extremely large
         // in randSample households that must be swapped are automatically choosen
-        std::vector<int> IDswap_help = randSample(IDswap_draw,countRest,prob[0],mersenne_engine,IDused,mustSwap);
-        cout<<"drawing sample done"<<endl;
+        std::vector<int> IDswap_help = randSample(IDswap_draw,countRest,prob_help,mersenne_engine,IDused,mustSwap);
         IDswap.resize(IDswap_help.size());
         IDswap = IDswap_help; 
       }
       
       // if any IDs need to be swapped:
       if(IDswap.size()>0){
-        
-        
+
         // get donor set
         // if IDdonor is -1 at a position ==> no donor for IDswap at same position
         std::vector<int> IDdonor = sampleDonor(data, similar, IDswap, x.second,
                                             samp_order_donor[h], IDused, hid);
-        cout<<"drawing donor done"<<endl;  
 
         // set Index to used
         for(int i=0;i<IDdonor.size();i++){
@@ -742,9 +746,8 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       }
       /////////////////
     }
-    cout<<"level: "<<h<<" done"<<endl;
   }
-  
+
   ////////////////////////////////////////////////////
   // Create output using swappedIndex
   
@@ -752,21 +755,21 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   int hsize=0;
   int hsizewith=0;
   for(auto const&x : swappedIndex){
-    hsize = map_hsize[data[hid][x.first]];
-    hsizewith = map_hsize[data[hid][x.second]];
+    hsize = map_hsize[data[x.first][hid]];
+    hsizewith = map_hsize[data[x.second][hid]];
     
     // loop over hierarchy
     for(int j=0;j<nhier;j++){
-      swap_hierarchy = data[hierarchy[j]][x.first];
-      swap_hierarchy_with = data[hierarchy[j]][x.second];
+      swap_hierarchy = data[x.first][hierarchy[j]];
+      swap_hierarchy_with = data[x.second][hierarchy[j]];
       for(int h=0;h<max(hsize,hsizewith);h++){
         // swap hierarchy for every household member in x.first
         if(h<hsize){
-          data[hierarchy[j]][x.first+h] = swap_hierarchy_with;
+          data[x.first+h][hierarchy[j]] = swap_hierarchy_with;
         }
         // swap hierarchy for every household member in x.second
         if(h<hsizewith){
-          data[hierarchy[j]][x.second+h] = swap_hierarchy;
+          data[x.second+h][hierarchy[j]] = swap_hierarchy;
         }
       }
     }

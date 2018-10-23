@@ -7,7 +7,7 @@ Authors@R: c(
   person("Johannes", "Gussenbauer", email="Johannes.Gussenbauer@statistik.gv.at", role = c("aut", "cre")),
   person("Bernhard", "Meindl", email = "Bernhard.Meindl@statistik.gv.at", role = c("aut")),
   person("Alexander", "Kowarik", email="Alexander.Kowarik@statistik.gv.at", role = "aut"))
-Maintainer: Matthias Templ <matthias.templ@gmail.com>
+Maintainer: Johannes Gussenbauer <Johannes.Gussenbauer@statistik.gv.at>
 Description: Method developed by....
 LazyData: TRUE
 ByteCompile: TRUE
