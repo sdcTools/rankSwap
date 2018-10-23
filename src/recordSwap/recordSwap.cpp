@@ -220,7 +220,7 @@ std::vector<int> randSample(std::unordered_set<int> &ID, int N, std::vector<doub
 
 /*
  * Function to distribute n draws over a given number of groups
- * the distribution is always proportional pro group size
+ * the distribution is always proportional to group size
  */
 std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
                                                                                          int &nhid, double &swaprate,
@@ -632,7 +632,6 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
 
   ////////////////////////////////////////////////////
   // Create output using swappedIndex
-  
   int swap_hierarchy,swap_hierarchy_with;
   int hsize=0;
   int hsizewith=0;
@@ -666,7 +665,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   if(IDnotUsed.size()==0){
     cout<<"Recordswapping was successful!"<<endl;
   }else{
-    cout<<"Donor "<<endl;
+    cout<<"Donor household was not found in "<<IDnotUsed.size()<<" cases."<<endl;
   }
   
   return data;

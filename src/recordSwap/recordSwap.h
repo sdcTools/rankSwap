@@ -74,7 +74,7 @@ std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<
   
 /*
  * Function to distribute n draws over a given number of groups
- * the distribution is always proportional pro group size
+ * the distribution is always proportional to group size
  */
 std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
                                                               int &nhid, double &swaprate,

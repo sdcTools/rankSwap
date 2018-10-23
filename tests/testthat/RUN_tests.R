@@ -96,7 +96,7 @@ IDused[startpoint:(startpoint+Nused-1)] <- 1
 prob <- sample(c(rnorm(n/2,mean=10,sd=2),rnorm(n/2,mean=100,sd=20)))
 
 out_mat <- replicate(b,{
-  cpp_samp <- recordSwapping:::test_randSample_cpp(1:n,N,prob,IDused,seed=sample(seed.base,1))
+  cpp_samp <- recordSwapping:::randSample_cpp(1:n,N,prob,IDused,seed=sample(seed.base,1))
   R_samp <- sample(ID[IDused==0],N,prob=prob[IDused==0])
   wrswoR_samp <- wrswoR::sample_int_crank(n-Nused,N,prob[IDused==0])
   wrswoR_samp <- ID[IDused==0][wrswoR_samp]
@@ -133,7 +133,7 @@ drawDistrubtionTRUE <- replicate(B,{
   hid <- 4
   
   seed.base <- 1:1e6
-  distdraw <- as.data.table(recordSwapping:::test_distributeDraws_cpp(dat_t,hierarchy,hid,swaprate,sample(seed.base,1)))
+  distdraw <- as.data.table(recordSwapping:::distributeDraws_cpp(dat_t,hierarchy,hid,swaprate,sample(seed.base,1)))
   distdraw <- transpose(distdraw)
   
   # compare with R solution
@@ -181,7 +181,7 @@ b <- 5000
 out_mat <- replicate(b,{
   seed <- sample(1:1e6,1)
   set.seed(seed)
-  IDdonor <- recordSwapping:::test_sampleDonor_cpp(dat_t,similar,hid,IDswap_vec,IDswap_pool_vec, dat$prob,seed)
+  IDdonor <- recordSwapping:::sampleDonor_cpp(dat_t,similar,hid,IDswap_vec,IDswap_pool_vec, dat$prob,seed)
   IDdonor_R <- dat[nuts1!=swap_pool,sample(.I-1,N[1],prob=prob),by=c(sim_names)][,V1]
   cbind(IDdonor,
         IDdonor_R)
@@ -199,3 +199,121 @@ out_data <- melt(out_data,id.vars="run")
 library(ggplot2)
 ggplot(out_data,aes(value))+
   geom_density(aes(color=variable))
+
+
+############################
+# check recordSwap as a whole
+# 
+dat <- recordSwapping:::create.dat(100000)
+dat_t <- transpose(dat)
+hierarchy <- 0:2
+risk_variables <- 5:6
+k_anonymity <- 3
+swaprate <- .1
+hid <- 4
+similar <- list(c(5))
+
+risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
+risk_threshold <- 1/k_anonymity
+level_cpp <- recordSwapping:::setLevels_cpp(risk,risk_threshold)
+table(level_cpp)
+
+# run recordSwap()
+dat_swapped <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+
+# run recordSwap() with
+# k_anonymity=0
+k_anonymity <- 0
+dat_swapped <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.2
+swaprate <- .2
+dat_swapped <-recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.2
+swaprate <- .2
+dat_swapped <- recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.1
+# and 1 hierarchy level
+hierarchy <- 0
+swaprate <- 0.1
+dat_swapped <- recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.1
+# with multiple similarity profiles
+hierarchy <- 0:2
+k_anonymity <- 1
+similar <- list(c(0,5,9,10),c(5,9))
+
+dat_swapped <- recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.1
+# where donor cannot be found
+hierarchy <- 0:1
+k_anonymity <- 1
+similar <- list(c(0:1))
+
+dat_swapped <- recordSwap(dat_t,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- as.data.table(dat_swapped)
+dat_swapped <- transpose(dat_swapped)
+setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
