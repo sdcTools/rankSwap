@@ -39,7 +39,7 @@ recordSwap <- function(data, similar, hierarchy, risk_variables, hid, k_anonymit
   risk_threshold <- 0
   risk <- data.frame()
   
-  if(any(c(similar, hierarchy, risk_variables, hid)>=ncol(data))){
+  if(any(c(unlist(similar), hierarchy, risk_variables, hid)>=ncol(data))){
     stop("Indices higher than column number in data")
   }
   

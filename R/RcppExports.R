@@ -35,8 +35,8 @@
 #' @param seed integer defining the seed for the random number generator, for reproducability.
 #' 
 #' @return Returns data set with swapped records.
-recordSwap_cpp <- function(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed = 123456L) {
-    .Call(`_recordSwapping_recordSwap_cpp`, data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed)
+recordSwap_cpp <- function(data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed = 123456L) {
+    .Call(`_recordSwapping_recordSwap_cpp`, data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed)
 }
 
 #' @title Define Swap-Levels
@@ -65,10 +65,6 @@ orderData_cpp <- function(data, orderIndex) {
     .Call(`_recordSwapping_orderData_cpp`, data, orderIndex)
 }
 
-test_randSample_cpp <- function(ID, N, prob, IDused, seed) {
-    .Call(`_recordSwapping_test_randSample_cpp`, ID, N, prob, IDused, seed)
-}
-
 #' @title Calculate Risk
 #' 
 #' @description Calculate risk for records to be swapped and donor records.  Risks are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
@@ -83,12 +79,16 @@ setRisk_cpp <- function(data, hierarchy, risk_variables, hid) {
     .Call(`_recordSwapping_setRisk_cpp`, data, hierarchy, risk_variables, hid)
 }
 
-test_distributeDraws_cpp <- function(data, hierarchy, hid, swaprate, seed = 123456L) {
-    .Call(`_recordSwapping_test_distributeDraws_cpp`, data, hierarchy, hid, swaprate, seed)
+randSample_cpp <- function(ID, N, prob, IDused, seed) {
+    .Call(`_recordSwapping_randSample_cpp`, ID, N, prob, IDused, seed)
 }
 
-test_sampleDonor_cpp <- function(data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed = 123456L) {
-    .Call(`_recordSwapping_test_sampleDonor_cpp`, data, similar, hid, IDswap_vec, IDswap_pool_vec, prob, seed)
+distributeDraws_cpp <- function(data, hierarchy, hid, swaprate, seed = 123456L) {
+    .Call(`_recordSwapping_distributeDraws_cpp`, data, hierarchy, hid, swaprate, seed)
+}
+
+sampleDonor_cpp <- function(data, similar, hid, IDswap, IDswap_pool_vec, prob, seed = 123456L) {
+    .Call(`_recordSwapping_sampleDonor_cpp`, data, similar, hid, IDswap, IDswap_pool_vec, prob, seed)
 }
 
 test_prioqueue <- function(x_vec, prob, mustSwap_vec, n, seed) {

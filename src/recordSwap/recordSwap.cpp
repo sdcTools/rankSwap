@@ -7,6 +7,7 @@
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
+#include "recordSwap.h"
 using namespace std;
 
 /*
@@ -46,7 +47,7 @@ std::vector< std::vector<int> > orderData(std::vector< std::vector<int> > &data,
 * this function returns the hierarchy level over which a unit/household needs to be swapped
 * 0 meaning the highest hierarchy level, 1 the second highest hierarchy level, and so on....
 */
-std::vector<int> setLevels(std::vector< std::vector<double> > risk, double risk_threshold) {
+std::vector<int> setLevels(std::vector< std::vector<double> > &risk, double risk_threshold) {
   
   // risk: data containing the risk for each hierarchy level and each unit. risk[0] returns the vector of risks for the first unit over all hierarchy levels
   // risk_threshold: double defining the risk threshold beyond which a record/household needs to be swapped. This is understood as risk>=risk_threshhold.
@@ -75,7 +76,7 @@ std::vector<int> setLevels(std::vector< std::vector<double> > risk, double risk_
 * in each hierarchy level
 * this is then used as smapling probability
 */
-std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid){
+std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > &data, std::vector<int> &hierarchy, std::vector<int> &risk_variables, int &hid){
   
   // data: data input
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
@@ -167,7 +168,6 @@ std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > data, 
 * Sampling function
 * samples the unordered indices in ID
 */
-
 std::vector<int> randSample(std::unordered_set<int> &ID, int N, std::vector<double> &prob, std::mt19937 &mersenne_engine,
                                    std::vector<int> &IDused, std::unordered_set<int> &mustSwap){
   
@@ -216,29 +216,6 @@ std::vector<int> randSample(std::unordered_set<int> &ID, int N, std::vector<doub
   }
   return sampleID;
 }
-
-/*
-* test random sampling and seed
-* used to check of state of RNG changes successfully with function calls
-* and compare with sampling in R
-* this wrapper is needed since it is not possible to map to an std::unordered_set<int> from R
-*/
-std::vector<int> test_randSample(std::vector<int> ID, int N, std::vector<double> prob,std::vector<int> IDused, int seed){
-  
-  ;
-  // set random seed according to input parameter and
-  // initialize random number generator with seed
-  std::mt19937 mersenne_engine;
-  mersenne_engine.seed(seed);
-  
-  std::unordered_set<int> mustSwap;
-  std::unordered_set<int> ID_set(ID.begin(),ID.end());
-  
-  std::vector<int> output = randSample(ID_set,N,prob,mersenne_engine,IDused,mustSwap);
-
-  return output;
-}
-
 
 
 /*
@@ -311,73 +288,6 @@ std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vect
 
 
 /*
- * Function to test distributeDraws()
- * this is again needed because one cannot map to all C++ containers from R objects, for instance std::unordered_set<int>
- */
-std::vector< std::vector<int> > test_distributeDraws(std::vector< std::vector<int> > data,
-                                                     std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
-  
-  // define parameter
-  int n = data.size();
-  int nhier = hierarchy.size();
-  int nhid = 0;
-  int currentID = -1;
-  
-  std::mt19937 mersenne_engine;
-  mersenne_engine.seed(seed);
-  // initialize random number generator for distributeDraws()
-  std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
-  
-  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
-  std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
-  
-  for(int i=0;i<n;i++){
-    
-    if(currentID==data[i][hid]){
-      continue; // go to next iteration if statement is true
-    }
-    
-    currentID = data[i][hid];
-    // ... define hierarchy group
-    for(int j=0;j<nhier;j++){
-      hier_help[j] = data[i][hierarchy[j]];
-    }
-    
-    // supply new household index to each group
-    // use only indices to speed up construction of output data
-    group_hier[hier_help].insert(i);
-    
-    // count number of households
-    nhid++;
-    // skip all other household member, only need first one
-  }
-
-  std::map<std::vector<int>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
-                                                                              runif01, mersenne_engine);
-  
-  
-  // iterate over map to generate output
-  // implementation good enough for testing purposes
-  std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+2));
-  int z = 0;
-  for(auto const&x : draw_group){
-    for(int j=0;j<(nhier+2);j++){
-      if(j<nhier){
-        output[z][j] = x.first[j];
-      }else if(j==nhier){
-        output[z][j] = x.second.first;
-      }else{
-        output[z][j] = x.second.second;
-      }
-    }
-    z++;
-  }
-  return output;
-}
-
-
-
-/*
  * Function to sample from donor set
  * this is done differently than the inital sampling to make procedure more efficient
  */
@@ -444,34 +354,6 @@ std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<
   }
 
   return IDdonor;  
-}
-
-/*
- * Function to test sampleDonor
- */
-std::vector<int> test_sampleDonor(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, int hid,
-                                  std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
-  
-  
-  // generate paramters
-  int n = data.size();
-  std::vector<int> IDused(n);
-  std::unordered_set<int> IDswap_pool(IDswap_pool_vec.begin(),IDswap_pool_vec.end());
-  
-  // generate IDdonor_pool
-  std::mt19937 mersenne_engine;
-  mersenne_engine.seed(seed);
-  // initialise lambda para for exp distribution
-  std::exponential_distribution<double> exp_dist(1.0);
-  std::map<double,int> IDdonor_pool;
-  for(int i=0; i<n; i++){
-    IDdonor_pool[prob[i]/exp_dist(mersenne_engine)] = i;
-  }
-  
-  std::vector<int> IDdonor = sampleDonor(data, similar, IDswap, IDswap_pool,
-                                                       IDdonor_pool, IDused, hid);
-  
-  return IDdonor;
 }
 
 
@@ -641,7 +523,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     // values of map element that must be swapped at current stage
     // if no elements need to be swapped than skipp this step
     std::unordered_set<int> mustSwap;
-    cout<<"swapping in level: "<<h<<endl;
+    cout<<"swapping in hierarchy level: "<<h<<endl;
     if(group_levels.find(h)!=group_levels.end()){
       mustSwap = group_levels[h];
     }
@@ -758,6 +640,12 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     hsize = map_hsize[data[x.first][hid]];
     hsizewith = map_hsize[data[x.second][hid]];
     
+    // erase elements if they have been used during the procedure
+    // donor was not found on highest hierarchy
+    // but donor was found on lowest...
+    IDnotUsed.erase(x.first);
+    IDnotUsed.erase(x.second);
+    
     // loop over hierarchy
     for(int j=0;j<nhier;j++){
       swap_hierarchy = data[x.first][hierarchy[j]];
@@ -773,6 +661,12 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         }
       }
     }
+  }
+  
+  if(IDnotUsed.size()==0){
+    cout<<"Recordswapping was successful!"<<endl;
+  }else{
+    cout<<"Donor "<<endl;
   }
   
   return data;
