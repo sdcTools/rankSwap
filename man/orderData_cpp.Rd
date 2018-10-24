@@ -15,5 +15,7 @@ orderData_cpp(data, orderIndex)
 ordered data set.
 }
 \description{
-Reorders the data according to a column in the data set. This procedure is used inside \code{\link{recordSwap_cpp}} to speed up performance.
+Reorders the data according to a column in the data set.
+\cr
+NOTE: This is an internal function used for testing the C++-function `orderData` which is used inside the C++-function `recordSwap` to speed up performance.
 }

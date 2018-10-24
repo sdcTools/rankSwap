@@ -94,19 +94,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleDonor_cpp
-std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, int hid, std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
-RcppExport SEXP _recordSwapping_sampleDonor_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hidSEXP, SEXP IDswapSEXP, SEXP IDswap_pool_vecSEXP, SEXP probSEXP, SEXP seedSEXP) {
+std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, Rcpp::List similar_cpp, int hid, std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
+RcppExport SEXP _recordSwapping_sampleDonor_cpp(SEXP dataSEXP, SEXP similar_cppSEXP, SEXP hidSEXP, SEXP IDswapSEXP, SEXP IDswap_pool_vecSEXP, SEXP probSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::vector<std::vector<int>> >::type similar(similarSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type similar_cpp(similar_cppSEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type IDswap(IDswapSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type IDswap_pool_vec(IDswap_pool_vecSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleDonor_cpp(data, similar, hid, IDswap, IDswap_pool_vec, prob, seed));
+    rcpp_result_gen = Rcpp::wrap(sampleDonor_cpp(data, similar_cpp, hid, IDswap, IDswap_pool_vec, prob, seed));
     return rcpp_result_gen;
 END_RCPP
 }

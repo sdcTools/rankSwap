@@ -35,34 +35,8 @@ for(n in npop){
     k_anonymity <- 3
     nhier <- length(hierarchy)
     similar <- list(c(5))
-    levels <- recordSwapping:::setLevels_cpp(dat,0:(nhier-1),5:8,4,k_anonymity)
-    prob <- recordSwapping:::setRisk_cpp(dat,0:(nhier-1),5:8,4)
-    
-    # prep data for R function
-    dat_R <- copy(dat)
-    dat_R[,level:=levels]
-    dat_R[,risk:=prob[[1]]]
-    dat_R[,antirisk:=prob[[2]]]
-    dat_R <- unique(dat_R,by="hid")
-    
-    for(i in 1:length(hierarchy)){
-      if(i==1){
-        dat.draw <- dat_R[,.(drawN=recordSwapping:::randomRound(.N*swap)),by=c(hierarchy[1:i],"hsize")]
-      }else{
-        # distribute N
-        # take number of risky households into account??????!!!!!!!!
-        dat.draw.next <- dat_R[,.(N=as.numeric(.N)),by=c(hierarchy[1:i],"hsize")]
-        dat.draw.next[,N:=N/sum(N),by=c("hsize",hierarchy[1:(i-1)])]
-        dat.draw <- merge(dat.draw,dat.draw.next,by=c("hsize",hierarchy[1:(i-1)]),all.y=TRUE)
-        dat.draw[,drawN:=recordSwapping:::randomRound(N*drawN),by=c(hierarchy[1:i],"hsize")]
-        dat.draw[,N:=NULL]
-      }
-    }
-    dat_R <- merge(dat_R,dat.draw,by=c(hierarchy,"hsize"))
-    
-    
-    mb <- microbenchmark(cpp=recordSwap(dat,similar,0:(nhier-1),5:8,4,th,swap),
-                         # R=recordSwapR(copy(dat_R),hierarchy),
+
+    mb <- microbenchmark(cpp=recordSwap(dat,similar,0:(nhier-1),5:8,4,k_anonymity,swaprate,seed=sample(1:1e6,1)),
                          times=times)
     mb <- as.data.table(mb)
     mb[,npop:=n]

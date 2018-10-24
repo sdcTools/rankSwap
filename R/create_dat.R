@@ -13,8 +13,8 @@ create.dat <- function(N=10000){
   nuts3 <- sample(1:15,N,replace=TRUE)
   nuts4 <- sample(1:25,N,replace=TRUE)
   hsize <- sample(1:6,N,replace=TRUE)
-  htype <- sample(1:5,N,replace=TRUE)
-  hincome <- sample(1:5,N,replace=TRUE)
+  htype <- sample(1:10,N,replace=TRUE)
+  hincome <- sample(1:10,N,replace=TRUE)
   
   # replicate
   hid <- rep(1:length(hsize),times=hsize)

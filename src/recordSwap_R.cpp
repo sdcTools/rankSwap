@@ -9,28 +9,12 @@ using namespace Rcpp;
 
 //' @title Targeted Record Swapping
 //' 
-//' @description Applies targeted record swapping on micro data considering the identification risk of each record as well the geographic topology.
-//'  
-//' @details The procedure accepts a rectanglar data set containing all necessary information for the record swapping, e.g parameter \code{hid}, \code{similar}, \code{hierarchy}, ect... \cr 
-//' First the micro data in \code{data} is ordered by \code{hid} and the identification risk is calculated for each record. As of right now only counts is used as 
-//' identification risk and the inverse of counts is used as sampling probability. \cr
-//' \cr 
-//' In addition each record gets an index corresponding to the hierarchy level over which the household must be swapped. For instance having a geographic hierarchy
-//' of county > municipality > district the risk is calculated for each geographic variable and defined risk variables. If a record falls below \code{th} for hierachy county then this record
-//' needs to be swapped accross counties. \cr
-//' \cr 
-//' After that the targeted record swapping is applied starting from the highest to the lowest hierarchy level and cycling through all possible geographic areas at each hierarchy level, e.g every county, every municipality in ever county, ect...
-//' At each geographic area a set of values is created for records to be swapped.\cr
-//' In all but the lowest hierarchy level this is made out of all records which do not fullfill the k-anonymity and have not already been swapped.
-//' Those records are swapped with records not belonging to the same geographic area, which have not already been swapped before hand. Swapping referes to the interchange of geographic variables defined in \code{hierarchy}.
-//' When a record is swapped all other record containing the same \code{hid} are swapped as well. \cr
-//' \cr 
-//' At the lowest hierarchy level in every geographic area the set of records to be swapped is made up of all records which do not fullfill the k-anonymity as well as the remaining numer of records such
-//' that the proportion of swapped records of the geographic area is equal to \code{swaprate}. k-anonymity is implemented in the sense that a household will be swapped if \code{counts<=th}. If, due to the k-anonymity condition, more records have already been swapped in this geographic area then only the 
-//' records which do not fullfill the k-anonymity are swapped.
+//' @description Applies targeted record swapping on micro data set, see \link{\code{recordSwap}} for details.
+//' \cr
+//' NOTS: This is an internal function called by the R-function `recordSwap()`. It's only purpose is to include the C++-function recordSwap() using Rcpp.
 //' 
-//' @param data micro data set containing only integer values.
-//' @param similar vector of vector where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations
+//' @param data micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.
+//' @param similar List where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households.
 //' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
 //' @param risk_variables column indices of variables in \code{data} which will be considered for estimating the risk.
 //' @param hid column index in \code{data} which refers to the household identifier.
@@ -65,10 +49,12 @@ std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > d
 //' @title Define Swap-Levels
 //' 
 //' @description Define hierarchy levels over which record needs to be swapped according to risk variables.
+//' \cr
+//' NOTE: This is an internal function used for testing the C++-function `setLevels()` which is applied inside `recordSwap()`.
 //' 
 //' 
 //' @param risk vector of vectors containing risks of each individual in each hierarchy level. risk[0] returns the vector of risks for the first unit over all hierarchy levels.
-//' risk[1] the vectir if risks for all hierarchy level of unit 2, and so on.
+//' risk[1] the vector if risks for all hierarchy level of unit 2, and so on.
 //' @param risk_threshold double defining the risk threshold beyond which a record/household needs to be swapped. This is understood as risk>=risk_threshhold.
 //' 
 //' @return Integer vector with hierarchy level over which record needs to be swapped with.
@@ -80,7 +66,9 @@ std::vector<int> setLevels_cpp(std::vector< std::vector<double> > risk, double r
 
 //' @title Reorder data
 //' 
-//' @description Reorders the data according to a column in the data set. This procedure is used inside \code{\link{recordSwap_cpp}} to speed up performance.
+//' @description Reorders the data according to a column in the data set.
+//' \cr
+//' NOTE: This is an internal function used for testing the C++-function `orderData` which is used inside the C++-function `recordSwap` to speed up performance.
 //' 
 //' @param data micro data set containing only numeric values.
 //' @param orderIndex column index in \code{data} refering to the column by which data should be ordered.
@@ -95,8 +83,10 @@ std::vector< std::vector<int> > orderData_cpp(std::vector< std::vector<int> > &d
 
 //' @title Calculate Risk
 //' 
-//' @description Calculate risk for records to be swapped and donor records.  Risks are defined by 1/counts, where counts is the number of records with the same values for specified risk variables in the each geographic hierarchy.
+//' @description Calculate risk for records to be swapped and donor records.  Risks are defined by 1/counts, where counts is the number of records with the same values for specified `risk_variables` in the each geographic hierarchy.
 //' This risk will be used as sampling probability for both sampling set and donor set.
+//' \cr
+//' NOTE: This is an internal function used for testing the C++-function `setRisk` which is used inside the C++-function `recordSwap`.
 //' 
 //' @param data micro data set containing only numeric values.
 //' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
@@ -110,12 +100,18 @@ std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > da
 }
 
 
-/*
- * test random sampling and seed
- * used to check of state of RNG changes successfully with function calls
- * and compare with sampling in R
- * this wrapper is needed since it is not possible to map to an std::unordered_set<int> from R
- */
+//' @title Random Sampling
+//' 
+//' @description Randomly select records given a proabability weight vector `prob`. 
+//' \cr
+//' NOTE: This is an internal function used for testing the C++-function `randSample` which is used inside the C++-function `recordSwap`.
+//' 
+//' @param ID vector containing record IDs from which to sample
+//' @param N integer defining the number of records to be sampled
+//' @param prob a vector of probability weights for obtaining the elements of the vector being sampled.
+//' @param IDused vector containing IDs which must not be sampled
+//' @param seed integer setting the sampling seed
+//' 
 // [[Rcpp::export]]
 std::vector<int> randSample_cpp(std::vector<int> ID, int N, std::vector<double> prob,std::vector<int> IDused, int seed){
   
@@ -133,10 +129,19 @@ std::vector<int> randSample_cpp(std::vector<int> ID, int N, std::vector<double> 
 }
 
 
-/*
- * Function to test distributeDraws()
- * this is again needed because one cannot map to all C++ containers from R objects, for instance std::unordered_set<int>
- */
+//' @title Distribute number of swaps
+//' 
+//' @description Distribute number of swaps across lowest hierarchy level according to a predefinde `swaprate`. The swaprate is applied such that a single swap counts as swapping 2 households.
+//' Number of swaps are randomly rouded up or down, if needed, such that the total number of swaps is in coherence with the swaprate.
+//' \cr
+//' NOTE: This is an internal function used for testing the C++-function `distributeDraws` which is used inside the C++-function `recordSwap`.
+//' 
+//' @param data micro data containing the hierarchy levels and household ID
+//' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
+//' @param hid column index in \code{data} which refers to the household identifier.
+//' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
+//' @param seed integer setting the sampling seed
+//' 
 // [[Rcpp::export]]
 std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int> > data,
                                                      std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
@@ -205,10 +210,35 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
 /*
  * Function to test sampleDonor
  */
+//' @title Random sample for donor records
+//' 
+//' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function `recordSwap`.
+//' \cr
+//' NOTE: This is an internal function used for testing the C++-function `sampleDonor` which is used inside the C++-function `recordSwap`.
+//' 
+//' @param data micro data containing the hierarchy levels and household ID
+//' @param similar List where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households.
+//' @param hid column index in \code{data} which refers to the household identifier.
+//' @param IDswap vector containing records for which a donor needs to be sampled
+//' @param IDswap_pool_vec set from which `IDswap` was drawn
+//' @param prob a vector of probability weights for obtaining the elements of the vector being sampled.
+//' @param seed integer setting the sampling seed
+//' 
 // [[Rcpp::export]]
-std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar, int hid,
+std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, Rcpp::List similar_cpp, int hid,
                                   std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
   
+  
+  // prep inputs for the call to sampleDonor()
+  // some formats can not directly be transformed to stl-containers
+  std::vector<std::vector<int>> similar(similar_cpp.size());
+  for(int i=0;i<similar_cpp.size();i++){
+    Rcpp::List sublist = similar_cpp[i];
+    int m = sublist.size();
+    for(int j=0;j<m;j++){
+      similar[i].push_back(sublist[j]);
+    }
+  }
   
   // generate paramters
   int n = data.size();
@@ -232,6 +262,10 @@ std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vect
 }
 
 
+/*
+ * Some test functions
+ * NOT USED AS OF RIGHT NOW!
+ */
 // [[Rcpp::export]]
 std::vector<int> test_prioqueue(std::vector<int> x_vec,std::vector<double> prob,std::vector<int> mustSwap_vec,int n,int seed){
 

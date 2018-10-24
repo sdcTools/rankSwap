@@ -23,22 +23,24 @@ There are however substantial differences between the SAS- and C++-Code. Some of
 The targeted record swapping can be applied with the function `recordSwap()`. All other functions in the package are called from inside `recordSwap()` and are only exportet for testing purposes. The function has the following arguments:
 
 ```{rcpp,include=TRUE,eval=FALSE}
-recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
-               std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
-               int seed = 123456)
+recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar,
+                                           std::vector<int> hierarchy, std::vector<int> risk_variables, int hid, 
+                                           int k_anonymity, double swaprate, double risk_threshold,
+                                           std::vector<std::vector<double>> risk, int seed = 123456)
 ```
 
 + **data** micro data containing ONLY integer values, rectangular table format.
-+ **similar** column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations
++ **similar** vector of vector containing the similarity profiles that is sets of variables in \code{data} which should be considered when swapping households. \code{similar[0]} corresponds to the first set similarity variables, \code{similar[1]} to the second set and so on. 
 + **hierarchy** column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-+ **risk** column indices of variables in \code{data} which will be considered for estimating the risk.
++ **risk_variables** column indices of variables in \code{data} which will be considered for estimating the risk. This is only used if `risk` was not supplied.
 + **hid** column index in \code{data} which refers to the household identifier.
-+ **th** integer defining the threshhold of high risk households (k-anonymity). Right now this is implemented as `th <= counts`.
++ **k_anonymity** integer defining the threshhold of high risk households (k-anonymity). Right now this is implemented as `k_anonymity <= counts`.
 + **swaprate** double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
++ **risk_threshold** risk threshold which determines if a record has to be swapped and over which hierarchy level. This overwrites k_anonymity.
++ **risk** vector of vector containing the risk of each individual for each hierarchy level. `risk[0]` corresponds to the risks of the first record for all hierachy levels, `risk[1]` for the second record and so on.
 + **seed** integer defining the seed for the random number generator, for reproducability.
 
-**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses the first column and `data[0][0]` the first entry in the first column.
-
+**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses the first column and `data[0][0]` the first entry in the first column. The same logic hold for the argument `risk`.
 
 
 ### Some differences to SAS-Code
@@ -50,15 +52,11 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
 
 #### Sampling probability
 
-+ **C++-Code**: Sampling probability is directly derived from the counts over the risk and geographic variables, by 
++ **C++-Code**: Sampling probability is directly derived from the counts over the risk and each geographic variables, by 
 $$
-p_i=\frac{1}{counts_i}
+p_{i,h}=\frac{1}{counts_{i,h}}
 $$
-where $counts_i$ is the number of counts for record $i$. The probability,$p^d_i$ for sampling donor records for the procedure is defined by
-
-$$
-p^d_i = max(1-p_i,5^{-10})
-$$
+where $counts_{i,h}$ is the number of counts for record $i$ in hierarchy $h$. This sampling probability is used for selecting households as well as donor households. 
 
 + **SAS-Code**: Sampling probability is derived from the multiple factors.
     
@@ -116,55 +114,91 @@ with $H_m$ as the proportion of high risk households in municipality $m$.
 
 The package was tested on randomly generated data, which contained 4 geographic levels and some other soziodemographic variables.
 ```{r}
-dat <- recordSwapping:::create.dat(N=500000)
+dat <- recordSwapping:::create.dat(N=250000)
 dat
 ```
 
 Applying the record swapping to dat could look like this
 
 ```{r}
-th <- 3
+hierarchy <- 0:2
+risk_variables <- 5:7
+k_anonymity <- 3
 swaprate <- .05
-dat_swapped <- as.data.table(recordSwap(dat,5,0:2,5:7,4,th,swaprate))
-setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+hid <- 4
+similar <- list(c(5))
+
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
 dat_swapped
 ```
 
 Here the procedure was applied to `dat`
 
 + using every hierarchy level, `nuts1` to `nuts3` 
-+ using `hsize` as the similarity variable (so only households with the same households size are swapped)
++ using `hsize` as the similarity variable (so only households with the same household size are swapped)
 + using `hsize`, `ageGroup`, `gender` as risk variables
 + setting the k-anonymity rule to 3
 + setting the swaprate to 0.05
 
-Please note, that in C++ indexing starts with 0 but in R it starts with 1. Therefore the position of columns in `dat` are specified by `5`,`0:3`,ect...
+Please note, that in C++ indexing starts with 0 but in R it starts with 1. Therefore the position of columns in `dat` are specified by `5`,`0:2`,ect...
 
 If `th <- 0` only the swaprate is considered. Then at most `th*100`% of the households are swapped. If the sample is very small the actual number of swaps can be smaller, however this can only happen if some regions have a very small number of households e.g. 1,2,3,...
 
 ```{r}
-th <- 0
+k_anonymity <- 0
 swaprate <- .05
-dat_swapped <- as.data.table(recordSwap(dat,5,0:2,5:7,4,th,swaprate))
-setnames(dat_swapped,colnames(dat_swapped),colnames(dat))
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
 dat_swapped
 ```
 
 Comparing number of swapped households
 
 ```{r}
-dat_comp <- unique(dat[,.(paste(geo=nuts1,nuts2,nuts3,nuts4,sep="_"),hid=hid)])
-dat_comp_swapped <- unique(dat_swapped[,.(paste(geo=nuts1,nuts2,nuts3,nuts4,sep="_"),hid=hid)])
-dat_comp
-
-dat_comp_merge <- merge(dat_comp,dat_comp_swapped,by="hid")
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
 
 # number of swapped households
-nrow(dat_comp_merge[V1.x!=V1.y])
+nrow(dat_compare[V1.x!=V1.y])
 ```
 ```{r}
 # swaprate times number of households in data
 swaprate*nrow(dat[!duplicated(hid)])
+```
+
+With the parameter `similar` multiple similarity profiles can be defined. If a donor could not be found for the first similarity profile (`similar[[1]]`) then a donor is searched for using the next similart profile (`similar[[2]]`).
+
+```{r}
+# demonstrate on small data set
+dat <- recordSwapping:::create.dat(N=10000)
+# similarity profile contains:
+# nuts1 + hsize + htype + hincome
+hierarchy <- 0:1
+similar <- list(c(0,5,9,10))
+
+# procedure will not always find a suitable donor
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+```
+
+Using multiple similarity profiles makes it easy to supply fall-back profiles if the initial profile is too specific.
+
+```{r}
+# similarity additianal profil containig only hsize 
+similar[[2]] <- c(5)
+similar
+```
+```{r}
+# procedure found donors for every record
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
 ```
 
 ## Benchmarking
