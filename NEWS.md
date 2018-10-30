@@ -5,8 +5,8 @@
     + `similar` is now a vector of vectors allowing for multiple similarity profiles
     + changed `std::vector<int> risk` to `std::vector<int> risk_variables` for a more descriptive name
     + changed `int th` to `int k_anonymity` for a more descriptive name
-    + added parameter `double risk_threshold` which can be used to set an custom risk threshold. household whith a risk **greater or equal** `risk_threshold` is set as risky household
-    + added parameter `std::vector<std::vector<double>> risk` which can be used as custom risks for each household in each hierarchy level.
+    + added parameter `double risk_threshold` which can be used to set an custom risk threshold. household whith a risk **greater or equal** `risk_threshold` is set as risky household (**not yet supported by `R` wrapper**)
+    + added parameter `std::vector<std::vector<double>> risk` which can be used as custom risks for each household in each hierarchy level (**not yet supported by `R` wrapper**)
 
 ```r
 recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar,

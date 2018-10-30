@@ -396,7 +396,8 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   
   ////////////////////////////////////////////////////
   // order data by hid 
-  orderData(data,hid);
+  // not needed at the moment -> order data outside function
+  // orderData(data,hid);
   ////////////////////////////////////////////////////
   
   
