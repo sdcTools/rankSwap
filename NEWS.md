@@ -34,7 +34,7 @@ recordSwap(std::vector< std::vector<int>> data, std::vector<int> similar,
 
 * The parameter `data` contains the household data and is used internal such that `data[0]` contains values for each individual for the first column of the data,
 `data[1]` contains the values for each individual for the second column of the data, and so on.
-* The procedure expects the data to be **sorted** by household ID (column `hid`). Sorting inside each household is irrelevant. 
+* The procedure expects the data to be **ordered** by household ID (column `hid`). Ordering inside each household is irrelevant. 
 * Various internal help functions are included. These are however not intended for flexible use and are only called from withing `recordSwap()`                                           
 
 

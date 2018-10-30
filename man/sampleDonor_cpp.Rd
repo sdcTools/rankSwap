@@ -23,7 +23,7 @@ sampleDonor_cpp(data, similar_cpp, hid, IDswap, IDswap_pool_vec, prob,
 \item{similar}{List where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households.}
 }
 \description{
-Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function `recordSwap`.
+Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
 \cr
-NOTE: This is an internal function used for testing the C++-function `sampleDonor` which is used inside the C++-function `recordSwap`.
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{sampleDonor} which is used inside the C++-function \code{recordSwap()}.
 }

@@ -8,7 +8,8 @@ recordSwap_cpp(data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity,
   swaprate, risk_threshold, risk, seed = 123456L)
 }
 \arguments{
-\item{data}{micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.}
+\item{data}{micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.
+\strong{NOTE:} \emph{data has to be ordered by hid beforehand.}}
 
 \item{hierarchy}{column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.}
 
@@ -32,7 +33,7 @@ recordSwap_cpp(data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity,
 Returns data set with swapped records.
 }
 \description{
-Applies targeted record swapping on micro data set, see \link{\code{recordSwap}} for details.
+Applies targeted record swapping on micro data set, see \code{?recordSwap} for details.
 \cr
-NOTS: This is an internal function called by the R-function `recordSwap()`. It's only purpose is to include the C++-function recordSwap() using Rcpp.
+\strong{NOTE:} This is an internal function called by the R-function \code{recordSwap()}. It's only purpose is to include the C++-function recordSwap() using Rcpp.
 }

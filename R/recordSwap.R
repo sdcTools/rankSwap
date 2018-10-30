@@ -47,8 +47,12 @@
 #' 
 #' @export recordSwap
 recordSwap <- function(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, seed = 123456L){
-
+  
   cnames <- copy(colnames(data))
+  
+  # order data by hid
+  setkeyv(data,cnames[hid+1])
+  
   # transpose data for cpp function
   data <- transpose(data)
   # default values since those parameters are not used yet

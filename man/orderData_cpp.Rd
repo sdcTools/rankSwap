@@ -17,5 +17,5 @@ ordered data set.
 \description{
 Reorders the data according to a column in the data set.
 \cr
-NOTE: This is an internal function used for testing the C++-function `orderData` which is used inside the C++-function `recordSwap` to speed up performance.
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{orderData} which is used inside the C++-function \code{recordSwap()} to speed up performance.
 }

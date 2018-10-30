@@ -18,8 +18,8 @@ distributeDraws_cpp(data, hierarchy, hid, swaprate, seed = 123456L)
 \item{seed}{integer setting the sampling seed}
 }
 \description{
-Distribute number of swaps across lowest hierarchy level according to a predefinde `swaprate`. The swaprate is applied such that a single swap counts as swapping 2 households.
+Distribute number of swaps across lowest hierarchy level according to a predefinde \code{swaprate}. The swaprate is applied such that a single swap counts as swapping 2 households.
 Number of swaps are randomly rouded up or down, if needed, such that the total number of swaps is in coherence with the swaprate.
 \cr
-NOTE: This is an internal function used for testing the C++-function `distributeDraws` which is used inside the C++-function `recordSwap`.
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{distributeDraws} which is used inside the C++-function \code{recordSwap()}.
 }

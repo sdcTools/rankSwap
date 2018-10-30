@@ -18,7 +18,7 @@ randSample_cpp(ID, N, prob, IDused, seed)
 \item{seed}{integer setting the sampling seed}
 }
 \description{
-Randomly select records given a proabability weight vector `prob`. 
+Randomly select records given a proabability weight vector \code{prob}. 
 \cr
-NOTE: This is an internal function used for testing the C++-function `randSample` which is used inside the C++-function `recordSwap`.
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{randSample} which is used inside the C++-function \code{recordSwap()}.
 }

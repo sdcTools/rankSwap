@@ -16,8 +16,8 @@ setRisk_cpp(data, hierarchy, risk_variables, hid)
 \item{hid}{column index in \code{data} which refers to the household identifier.}
 }
 \description{
-Calculate risk for records to be swapped and donor records.  Risks are defined by 1/counts, where counts is the number of records with the same values for specified `risk_variables` in the each geographic hierarchy.
+Calculate risk for records to be swapped and donor records.  Risks are defined by 1/counts, where counts is the number of records with the same values for specified \code{risk_variables} in the each geographic hierarchy.
 This risk will be used as sampling probability for both sampling set and donor set.
 \cr
-NOTE: This is an internal function used for testing the C++-function `setRisk` which is used inside the C++-function `recordSwap`.
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{setRisk} which is used inside the C++-function \code{recordSwap()}.
 }

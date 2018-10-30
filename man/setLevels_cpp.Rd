@@ -7,8 +7,8 @@
 setLevels_cpp(risk, risk_threshold)
 }
 \arguments{
-\item{risk}{vector of vectors containing risks of each individual in each hierarchy level. risk[0] returns the vector of risks for the first unit over all hierarchy levels.
-risk[1] the vector if risks for all hierarchy level of unit 2, and so on.}
+\item{risk}{vector of vectors containing risks of each individual in each hierarchy level. \code{risk[0]} returns the vector of risks for the first unit over all hierarchy levels.
+\code{risk[1]} the vector if risks for all hierarchy level of unit 2, and so on.}
 
 \item{risk_threshold}{double defining the risk threshold beyond which a record/household needs to be swapped. This is understood as risk>=risk_threshhold.}
 }
@@ -18,5 +18,5 @@ Integer vector with hierarchy level over which record needs to be swapped with.
 \description{
 Define hierarchy levels over which record needs to be swapped according to risk variables.
 \cr
-NOTE: This is an internal function used for testing the C++-function `setLevels()` which is applied inside `recordSwap()`.
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{setLevels()} which is applied inside \code{recordSwap()}.
 }
