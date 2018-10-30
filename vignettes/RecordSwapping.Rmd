@@ -203,26 +203,20 @@ nrow(dat_compare[V1.x!=V1.y])
 
 ## Benchmarking
 
-The function applied on randomly generated household data with $n=10^3,10^4,2\cdot 10^4,8\cdot 10^4,1.6\cdot 10^5,3.2\cdot 10^5,5\cdot 10^5,10^6$ households.
-The parameter `swaprate` was set to 0.05 and the paramter `th` was set 3. In addition the targeted record swapping was applied using 2, 3 and 4 hierarchy levels.
-Using all 4 hierarchy levels results in over 18000 distinct geographic areas.
-Figure 2 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 4 hierarchy levels the runtime is at roughly 32 Seconds. 
-
-```{r benchmark,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center"}
-npop <- c(1,2^(1:5))*1e4
-npop <- c(1000,npop,500000,1e6)
-hier <- 2:4
-mb_all <- list()
-for(i in npop){
-  for(j in hier){
-    load(paste0("../R/benchmark_",i,"_",j,".RData"))
-    mb_all <- c(mb_all,list(mb))
-  }
-}
+```{r benchmark, include=FALSE}
+load(paste0("../R/benchmark_cpp.RData"))
 mb_all <- rbindlist(mb_all)
 
 mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
 mb_all[,Hierarchy.Levels:=factor(hier.levels)]
+```
+
+The function applied on randomly generated household data with $n=10^3,10^4,2\cdot 10^4,8\cdot 10^4,1.6\cdot 10^5,3.2\cdot 10^5,5\cdot 10^5,10^6$ households.
+The parameter `swaprate` was set to 0.05 and the paramter `th` was set 3. In addition the targeted record swapping was applied using 2, 3 and 4 hierarchy levels.
+Using all 4 hierarchy levels results in over 18000 distinct geographic areas.
+Figure 2 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 4 hierarchy levels the runtime is at roughly `r round(mb_all[hier.levels==4&npop==1000000,value])` Seconds. *Note: Benchmarks were run with the script `RUN_benchmark.R` in tests/testthat/*.
+
+```{r benchmark_plot,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center"}
 p1 <- ggplot(mb_all,aes(npop,value))+
   geom_point(aes(color=Hierarchy.Levels))+
   geom_line(aes(color=Hierarchy.Levels),alpha=0.4)+
