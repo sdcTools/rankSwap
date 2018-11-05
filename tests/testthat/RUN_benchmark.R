@@ -32,7 +32,7 @@ for(n in npop){
     hierarchy <- hierarchy[1:h]
     risk_variables <- 5:8
     swaprate <- .05 # runif(1)
-    hid <- 5
+    hid <- 4
     k_anonymity <- 3
     nhier <- length(hierarchy)
     similar <- list(c(5))

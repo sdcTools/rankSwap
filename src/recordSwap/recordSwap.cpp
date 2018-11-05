@@ -524,7 +524,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     // values of map element that must be swapped at current stage
     // if no elements need to be swapped than skipp this step
     std::unordered_set<int> mustSwap;
-    // cout<<"swapping in hierarchy level: "<<h<<endl;
+
     if(group_levels.find(h)!=group_levels.end()){
       mustSwap = group_levels[h];
     }
