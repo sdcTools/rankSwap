@@ -16,7 +16,7 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> s
 ```
                                            
 * Fixed some bugs concerning the application of `swaprate`
-* `data` as well as `risk` are used internal such that `data[0]` or `risk[0]` contain the micro data or risk,  over all hierarchies, for the first individual,
+* `data` as well as `risk` are used internal such that `data[0]` or `risk[0]` contain the micro data or risk over all hierarchies for the first individual,
 `data[1]` or `risk[1]` contain the micro data or risk, over all hierarchies, for the second individual, and so on.
 * Documentation and paramter description have been updated in the corresponding help files.
 
