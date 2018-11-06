@@ -293,11 +293,11 @@ vignette("introduction",package="cellKey")
   \begin{itemize}
     \item Some major difference between SAS and C++ implementation
   \end{itemize}
-  \item Implemnted in C++11
+  \item Implemented in C++11
   \begin{itemize}
     \item C++ core functionality used by R-Package \texttt{recordSwapping} and Mu-Argus.
   \end{itemize}
-  \item main function \texttt{recordSwap()}
+  \item single core-function \texttt{recordSwap()}
 \end{itemize}
 \end{frame}
 
@@ -313,10 +313,19 @@ recordSwap(data, # micro data
            seed # random seed
 )
 @
+\begin{itemize}
+  \item \texttt{similar} only households with same household size are swapped
+  \begin{itemize}
+    \item in prototype version procedure silently fails if no donor can be found
+  \end{itemize}
+  \item count tables are generated using \texttt{risk} for each hierarchy
+  \item Records which fullfil \texttt{counts $\leq$ th} are ``high risk`` and must be swapped across respective hierarchy
+  \item \texttt{swaprate} \textasciitilde lower bound for swapped households
+\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Example}
-<<mainRS,eval=FALSE>>=
+<<dataRS>>=
 library(recordSwapping)
 # create some dummy data (~ 100k households)
 dat <- recordSwapping:::create.dat(100000)
@@ -325,30 +334,27 @@ dat
 \end{frame}
 
 \begin{frame}[fragile]{Set Parameters}
-<<mainRS>>=
+<<colnamesRS>>=
+colnames(dat)
+@
+<<paramRS>>=
 # define paramters - in C++ indexing starts with 0 (!)
 hierarchy <- 0:2 # nuts1 - nuts3
 risk <- 5:7 # hsize - gender 
 hid <- 4 # column for hid
+similar <- c(5) # hsize
+
+# variables which are not column indices
 swaprate <- .05 # swaprate of households
 th <- 2 # counts <= th
-similar <- c(5) # hsize
 @
-\begin{itemize}
-  \item count tables are generated using \texttt{risk} for each hierarchy
-  \item Records which fullfil \texttt{counts <= th} are ``high risk`` and must be swapped across respective hierarchy
-  \item \texttt{swaprate} $\tilde$ lower bound for swapped households
-  \item \texttt{similar} only households with same household size are swapped
-  \begin{itemize}
-    \item in prototype version procedure silently fails if no donor can be found
-  \end{itemize}
-\end{itemize}
 
 \end{frame}
 \begin{frame}[fragile]{Function Call}
 <<callRS>>=
 # call recodSwap()
-dat_swapped <- recordSwap(dat,similar,hierarchy,risk,hid,k_anonymity,swaprate)
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk,
+                          hid,th,swaprate)
 # returnes data with swapped records
 dat_swapped
 @
@@ -363,26 +369,23 @@ dat_swapped
           \item SAS-Code uses each risk variable seperately
       \end{itemize}
   \item Sampling probability is defined by $\frac{1}{counts}$
-\end{itemize}
-\end{frame}
-
-% RECORD SWAPPING
-\begin{frame}[fragile]{Differences to SAS}
-\begin{itemize}
   \item Number of swaps households are distributed proportional to size
   \item ``high risk`` households are mandatorily swapped
     \begin{itemize}
           \item set \texttt{th <- 0} to disable this
     \end{itemize}
+  \item More details in the package vignette
+<<vignetteRS, eval=FALSE>>=
+vignette("recordSwapping",package="recordSwapping")
+@
 \end{itemize}
-
-
 \end{frame}
 
 % RECORD SWAPPING
 \begin{frame}[fragile]{Benchmark}
-<<benchmark, echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center">>= 
-load(paste0("../R/benchmark_cpp.RData"))
+<<benchmark, echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center",fig.height=4.5>>= 
+load(paste0("../data/benchmark_cpp.RData"))
+library(ggplot2)
 mb_all <- rbindlist(mb_all)
 
 mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
@@ -395,6 +398,16 @@ p1 <- ggplot(mb_all,aes(npop,value))+
   xlab("Number of Households")
 plot(p1)
 @
+\end{frame}
+
+\begin{frame}[fragile]{Outlook for Record Swapping}
+\begin{itemize}
+  \item Supply risk from external source
+  \item Multiple similarity profiles
+  \item Return information if donor cannot be found
+  \item Add function to calculate information loss
+  \item Improve distribution of number of swaps
+\end{itemize}
 \end{frame}
 
 \end{document}
