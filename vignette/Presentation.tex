@@ -1,0 +1,453 @@
+\documentclass{beamer}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage[sidebar=false,showpagetotal=false]{../../vimdocs/Vorlagen/beamerthemeSTAT}
+\usepackage[sidebar=false,showpagetotal=false]{../../vimdocs/Vorlagen/beamercolorthemeSTAT}
+\usepackage{../../vimdocs/Vorlagen/beamerinnerthemeSTAT}
+\usepackage{../../vimdocs/Vorlagen/beamerouterthemeSTAT}
+\usepackage{../../vimdocs/Vorlagen/beamerfontthemeSTAT}
+%\usepackage{../../vimdocs/Vorlagen/Sweave} % disable Sweave when using knitr
+\usepackage{listings}
+\usepackage{multicol}
+% bibliography
+%\usepackage[round]{natbib}
+%\bibliography{lib}
+
+\bibpunct{(}{)}{,}{a}{}{,}
+%\usepackage[ngerman]{babel} 
+
+
+\hypersetup{colorlinks=true, breaklinks=true, linkcolor=STATred, menucolor=STATred, urlcolor=STATred}
+\newcommand{\Rlogo}{\raisebox{-.1mm}{\includegraphics[width=1.2em]{../../vimdocs/Vorlagen/Rlogo.pdf}}}
+\newcommand{\mymat}[1]{\boldsymbol{#1}}
+\newcommand{\m}[1]{\boldsymbol{#1}}
+\newcommand{\R}{\textsf{R}}
+\newcommand{\code}[1]{\texttt{#1}}     
+\bibpunct{(}{)}{,}{a}{}{,}
+\lstloadlanguages{R} 
+ \lstdefinelanguage{Renhanced}[]{R}{% 
+   morekeywords={kNN,hotdeck,library, impCoda, impKNNa, aggr, plot, class,
+   methods, names, which, robCompositions, head, foo.bar, foo.default}, deletekeywords={c}, 
+   alsoletter={.\%},% 
+   alsoother={:_\$}} 
+ \lstset{language=Renhanced,extendedchars=true, 
+   basicstyle=\small\ttfamily, 
+   commentstyle=\color{STATgrey}, 
+   keywordstyle=\color{STATred}\bfseries,
+   showstringspaces=false, 
+   index=[1][keywords], 
+   indexstyle=\indexfonction
+} 
+\newcommand{\indexfonction}[1]{\index{#1@\texttt{#1}}}
+\newcommand{\boma}[1]{\mbox{\boldmath ${#1}$}}
+\newcommand{\MD}{\mbox{MD}}
+\newcommand{\Cov}{\mbox{Cov}}
+\newcommand{\argmax}{\mathop{\mbox{argmax}}}
+\newcommand{\argmin}{\mathop{\mbox{argmin}}}
+\newcommand{\ab}{\boldsymbol{a}}
+\newcommand{\betab}{\boldsymbol{\beta}}
+\newcommand{\med}{\mathop{\mbox{median}}}
+\newcommand{\mad}{\mathop{\mbox{MAD}}}
+\newcommand{\wb}{\boldsymbol{w}}
+
+\definecolor{Gray}{gray}{0.75}
+\definecolor{pddblue}{rgb}{.17,.31,.44}
+% Farben wie fuer TU
+\definecolor{pddblue}{rgb}{.17,.31,.44}
+\definecolor{pddblue2}{rgb}{.17,.36,.49}
+\definecolor{pddblue3}{rgb}{.2,.35,.60}
+\definecolor{tublau}{rgb}{0,0.4,0.66} % ca. #0066AA
+\definecolor{rotgold}{rgb}{0.8,0.3,0}
+\definecolor{pdlblue}{rgb}{.75,.85,.92}
+\definecolor{pdllblue}{rgb}{.9,.95,.98}
+\definecolor{pdlparchment}{rgb}{.96,.94,.89}
+\definecolor{pddparchment}{rgb}{.89,.85,.69}
+\definecolor{Gray}{gray}{0.75}
+\definecolor{Gray2}{gray}{0.5}
+\definecolor{digreen}{rgb}{.1,.31,.1}
+\definecolor{diblue}{rgb}{.0,.2,.35}
+\definecolor{diblue2}{rgb}{.0,.3,.2}
+
+
+% ---------------------
+% begin of presentation
+% ---------------------
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+% \SweaveOpts{concordance=TRUE} % disable Sweave when using knitr
+% define title and authors
+\title{Implementation of the Cell-Key Method \& Targeted Record Swapping}
+
+\author[Gussenbauer, Kowarik, Meindl]{\textbf{Johannes Gussenbauer}, Alexander Kowarik, Bernhard Meindl}
+\institute[www.statistik.at]{Statistik Austria}
+\date[November 2018]{November, 2018}
+
+% slides
+\pgfdeclareimage[height=0.87cm,width=2cm]{logo}{../../vimdocs/Vorlagen/logo}
+\logo{\pgfuseimage{logo}}
+{
+\usebackgroundtemplate{\includegraphics[height=0.95\paperheight,width=\paperwidth]{../../vimdocs/Vorlagen/titlepage}}
+\begin{frame}
+\titlepage
+\end{frame}
+}
+\setcounter{tocdepth}{1}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{knitr}\hlopt{::}\hlstd{opts_chunk}\hlopt{$}\hlkwd{set}\hlstd{(}\hlkwc{size}\hlstd{=}\hlstr{"footnotesize"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+% INTRODUCTION
+\begin{frame}[fragile]{Introduction}
+\begin{itemize}
+  \item Cell-Key Method and Targeted Record Swapping implemented in R-Packages
+  \item Available on https://github.com/sdcTools
+  \begin{itemize}
+    \item \texttt{recordSwapping}
+    \item \texttt{cellKey}
+  \end{itemize}
+  \item Implementations are prototype-ready
+\end{itemize}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{cellKey}
+\begin{itemize}
+  \item Two different approaches implemented
+  \begin{itemize}
+    \item \textit{Methodology for the Automatic Confidentialisation of Statistical Outputs from Remote Servers at the Australian Bureau of Statistics} (Thompson, Broadfoot, Elazar) 
+    \item Approach developed by the Federal Statistical Office of Germany (Destatis)
+  \end{itemize}
+  \item \texttt{cellKey} depends on R-package \texttt{ptable}
+\end{itemize}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Main Features}
+\begin{itemize}
+  \item Methods \texttt{abs} and \texttt{destatis}
+  \item \texttt{ck\_generate\_rkeys()} for generating record keys
+  
+  \begin{itemize}
+    \item perturbation for magnitude tables only for \texttt{abs} 
+  \end{itemize}
+  
+  \item main function \texttt{pertubTable()}
+  \item allows sampling weights
+  \item define arbitrarily complex hierarchies like in \texttt{sdcTable}
+  
+  \begin{itemize}
+    \item improved functionality in \texttt{cellKey}
+  \end{itemize}
+  
+  \item various auxiliary methods implemented    
+\end{itemize}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Example}
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# load package}
+\hlkwd{library}\hlstd{(cellKey,}\hlkwc{verbose}\hlstd{=}\hlnum{FALSE}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: data.table}}\begin{alltt}
+\hlcom{# load dummy data}
+\hlstd{dat} \hlkwb{<-} \hlkwd{ck_create_testdata}\hlstd{()[,}\hlkwd{c}\hlstd{(}\hlstr{"sex"}\hlstd{,}\hlstr{"age"}\hlstd{,}\hlstr{"savings"}\hlstd{,}
+                               \hlstr{"income"}\hlstd{,}\hlstr{"sampling_weight"}\hlstd{)]}
+\hlstd{dat[,cnt_males}\hlkwb{:=}\hlkwd{ifelse}\hlstd{(sex}\hlopt{==}\hlstr{"male"}\hlstd{,} \hlnum{1}\hlstd{,} \hlnum{0}\hlstd{)]}
+\hlstd{dat[,cnt_highincome}\hlkwb{:=}\hlkwd{ifelse}\hlstd{(income}\hlopt{>=}\hlnum{9000}\hlstd{,} \hlnum{1}\hlstd{,} \hlnum{0}\hlstd{)]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+$\rightarrow$ create a perturbed table of counts of variables \texttt{sex} by \texttt{age} 
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Set parameters}
+
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{pert_params} \hlkwb{<-} \hlkwd{ck_create_pert_params}\hlstd{(}
+  \hlkwc{bigN}\hlstd{=}\hlnum{17312941}\hlstd{,}
+  \hlkwc{smallN}\hlstd{=}\hlnum{12}\hlstd{,}
+  \hlkwc{pTable}\hlstd{=}\hlkwd{ck_create_pTable}\hlstd{(}\hlkwc{D}\hlstd{=}\hlnum{5}\hlstd{,} \hlkwc{V}\hlstd{=}\hlnum{3}\hlstd{,} \hlkwc{pTableSize}\hlstd{=}\hlnum{70}\hlstd{,} \hlkwc{type}\hlstd{=}\hlstr{"abs"}\hlstd{),}
+  \hlkwc{sTable}\hlstd{=}\hlkwd{ck_generate_sTable}\hlstd{(}\hlkwc{smallC}\hlstd{=}\hlnum{12}\hlstd{),}
+  \hlkwc{mTable}\hlstd{=}\hlkwd{c}\hlstd{(}\hlnum{0.6}\hlstd{,}\hlnum{0.4}\hlstd{,}\hlnum{0.2}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Create input}
+
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{inp} \hlkwb{<-} \hlkwd{ck_create_input}\hlstd{(}
+  \hlkwc{dat}\hlstd{=dat,}
+  \hlkwc{def_rkey}\hlstd{=}\hlnum{15}\hlopt{*}\hlkwd{nrow}\hlstd{(dat),}
+  \hlkwc{pert_params}\hlstd{=pert_params)}
+\hlkwd{print}\hlstd{(}\hlkwd{class}\hlstd{(inp))}
+\end{alltt}
+\begin{verbatim}
+## [1] "pert_inputdat"
+## attr(,"package")
+## [1] "cellKey"
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Specify Dimensions}
+
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# example for variable sex}
+\hlstd{dim.sex} \hlkwb{<-} \hlkwd{data.table}\hlstd{(}\hlkwc{levels}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"@"}\hlstd{,}\hlstr{"@@"}\hlstd{,}\hlstr{"@@"}\hlstd{),}
+                      \hlkwc{codes}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"Total"}\hlstd{,} \hlstr{"male"}\hlstd{,} \hlstr{"female"}\hlstd{))}
+\hlkwd{print}\hlstd{(dim.sex)}
+\end{alltt}
+\begin{verbatim}
+##    levels  codes
+## 1:      @  Total
+## 2:     @@   male
+## 3:     @@ female
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# or alternatively}
+\hlstd{dim.sex2} \hlkwb{<-} \hlkwd{ck_create_node}\hlstd{(}\hlkwc{total_lab}\hlstd{=}\hlstr{"Total"}\hlstd{)}
+\hlstd{dim.sex2} \hlkwb{<-} \hlkwd{ck_add_nodes}\hlstd{(dim.sex2,} \hlkwc{reference_node}\hlstd{=}\hlstr{"Total"}\hlstd{,}
+                         \hlkwc{node_labs}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"male"}\hlstd{,}\hlstr{"female"}\hlstd{))}
+\hlkwd{print}\hlstd{(dim.sex2)}
+\end{alltt}
+\begin{verbatim}
+##    levelName
+## 1 Total     
+## 2  ¦--male  
+## 3  °--female
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Specify Dimensions}
+
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# example for variable age}
+\hlstd{dim.age} \hlkwb{<-} \hlkwd{data.table}\hlstd{(}\hlkwc{levels}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"@"}\hlstd{,}\hlkwd{rep}\hlstd{(}\hlstr{"@@"}\hlstd{,} \hlnum{6}\hlstd{)),}
+                      \hlkwc{codes}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"Total"}\hlstd{,} \hlkwd{paste0}\hlstd{(}\hlstr{"age_group"}\hlstd{,}\hlnum{1}\hlopt{:}\hlnum{6}\hlstd{)))}
+
+\hlcom{# or alternatively}
+\hlstd{dim.age2} \hlkwb{<-} \hlkwd{ck_create_node}\hlstd{(}\hlkwc{total_lab}\hlstd{=}\hlstr{"Total"}\hlstd{)}
+\hlstd{dim.age2} \hlkwb{<-} \hlkwd{ck_add_nodes}\hlstd{(dim.age2,} \hlkwc{reference_node}\hlstd{=}\hlstr{"Total"}\hlstd{,}
+                         \hlkwc{node_labs}\hlstd{=}\hlkwd{paste0}\hlstd{(}\hlstr{"age_group"}\hlstd{,}\hlnum{1}\hlopt{:}\hlnum{6}\hlstd{))}
+\hlkwd{print}\hlstd{(dim.age2)}
+\end{alltt}
+\begin{verbatim}
+##        levelName
+## 1 Total         
+## 2  ¦--age_group1
+## 3  ¦--age_group2
+## 4  ¦--age_group3
+## 5  ¦--age_group4
+## 6  ¦--age_group5
+## 7  °--age_group6
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Compine Hierachies}
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{dimList} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{sex}\hlstd{=dim.sex,} \hlkwc{age}\hlstd{=dim.age2)}
+\hlkwd{print}\hlstd{(dimList)}
+\end{alltt}
+\begin{verbatim}
+## $sex
+##    levels  codes
+## 1:      @  Total
+## 2:     @@   male
+## 3:     @@ female
+## 
+## $age
+##        levelName
+## 1 Total         
+## 2  ¦--age_group1
+## 3  ¦--age_group2
+## 4  ¦--age_group3
+## 5  ¦--age_group4
+## 6  ¦--age_group5
+## 7  °--age_group6
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+\begin{frame}[fragile]{Perturb Table}
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{tab1} \hlkwb{<-} \hlkwd{perturbTable}\hlstd{(}\hlkwc{inp}\hlstd{=inp,} \hlkwc{dimList}\hlstd{=dimList,}
+                     \hlkwc{countVars}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"cnt_males"}\hlstd{,} \hlstr{"cnt_highincome"}\hlstd{),}
+  \hlkwc{weightVar}\hlstd{=}\hlstr{"sampling_weight"}\hlstd{,} \hlkwc{numVars}\hlstd{=}\hlkwa{NULL}\hlstd{)}
+\hlkwd{print}\hlstd{(tab1)}
+\end{alltt}
+\begin{verbatim}
+## The weighted 2-dimensional table consists of 21 cells. The results are based on all units in the input data. 
+## The dimensions are given by the following variables
+## o sex
+## o age 
+## 
+## Type of pTable-used: 'abs' 
+## The following count-variables have been tabulated/perturbed:
+## o Total
+## o cnt_males
+## o cnt_highincome 
+## No numeric variables have been tabulated/perturbed in this table
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+\begin{frame}[fragile]{Perturbed Table}
+  \begin{itemize}
+    \item returns tables with \texttt{ck\_freq\_table()} 
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+ \hlcom{# count table containing}
+ \hlcom{# original, perturbed and (un)weighted values}
+ \hlkwd{ck_freq_table}\hlstd{(tab1,} \hlkwc{vname}\hlstd{=}\hlstr{"cnt_males"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+    \item compute information loss measures with \texttt{ck\_cnt\_measures()}
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{ck_cnt_measures}\hlstd{(tab1,} \hlkwc{vname}\hlstd{=}\hlstr{"Total"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+  \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Perturbed Table}
+\begin{itemize}
+  \item perturbed table of continous data
+\end{itemize}
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{tab2} \hlkwb{<-} \hlkwd{perturbTable}\hlstd{(}\hlkwc{inp}\hlstd{=inp,}\hlkwc{dimList}\hlstd{=dimList,}\hlkwc{weightVar}\hlstd{=}\hlstr{"sampling_weight"}\hlstd{,}
+  \hlkwc{countVars}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"cnt_males"}\hlstd{,} \hlstr{"cnt_highincome"}\hlstd{),}
+  \hlkwc{numVars}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"savings"}\hlstd{,}\hlstr{"income"}\hlstd{))}
+
+\hlstd{p_income} \hlkwb{<-} \hlkwd{ck_cont_table}\hlstd{(tab2,} \hlkwc{vname}\hlstd{=}\hlstr{"income"}\hlstd{,} \hlkwc{meanBeforeSum}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+\hlkwd{head}\hlstd{(p_income)}
+\end{alltt}
+\begin{verbatim}
+##      sex        age UW_income pUW_income  WS_income pWS_income pWM_income
+## 1: Total      Total  22952978 22930849.1 1363517148 1362202587   5006.736
+## 2: Total age_group1   9810547  9794206.1  583047435  582076283   4966.648
+## 3: Total age_group2   5692119  5679273.0  336517278  335757827   4968.743
+## 4: Total age_group3   4406946  4398044.8  261341079  260813219   5090.330
+## 5: Total age_group4   2133543  2133021.2  128441306  128409893   5054.513
+## 6: Total age_group5    848151   857505.6   49990424   50541786   5073.967
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+\begin{frame}[fragile]{Perturbed Table}
+\begin{itemize}
+  \item perturbed table for a specific group $\rightarrow$ \texttt{by="cnt\_highincome"}
+\end{itemize}
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{tab3} \hlkwb{<-} \hlkwd{perturbTable}\hlstd{(}\hlkwc{inp}\hlstd{=inp,} \hlkwc{dimList}\hlstd{=dimList,}
+  \hlkwc{weightVar}\hlstd{=}\hlstr{"sampling_weight"}\hlstd{,}
+  \hlkwc{numVars}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"savings"}\hlstd{),} \hlkwc{by}\hlstd{=}\hlstr{"cnt_highincome"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\end{frame}
+
+\end{document}
+

@@ -1,0 +1,401 @@
+\documentclass{beamer}
+\usepackage[sidebar=false,showpagetotal=false]{../../vimdocs/Vorlagen/beamerthemeSTAT}
+\usepackage[sidebar=false,showpagetotal=false]{../../vimdocs/Vorlagen/beamercolorthemeSTAT}
+\usepackage{../../vimdocs/Vorlagen/beamerinnerthemeSTAT}
+\usepackage{../../vimdocs/Vorlagen/beamerouterthemeSTAT}
+\usepackage{../../vimdocs/Vorlagen/beamerfontthemeSTAT}
+%\usepackage{../../vimdocs/Vorlagen/Sweave} % disable Sweave when using knitr
+\usepackage{listings}
+\usepackage{multicol}
+% bibliography
+%\usepackage[round]{natbib}
+%\bibliography{lib}
+
+\bibpunct{(}{)}{,}{a}{}{,}
+%\usepackage[ngerman]{babel} 
+
+
+\hypersetup{colorlinks=true, breaklinks=true, linkcolor=STATred, menucolor=STATred, urlcolor=STATred}
+\newcommand{\Rlogo}{\raisebox{-.1mm}{\includegraphics[width=1.2em]{../../vimdocs/Vorlagen/Rlogo.pdf}}}
+\newcommand{\mymat}[1]{\boldsymbol{#1}}
+\newcommand{\m}[1]{\boldsymbol{#1}}
+\newcommand{\R}{\textsf{R}}
+\newcommand{\code}[1]{\texttt{#1}}     
+\bibpunct{(}{)}{,}{a}{}{,}
+\lstloadlanguages{R} 
+ \lstdefinelanguage{Renhanced}[]{R}{% 
+   morekeywords={kNN,hotdeck,library, impCoda, impKNNa, aggr, plot, class,
+   methods, names, which, robCompositions, head, foo.bar, foo.default}, deletekeywords={c}, 
+   alsoletter={.\%},% 
+   alsoother={:_\$}} 
+ \lstset{language=Renhanced,extendedchars=true, 
+   basicstyle=\small\ttfamily, 
+   commentstyle=\color{STATgrey}, 
+   keywordstyle=\color{STATred}\bfseries,
+   showstringspaces=false, 
+   index=[1][keywords], 
+   indexstyle=\indexfonction
+} 
+\newcommand{\indexfonction}[1]{\index{#1@\texttt{#1}}}
+\newcommand{\boma}[1]{\mbox{\boldmath ${#1}$}}
+\newcommand{\MD}{\mbox{MD}}
+\newcommand{\Cov}{\mbox{Cov}}
+\newcommand{\argmax}{\mathop{\mbox{argmax}}}
+\newcommand{\argmin}{\mathop{\mbox{argmin}}}
+\newcommand{\ab}{\boldsymbol{a}}
+\newcommand{\betab}{\boldsymbol{\beta}}
+\newcommand{\med}{\mathop{\mbox{median}}}
+\newcommand{\mad}{\mathop{\mbox{MAD}}}
+\newcommand{\wb}{\boldsymbol{w}}
+
+\definecolor{Gray}{gray}{0.75}
+\definecolor{pddblue}{rgb}{.17,.31,.44}
+% Farben wie fuer TU
+\definecolor{pddblue}{rgb}{.17,.31,.44}
+\definecolor{pddblue2}{rgb}{.17,.36,.49}
+\definecolor{pddblue3}{rgb}{.2,.35,.60}
+\definecolor{tublau}{rgb}{0,0.4,0.66} % ca. #0066AA
+\definecolor{rotgold}{rgb}{0.8,0.3,0}
+\definecolor{pdlblue}{rgb}{.75,.85,.92}
+\definecolor{pdllblue}{rgb}{.9,.95,.98}
+\definecolor{pdlparchment}{rgb}{.96,.94,.89}
+\definecolor{pddparchment}{rgb}{.89,.85,.69}
+\definecolor{Gray}{gray}{0.75}
+\definecolor{Gray2}{gray}{0.5}
+\definecolor{digreen}{rgb}{.1,.31,.1}
+\definecolor{diblue}{rgb}{.0,.2,.35}
+\definecolor{diblue2}{rgb}{.0,.3,.2}
+
+
+% ---------------------
+% begin of presentation
+% ---------------------
+
+ 
+\begin{document}
+% \SweaveOpts{concordance=TRUE} % disable Sweave when using knitr
+% define title and authors
+\title{Implementation of the Cell-Key Method \& Targeted Record Swapping}
+
+\author[Gussenbauer, Kowarik, Meindl]{\textbf{Johannes Gussenbauer}, Alexander Kowarik, Bernhard Meindl}
+\institute[www.statistik.at]{Statistik Austria}
+\date[November 2018]{November, 2018}
+
+% slides
+\pgfdeclareimage[height=0.87cm,width=2cm]{logo}{../../vimdocs/Vorlagen/logo}
+\logo{\pgfuseimage{logo}}
+{
+\usebackgroundtemplate{\includegraphics[height=0.95\paperheight,width=\paperwidth]{../../vimdocs/Vorlagen/titlepage}}
+\begin{frame}
+\titlepage
+\end{frame}
+}
+\setcounter{tocdepth}{1}
+
+<<>>=
+knitr::opts_chunk$set(size="footnotesize")
+@
+
+
+% INTRODUCTION
+\begin{frame}[fragile]{Introduction}
+\begin{itemize}
+  \item Cell-Key Method and Targeted Record Swapping implemented in R-Packages
+  \item Available on https://github.com/sdcTools
+  \begin{itemize}
+    \item \texttt{recordSwapping}
+    \item \texttt{cellKey}
+  \end{itemize}
+  \item Implementations are prototype-ready
+\end{itemize}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{cellKey}
+\begin{itemize}
+  \item Two different approaches implemented
+  \begin{itemize}
+    \item \textit{Methodology for the Automatic Confidentialisation of Statistical Outputs from Remote Servers at the Australian Bureau of Statistics} (Thompson, Broadfoot, Elazar) 
+    \item Approach developed by the Federal Statistical Office of Germany (Destatis)
+  \end{itemize}
+  \item \texttt{cellKey} depends on R-package \texttt{ptable}
+\end{itemize}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Main Features}
+\begin{itemize}
+  \item Methods \texttt{abs} and \texttt{destatis}
+  \item \texttt{ck\_generate\_rkeys()} for generating record keys
+  
+  \begin{itemize}
+    \item perturbation for magnitude tables only for \texttt{abs} 
+  \end{itemize}
+  
+  \item main function \texttt{pertubTable()}
+  \item allows sampling weights
+  \item define arbitrarily complex hierarchies like in \texttt{sdcTable}
+  
+  \begin{itemize}
+    \item improved functionality in \texttt{cellKey}
+  \end{itemize}
+  
+  \item various auxiliary methods implemented    
+\end{itemize}
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Example}
+<<init>>=
+# load package
+library(cellKey,verbose=FALSE)
+
+# load dummy data
+dat <- ck_create_testdata()[,c("sex","age","savings",
+                               "income","sampling_weight")]
+dat[,cnt_males:=ifelse(sex=="male", 1, 0)]
+dat[,cnt_highincome:=ifelse(income>=9000, 1, 0)]
+@
+$\rightarrow$ create a perturbed table of counts of variables \texttt{sex} by \texttt{age} 
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Set parameters}
+
+<<setParam>>=
+pert_params <- ck_create_pert_params(
+  bigN=17312941, 
+  smallN=12,
+  pTable=ck_create_pTable(D=5, V=3, pTableSize=70, type="abs"),
+  sTable=ck_generate_sTable(smallC=12), 
+  mTable=c(0.6,0.4,0.2))
+@
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Create input}
+
+<<creatInput>>=
+inp <- ck_create_input(
+  dat=dat, 
+  def_rkey=15*nrow(dat), 
+  pert_params=pert_params)
+print(class(inp))
+@
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Specify Dimensions}
+
+<<dimsex>>=
+# example for variable sex
+dim.sex <- data.table(levels=c("@","@@","@@"),
+                      codes=c("Total", "male", "female"))
+print(dim.sex)
+@
+
+<<dimsex2>>=
+# or alternatively
+dim.sex2 <- ck_create_node(total_lab="Total")
+dim.sex2 <- ck_add_nodes(dim.sex2, reference_node="Total",
+                         node_labs=c("male","female"))
+print(dim.sex2)
+@
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Specify Dimensions}
+
+<<dimage>>=
+# example for variable age
+dim.age <- data.table(levels=c("@",rep("@@", 6)),
+                      codes=c("Total", paste0("age_group",1:6)))
+
+# or alternatively
+dim.age2 <- ck_create_node(total_lab="Total")
+dim.age2 <- ck_add_nodes(dim.age2, reference_node="Total",
+                         node_labs=paste0("age_group",1:6))
+print(dim.age2)
+@
+\end{frame}
+
+% CELL KEY
+\begin{frame}[fragile]{Compine Hierachies}
+<<hierarchies>>=
+dimList <- list(sex=dim.sex, age=dim.age2)
+print(dimList)
+@
+\end{frame}
+
+\begin{frame}[fragile]{Perturb Table}
+<<pertTable>>=
+tab1 <- perturbTable(inp=inp, dimList=dimList,
+                     countVars=c("cnt_males", "cnt_highincome"), 
+  weightVar="sampling_weight", numVars=NULL)
+print(tab1)
+@
+\end{frame}
+
+\begin{frame}[fragile]{Perturbed Table}
+  \begin{itemize}
+    \item returns tables with \texttt{ck\_freq\_table()} 
+<<freq, eval=FALSE>>=
+ # count table containing
+ # original, perturbed and (un)weighted values
+ ck_freq_table(tab1, vname="cnt_males")
+@
+
+    \item compute information loss measures with \texttt{ck\_cnt\_measures()}
+<<infoLoss, eval=FALSE>>=
+ck_cnt_measures(tab1, vname="Total")
+@
+  \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Perturbed Table}
+\begin{itemize}
+  \item perturbed table of continous data
+\end{itemize}
+<<pertTable2>>=
+tab2 <- perturbTable(inp=inp,dimList=dimList,weightVar="sampling_weight", 
+  countVars=c("cnt_males", "cnt_highincome"),
+  numVars=c("savings","income"))
+
+p_income <- ck_cont_table(tab2, vname="income", meanBeforeSum=TRUE)
+head(p_income)
+@
+\end{frame}
+
+\begin{frame}[fragile]{Perturbed Table}
+\begin{itemize}
+  \item perturbed table for a specific group $\rightarrow$ \texttt{by="cnt\_highincome"}
+
+<<pertTable3>>=
+tab3 <- perturbTable(inp=inp, dimList=dimList,  
+  weightVar="sampling_weight", 
+  numVars=c("savings"), by="cnt_highincome")
+@
+  
+  \item More details and examples in the package vignette
+<<vignette,eval=FALSE>>=
+vignette("introduction",package="cellKey")
+@
+  
+\end{itemize}
+\end{frame}
+
+% RECORD SWAPPING
+\begin{frame}[fragile]{Targeted Record Swapping}
+\begin{itemize}
+  \item Based on the SAS code on targeted record swapping from ONS
+  \begin{itemize}
+    \item Some major difference between SAS and C++ implementation
+  \end{itemize}
+  \item Implemnted in C++11
+  \begin{itemize}
+    \item C++ core functionality used by R-Package \texttt{recordSwapping} and Mu-Argus.
+  \end{itemize}
+  \item main function \texttt{recordSwap()}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Main Function}
+
+<<mainRS,eval=FALSE>>=
+recordSwap(data, # micro data
+           similar, # variables considered when swapping 
+           hierarchy, # hierarchy levels
+           risk, # risk variables
+           th, # threshold for k-anonymity
+           swaprate, # between 0 and 1 
+           seed # random seed
+)
+@
+\end{frame}
+
+\begin{frame}[fragile]{Example}
+<<mainRS,eval=FALSE>>=
+library(recordSwapping)
+# create some dummy data (~ 100k households)
+dat <- recordSwapping:::create.dat(100000)
+dat
+@
+\end{frame}
+
+\begin{frame}[fragile]{Set Parameters}
+<<mainRS>>=
+# define paramters - in C++ indexing starts with 0 (!)
+hierarchy <- 0:2 # nuts1 - nuts3
+risk <- 5:7 # hsize - gender 
+hid <- 4 # column for hid
+swaprate <- .05 # swaprate of households
+th <- 2 # counts <= th
+similar <- c(5) # hsize
+@
+\begin{itemize}
+  \item count tables are generated using \texttt{risk} for each hierarchy
+  \item Records which fullfil \texttt{counts <= th} are ``high risk`` and must be swapped across respective hierarchy
+  \item \texttt{swaprate} $\tilde$ lower bound for swapped households
+  \item \texttt{similar} only households with same household size are swapped
+  \begin{itemize}
+    \item in prototype version procedure silently fails if no donor can be found
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+\begin{frame}[fragile]{Function Call}
+<<callRS>>=
+# call recodSwap()
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk,hid,k_anonymity,swaprate)
+# returnes data with swapped records
+dat_swapped
+@
+\end{frame}
+
+% RECORD SWAPPING
+\begin{frame}[fragile]{Differences to SAS}
+\begin{itemize}
+  \item Arbitrary number of hierarchy levels and risk variables
+  \item Risk is calculated using the combination of \textbf{all} risk variables
+      \begin{itemize}
+          \item SAS-Code uses each risk variable seperately
+      \end{itemize}
+  \item Sampling probability is defined by $\frac{1}{counts}$
+\end{itemize}
+\end{frame}
+
+% RECORD SWAPPING
+\begin{frame}[fragile]{Differences to SAS}
+\begin{itemize}
+  \item Number of swaps households are distributed proportional to size
+  \item ``high risk`` households are mandatorily swapped
+    \begin{itemize}
+          \item set \texttt{th <- 0} to disable this
+    \end{itemize}
+\end{itemize}
+
+
+\end{frame}
+
+% RECORD SWAPPING
+\begin{frame}[fragile]{Benchmark}
+<<benchmark, echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center">>= 
+load(paste0("../R/benchmark_cpp.RData"))
+mb_all <- rbindlist(mb_all)
+
+mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
+mb_all[,Hierarchy.Levels:=factor(hier.levels)]
+
+p1 <- ggplot(mb_all,aes(npop,value))+
+  geom_point(aes(color=Hierarchy.Levels))+
+  geom_line(aes(color=Hierarchy.Levels),alpha=0.4)+
+  ylab("seconds")+
+  xlab("Number of Households")
+plot(p1)
+@
+\end{frame}
+
+\end{document}
+

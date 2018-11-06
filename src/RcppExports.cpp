@@ -24,17 +24,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // setLevels_cpp
-std::vector<int> setLevels_cpp(std::vector< std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th);
-RcppExport SEXP _recordSwapping_setLevels_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP) {
+std::vector<int> setLevels_cpp(std::vector< std::vector<double> > risk, double risk_threshold);
+RcppExport SEXP _recordSwapping_setLevels_cpp(SEXP riskSEXP, SEXP risk_thresholdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type risk(riskSEXP);
-    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
-    Rcpp::traits::input_parameter< int >::type th(thSEXP);
-    rcpp_result_gen = Rcpp::wrap(setLevels_cpp(data, hierarchy, risk, hid, th));
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> > >::type risk(riskSEXP);
+    Rcpp::traits::input_parameter< double >::type risk_threshold(risk_thresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(setLevels_cpp(risk, risk_threshold));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -50,42 +47,108 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test_randSample_cpp
-std::vector<std::vector<int> > test_randSample_cpp(int B, std::vector<int> ID, int N, std::vector<double> prob, int seed);
-RcppExport SEXP _recordSwapping_test_randSample_cpp(SEXP BSEXP, SEXP IDSEXP, SEXP NSEXP, SEXP probSEXP, SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type B(BSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type ID(IDSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_randSample_cpp(B, ID, N, prob, seed));
-    return rcpp_result_gen;
-END_RCPP
-}
 // setRisk_cpp
-std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk, int hid);
-RcppExport SEXP _recordSwapping_setRisk_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP) {
+std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid);
+RcppExport SEXP _recordSwapping_setRisk_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP risk_variablesSEXP, SEXP hidSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type risk(riskSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type risk_variables(risk_variablesSEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
-    rcpp_result_gen = Rcpp::wrap(setRisk_cpp(data, hierarchy, risk, hid));
+    rcpp_result_gen = Rcpp::wrap(setRisk_cpp(data, hierarchy, risk_variables, hid));
+    return rcpp_result_gen;
+END_RCPP
+}
+// randSample_cpp
+std::vector<int> randSample_cpp(std::vector<int> ID, int N, std::vector<double> prob, std::vector<int> IDused, int seed);
+RcppExport SEXP _recordSwapping_randSample_cpp(SEXP IDSEXP, SEXP NSEXP, SEXP probSEXP, SEXP IDusedSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type ID(IDSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type IDused(IDusedSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(randSample_cpp(ID, N, prob, IDused, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// distributeDraws_cpp
+std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int> > data, std::vector<int> hierarchy, int hid, double swaprate, int seed);
+RcppExport SEXP _recordSwapping_distributeDraws_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP hidSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
+    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
+    Rcpp::traits::input_parameter< double >::type swaprate(swaprateSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(distributeDraws_cpp(data, hierarchy, hid, swaprate, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sampleDonor_cpp
+std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, int hid, std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
+RcppExport SEXP _recordSwapping_sampleDonor_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hidSEXP, SEXP IDswapSEXP, SEXP IDswap_pool_vecSEXP, SEXP probSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type similar(similarSEXP);
+    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type IDswap(IDswapSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type IDswap_pool_vec(IDswap_pool_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(sampleDonor_cpp(data, similar, hid, IDswap, IDswap_pool_vec, prob, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_prioqueue
+std::vector<int> test_prioqueue(std::vector<int> x_vec, std::vector<double> prob, std::vector<int> mustSwap_vec, int n, int seed);
+RcppExport SEXP _recordSwapping_test_prioqueue(SEXP x_vecSEXP, SEXP probSEXP, SEXP mustSwap_vecSEXP, SEXP nSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type x_vec(x_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type mustSwap_vec(mustSwap_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_prioqueue(x_vec, prob, mustSwap_vec, n, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_comparator
+std::vector<int> test_comparator(std::vector<int> x_vec, std::vector<double> prob, std::vector<int> mustSwap_vec, int n, int seed);
+RcppExport SEXP _recordSwapping_test_comparator(SEXP x_vecSEXP, SEXP probSEXP, SEXP mustSwap_vecSEXP, SEXP nSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type x_vec(x_vecSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type mustSwap_vec(mustSwap_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_comparator(x_vec, prob, mustSwap_vec, n, seed));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 8},
-    {"_recordSwapping_setLevels_cpp", (DL_FUNC) &_recordSwapping_setLevels_cpp, 5},
+    {"_recordSwapping_setLevels_cpp", (DL_FUNC) &_recordSwapping_setLevels_cpp, 2},
     {"_recordSwapping_orderData_cpp", (DL_FUNC) &_recordSwapping_orderData_cpp, 2},
-    {"_recordSwapping_test_randSample_cpp", (DL_FUNC) &_recordSwapping_test_randSample_cpp, 5},
     {"_recordSwapping_setRisk_cpp", (DL_FUNC) &_recordSwapping_setRisk_cpp, 4},
+    {"_recordSwapping_randSample_cpp", (DL_FUNC) &_recordSwapping_randSample_cpp, 5},
+    {"_recordSwapping_distributeDraws_cpp", (DL_FUNC) &_recordSwapping_distributeDraws_cpp, 5},
+    {"_recordSwapping_sampleDonor_cpp", (DL_FUNC) &_recordSwapping_sampleDonor_cpp, 7},
+    {"_recordSwapping_test_prioqueue", (DL_FUNC) &_recordSwapping_test_prioqueue, 5},
+    {"_recordSwapping_test_comparator", (DL_FUNC) &_recordSwapping_test_comparator, 5},
     {NULL, NULL, 0}
 };
 
