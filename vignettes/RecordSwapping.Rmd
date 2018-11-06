@@ -1,8 +1,16 @@
 ---
 title: "Targeted Record Swapping"
 author: "Johannes Gussenbauer"
-date: "3 9 2018"
-output: html_document
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+  toc: true
+toc_depth: 5
+number_sections: false
+vignette: >
+  %\VignetteIndexEntry{Targeted Record Swapping}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -77,7 +85,7 @@ with $SA$ as the sample size, $N_{high}$ as the number of high risk households i
 
 + **C++-Code**: Swaps are made in every hierarchy level and records wich do not fullfill the k-anonymity are swapped. The donor set of records to be swapped with is always made out of every record wich do not belong to the same geographic area as the swapped households. At the lowest hierarchy level an additional number of households is swapped such that the proportion of households swapped is equal the number in `swaprate`. If the proportion of already swapped households succeeds this values then only records wich do not fullfill the k-anonymity are swapped.
 
-![Example for swapping households. The number represent the number of high risk households at each hierachy level.](Examplecpp.png)
+![Example for swapping households. The number represent the number of high risk households at each hierachy level.](../docs/Examplecpp.png)
 
 Figure 1 displays an example with hierarchy levels county > municipality > district where the number of high risk households are displayed at the end of the edges. For instance in the first county there are 5 high risk households which will be swapped with households from county 2. In the first municipality there are 10 high risk households which will be swapped with households which are not in the first municipality. At the lowest level, the districts, the number of swaps, $n_{swaps}$ is for the first district is defined by
 
@@ -188,7 +196,7 @@ The use of multiple similarity profiles will be implemented for future versions 
 ## Benchmarking
 
 ```{r benchmark, include=FALSE}
-load(paste0("../R/benchmark_cpp.RData"))
+load(paste0("../data/benchmark_cpp.RData"))
 mb_all <- rbindlist(mb_all)
 
 mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
@@ -200,7 +208,7 @@ The parameter `swaprate` was set to 0.05 and the paramter `th` was set 2. In add
 Using all 4 hierarchy levels results in over 18000 distinct geographic areas.
 Figure 2 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 4 hierarchy levels the runtime is at roughly `r round(mb_all[hier.levels==4&npop==1000000,value])` Seconds. *Note: Benchmarks were run with the script `RUN_benchmark.R` in tests/testthat/*.
 
-```{r benchmark_plot,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center"}
+```{r benchmark_plot,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center",fig.width=7}
 p1 <- ggplot(mb_all,aes(npop,value))+
   geom_point(aes(color=Hierarchy.Levels))+
   geom_line(aes(color=Hierarchy.Levels),alpha=0.4)+
