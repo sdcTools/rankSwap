@@ -198,10 +198,10 @@ ggplot(out_data,aes(value))+
 ############################
 # check recordSwap as a whole
 # 
-dat <- recordSwapping:::create.dat(100000)
-hierarchy <- 0:2
-risk_variables <- 5:6
-k_anonymity <- 3
+dat <- recordSwapping:::create.dat(80000)
+hierarchy <- 0:3
+risk_variables <- 6:8
+k_anonymity <- 1
 swaprate <- .1
 hid <- 4
 similar <- c(5)

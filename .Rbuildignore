@@ -3,6 +3,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^notes_and_testdata$
+^README\.Rmd$
+^NEWS\.md$ 
 docs
 src/recordSwap/*.o
 src/recordSwap/*.so

@@ -19,7 +19,7 @@ set.seed(1234)
 npop <- c(1,2^(1:5))*1e4
 # npop <- c(1000,npop)
 npop <- c(1000,npop,500000,1e6)
-hier.types <- 2:4
+hier.types <- 1:3
 times <- 100 # runtimes for microbenchmark
 n <- npop[1]
 mb_all <- list()
@@ -31,7 +31,7 @@ for(n in npop){
     
     hierarchy <- 0:3
     hierarchy <- hierarchy[1:h]
-    risk_variables <- 7:8
+    risk_variables <- 6:8
     swaprate <- .05 # runif(1)
     hid <- 4
     k_anonymity <- 2
