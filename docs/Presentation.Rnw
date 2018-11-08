@@ -376,7 +376,7 @@ plot(p1)
   \item Supply risk from external source
   \item Multiple similarity profiles
   \item Return information if donor cannot be found
-  \item Add function to calculate information loss
+  \item Add utility measure based on the spatial correlation
   \item Supply either risk threshold or swaprate
 \end{itemize}
 \end{frame}
