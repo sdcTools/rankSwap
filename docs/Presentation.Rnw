@@ -1,10 +1,10 @@
 \documentclass{beamer}
-\usepackage[sidebar=false,showpagetotal=false]{../../vimdocs/Vorlagen/beamerthemeSTAT}
-\usepackage[sidebar=false,showpagetotal=false]{../../vimdocs/Vorlagen/beamercolorthemeSTAT}
-\usepackage{../../vimdocs/Vorlagen/beamerinnerthemeSTAT}
-\usepackage{../../vimdocs/Vorlagen/beamerouterthemeSTAT}
-\usepackage{../../vimdocs/Vorlagen/beamerfontthemeSTAT}
-%\usepackage{../../vimdocs/Vorlagen/Sweave} % disable Sweave when using knitr
+\usepackage[sidebar=false,showpagetotal=false]{Vorlagen/beamerthemeSTAT}
+\usepackage[sidebar=false,showpagetotal=false]{Vorlagen/beamercolorthemeSTAT}
+\usepackage{Vorlagen/beamerinnerthemeSTAT}
+\usepackage{Vorlagen/beamerouterthemeSTAT}
+\usepackage{Vorlagen/beamerfontthemeSTAT}
+%\usepackage{Vorlagen/Sweave} % disable Sweave when using knitr
 \usepackage{listings}
 \usepackage{multicol}
 % bibliography
@@ -12,30 +12,30 @@
 %\bibliography{lib}
 
 \bibpunct{(}{)}{,}{a}{}{,}
-%\usepackage[ngerman]{babel} 
+%\usepackage[ngerman]{babel}
 
 
 \hypersetup{colorlinks=true, breaklinks=true, linkcolor=STATred, menucolor=STATred, urlcolor=STATred}
-\newcommand{\Rlogo}{\raisebox{-.1mm}{\includegraphics[width=1.2em]{../../vimdocs/Vorlagen/Rlogo.pdf}}}
+\newcommand{\Rlogo}{\raisebox{-.1mm}{\includegraphics[width=1.2em]{Vorlagen/Rlogo.pdf}}}
 \newcommand{\mymat}[1]{\boldsymbol{#1}}
 \newcommand{\m}[1]{\boldsymbol{#1}}
 \newcommand{\R}{\textsf{R}}
-\newcommand{\code}[1]{\texttt{#1}}     
+\newcommand{\code}[1]{\texttt{#1}}
 \bibpunct{(}{)}{,}{a}{}{,}
-\lstloadlanguages{R} 
- \lstdefinelanguage{Renhanced}[]{R}{% 
+\lstloadlanguages{R}
+ \lstdefinelanguage{Renhanced}[]{R}{%
    morekeywords={kNN,hotdeck,library, impCoda, impKNNa, aggr, plot, class,
-   methods, names, which, robCompositions, head, foo.bar, foo.default}, deletekeywords={c}, 
-   alsoletter={.\%},% 
-   alsoother={:_\$}} 
- \lstset{language=Renhanced,extendedchars=true, 
-   basicstyle=\small\ttfamily, 
-   commentstyle=\color{STATgrey}, 
+   methods, names, which, robCompositions, head, foo.bar, foo.default}, deletekeywords={c},
+   alsoletter={.\%},%
+   alsoother={:_\$}}
+ \lstset{language=Renhanced,extendedchars=true,
+   basicstyle=\small\ttfamily,
+   commentstyle=\color{STATgrey},
    keywordstyle=\color{STATred}\bfseries,
-   showstringspaces=false, 
-   index=[1][keywords], 
+   showstringspaces=false,
+   index=[1][keywords],
    indexstyle=\indexfonction
-} 
+}
 \newcommand{\indexfonction}[1]{\index{#1@\texttt{#1}}}
 \newcommand{\boma}[1]{\mbox{\boldmath ${#1}$}}
 \newcommand{\MD}{\mbox{MD}}
@@ -71,7 +71,7 @@
 % begin of presentation
 % ---------------------
 
- 
+
 \begin{document}
 % \SweaveOpts{concordance=TRUE} % disable Sweave when using knitr
 % define title and authors
@@ -82,10 +82,10 @@
 \date[November 2018]{November, 2018}
 
 % slides
-\pgfdeclareimage[height=0.87cm,width=2cm]{logo}{../../vimdocs/Vorlagen/logo}
+\pgfdeclareimage[height=0.87cm,width=2cm]{logo}{Vorlagen/logo}
 \logo{\pgfuseimage{logo}}
 {
-\usebackgroundtemplate{\includegraphics[height=0.95\paperheight,width=\paperwidth]{../../vimdocs/Vorlagen/titlepage}}
+\usebackgroundtemplate{\includegraphics[height=0.95\paperheight,width=\paperwidth]{Vorlagen/titlepage}}
 \begin{frame}
 \titlepage
 \end{frame}
@@ -101,10 +101,10 @@ knitr::opts_chunk$set(size="footnotesize")
 \begin{frame}[fragile]{Introduction}
 \begin{itemize}
   \item Cell-Key Method and Targeted Record Swapping implemented in R-Packages
-  \item Available on https://github.com/sdcTools
+  \item Available on \url{https://github.com/sdcTools}
   \begin{itemize}
-    \item \texttt{recordSwapping}
-    \item \texttt{cellKey}
+    \item \texttt{recordSwapping} (\url{https://github.com/sdcTools/recordSwapping})
+    \item \texttt{cellKey} (\url{https://github.com/sdcTools/cellKey})
   \end{itemize}
   \item Implementations are prototype-ready
 \end{itemize}
@@ -113,12 +113,12 @@ knitr::opts_chunk$set(size="footnotesize")
 % CELL KEY
 \begin{frame}[fragile]{cellKey}
 \begin{itemize}
-  \item Two different approaches implemented
+  \item Two different ways to specify perturbation tables available:
   \begin{itemize}
-    \item \textit{Methodology for the Automatic Confidentialisation of Statistical Outputs from Remote Servers at the Australian Bureau of Statistics} (Thompson, Broadfoot, Elazar) 
-    \item Approach developed by the Federal Statistical Office of Germany (Destatis)
+    \item ABS approach developed by Australian Bureau of Statistics
+    \item Approach developed by the Destatis
   \end{itemize}
-  \item \texttt{cellKey} depends on R-package \texttt{ptable}
+  \item \texttt{cellKey} depends on R-package \texttt{ptable} (https://github.com/sdcTools/ptable)
 \end{itemize}
 \end{frame}
 
@@ -126,21 +126,16 @@ knitr::opts_chunk$set(size="footnotesize")
 \begin{frame}[fragile]{Main Features}
 \begin{itemize}
   \item Methods \texttt{abs} and \texttt{destatis}
-  \item \texttt{ck\_generate\_rkeys()} for generating record keys
-  
-  \begin{itemize}
-    \item perturbation for magnitude tables only for \texttt{abs} 
-  \end{itemize}
-  
-  \item main function \texttt{pertubTable()}
+  \item Existing record-keys can be used or generated with \texttt{ck\_generate\_rkeys()}
   \item allows sampling weights
-  \item define arbitrarily complex hierarchies like in \texttt{sdcTable}
-  
+  \item perturbation of magnitude tables (for ABS-method only)
+  \item main function \texttt{perturbTable()}
+  \item useage of arbitrarily complex hierarchies like in \texttt{sdcTable}
+  \item further functionality in \texttt{cellKey}
   \begin{itemize}
-    \item improved functionality in \texttt{cellKey}
+    \item auxiliary methods (print, infoloss/utility, summary, ...) available
+    \item definition of binary sub-groups on the fly
   \end{itemize}
-  
-  \item various auxiliary methods implemented    
 \end{itemize}
 \end{frame}
 
@@ -151,23 +146,27 @@ knitr::opts_chunk$set(size="footnotesize")
 library(cellKey,verbose=FALSE)
 
 # load dummy data
-dat <- ck_create_testdata()[,c("sex","age","savings",
-                               "income","sampling_weight")]
-dat[,cnt_males:=ifelse(sex=="male", 1, 0)]
+dat <- ck_create_testdata()
+dat <- dat[,c("sex","age","savings", "income","sampling_weight")]
 dat[,cnt_highincome:=ifelse(income>=9000, 1, 0)]
 @
-$\rightarrow$ create a perturbed table of counts of variables \texttt{sex} by \texttt{age} 
+$\rightarrow$ create a perturbed table of counts of variables \texttt{sex} by \texttt{age}
 \end{frame}
 
 % CELL KEY
 \begin{frame}[fragile]{Set parameters}
 
+\begin{itemize}
+  \item \texttt{pTable}: perturbation (lookup)-table for frequency table
+  \item \texttt{sTable} and \texttt{mTable}: relevant input for perturbation of magnitude tables
+\end{itemize}
+
 <<setParam>>=
 pert_params <- ck_create_pert_params(
-  bigN=17312941, 
+  bigN=17312941,
   smallN=12,
   pTable=ck_create_pTable(D=5, V=3, pTableSize=70, type="abs"),
-  sTable=ck_generate_sTable(smallC=12), 
+  sTable=ck_generate_sTable(smallC=12),
   mTable=c(0.6,0.4,0.2))
 @
 \end{frame}
@@ -177,8 +176,8 @@ pert_params <- ck_create_pert_params(
 
 <<creatInput>>=
 inp <- ck_create_input(
-  dat=dat, 
-  def_rkey=15*nrow(dat), 
+  dat=dat,
+  def_rkey=15*nrow(dat),
   pert_params=pert_params)
 print(class(inp))
 @
@@ -189,17 +188,10 @@ print(class(inp))
 
 <<dimsex>>=
 # example for variable sex
-dim.sex <- data.table(levels=c("@","@@","@@"),
-                      codes=c("Total", "male", "female"))
+dim.sex <- ck_create_node(total_lab="Total")
+dim.sex <- ck_add_nodes(dim.sex, reference_node="Total",
+  node_labs=c("male","female"))
 print(dim.sex)
-@
-
-<<dimsex2>>=
-# or alternatively
-dim.sex2 <- ck_create_node(total_lab="Total")
-dim.sex2 <- ck_add_nodes(dim.sex2, reference_node="Total",
-                         node_labs=c("male","female"))
-print(dim.sex2)
 @
 \end{frame}
 
@@ -207,42 +199,29 @@ print(dim.sex2)
 \begin{frame}[fragile]{Specify Dimensions}
 
 <<dimage>>=
-# example for variable age
-dim.age <- data.table(levels=c("@",rep("@@", 6)),
-                      codes=c("Total", paste0("age_group",1:6)))
-
-# or alternatively
-dim.age2 <- ck_create_node(total_lab="Total")
-dim.age2 <- ck_add_nodes(dim.age2, reference_node="Total",
-                         node_labs=paste0("age_group",1:6))
-print(dim.age2)
-@
-\end{frame}
-
-% CELL KEY
-\begin{frame}[fragile]{Compine Hierachies}
-<<hierarchies>>=
-dimList <- list(sex=dim.sex, age=dim.age2)
-print(dimList)
+dim.age <- ck_create_node(total_lab="Total")
+dim.age <- ck_add_nodes(dim.age, reference_node="Total",
+  node_labs=paste0("age_group",1:6))
+print(dim.age)
 @
 \end{frame}
 
 \begin{frame}[fragile]{Perturb Table}
 <<pertTable>>=
-tab1 <- perturbTable(inp=inp, dimList=dimList,
-                     countVars=c("cnt_males", "cnt_highincome"), 
-  weightVar="sampling_weight", numVars=NULL)
+tab1 <- perturbTable(inp=inp, dimList=list(sex=dim.sex, age=dim.age),
+  countVars="cnt_highincome",
+  weightVar="sampling_weight", numVars=c("savings","income"))
 print(tab1)
 @
 \end{frame}
 
 \begin{frame}[fragile]{Perturbed Table}
   \begin{itemize}
-    \item returns tables with \texttt{ck\_freq\_table()} 
-<<freq, eval=FALSE>>=
+    \item return tables with \texttt{ck\_freq\_table()} or \texttt{ck\_export\_table()}
+<<freq, eval=TRUE>>=
  # count table containing
  # original, perturbed and (un)weighted values
- ck_freq_table(tab1, vname="cnt_males")
+ print(head(ck_export_table(tab1, vname="Total")))
 @
 
     \item compute information loss measures with \texttt{ck\_cnt\_measures()}
@@ -252,19 +231,13 @@ ck_cnt_measures(tab1, vname="Total")
   \end{itemize}
 \end{frame}
 
-
-
 \begin{frame}[fragile]{Perturbed Table}
 \begin{itemize}
-  \item perturbed table of continous data
+  \item perturbed table of continous (weighted) data
 \end{itemize}
 <<pertTable2>>=
-tab2 <- perturbTable(inp=inp,dimList=dimList,weightVar="sampling_weight", 
-  countVars=c("cnt_males", "cnt_highincome"),
-  numVars=c("savings","income"))
-
-p_income <- ck_cont_table(tab2, vname="income", meanBeforeSum=TRUE)
-head(p_income)
+p_income <- ck_cont_table(tab1, vname="savings", meanBeforeSum=TRUE)
+head(p_income, n=5)
 @
 \end{frame}
 
@@ -273,16 +246,14 @@ head(p_income)
   \item perturbed table for a specific group $\rightarrow$ \texttt{by="cnt\_highincome"}
 
 <<pertTable3>>=
-tab3 <- perturbTable(inp=inp, dimList=dimList,  
-  weightVar="sampling_weight", 
-  numVars=c("savings"), by="cnt_highincome")
+print(head(ck_export_table(tab1, vname="cnt_highincome")))
 @
-  
+
   \item More details and examples in the package vignette
 <<vignette,eval=FALSE>>=
 vignette("introduction",package="cellKey")
 @
-  
+
 \end{itemize}
 \end{frame}
 
@@ -305,11 +276,11 @@ vignette("introduction",package="cellKey")
 
 <<mainRS,eval=FALSE>>=
 recordSwap(data, # micro data
-           similar, # variables considered when swapping 
+           similar, # variables considered when swapping
            hierarchy, # hierarchy levels
            risk, # risk variables
            th, # threshold for k-anonymity
-           swaprate, # between 0 and 1 
+           swaprate, # between 0 and 1
            seed # random seed
 )
 @
@@ -340,7 +311,7 @@ colnames(dat)
 <<paramRS>>=
 # define paramters - in C++ indexing starts with 0 (!)
 hierarchy <- 0:2 # nuts1 - nuts3
-risk <- 5:7 # hsize - gender 
+risk <- 5:7 # hsize - gender
 hid <- 4 # column for hid
 similar <- c(5) # hsize
 
@@ -383,7 +354,7 @@ vignette("recordSwapping")
 
 % RECORD SWAPPING
 \begin{frame}[fragile]{Benchmark}
-<<benchmark, echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center",fig.height=4.5>>= 
+<<benchmark, echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center",fig.height=4.5>>=
 data(benchmark_cpp,package="recordSwapping")
 library(ggplot2)
 mb_all <- rbindlist(mb_all)
