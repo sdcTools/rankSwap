@@ -139,14 +139,14 @@ dat_swapped
 
 Here the procedure was applied to `dat`
 
-+ using hierarchy level, `nuts1` to `nuts3` 
++ using hierarchy levels `nuts1` to `nuts3` 
 + using `hsize` as the similarity variable (so only households with the same household size are swapped)
 + using `hsize`, `ageGroup`, `gender` as risk variables
 + setting the k-anonymity rule to 3
 + setting the swaprate to 0.05
 
 Please note, that in C++ indexing starts with 0 but in R it starts with 1. Therefore the position of columns in `dat` are specified by `5`,`0:2`,ect...
-The data supplied to the function `recordSwap` should idealy be a data.table or data.frame. For more information on the function `recordSwap` the corresponding help page can be opened through
+The data supplied to the function `recordSwap` should idealy be a data.table or data.frame. For more information on the function `recordSwap` one can call the the corresponding help page through
 
 ```{r,eval=FALSE}
 ?recordSwap
