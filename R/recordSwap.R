@@ -45,6 +45,10 @@ recordSwap <- function(data, similar, hierarchy, risk, hid, th, swaprate, seed =
   cnames <- copy(colnames(data))
   
   # order data by hid
+  if(!"data.table"%in%class(data)){
+    data <- as.data.table(data)
+  }
+  
   setkeyv(data,cnames[hid+1])
   
   # transpose data for cpp function
