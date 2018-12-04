@@ -30,7 +30,7 @@ There are however substantial differences between the SAS- and C++-Code. Some of
 ## Functionality
 The targeted record swapping can be applied with the function `recordSwap()`. All other functions in the package are called from inside `recordSwap()` and are only exportet for testing purposes. The function has the following arguments:
 
-```{rcpp,include=TRUE,eval=FALSE}
+```{r cpp,include=TRUE,eval=FALSE}
 recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
                                            std::vector<int> hierarchy, std::vector<int> risk, int hid, 
                                            int th, double swaprate, int seed = 123456)
@@ -159,8 +159,8 @@ dat_swapped
 Comparing number of swapped households
 
 ```{r}
-dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
-                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],by="hid")
 
 # number of swapped households
 nrow(dat_compare[V1.x!=V1.y])
@@ -182,8 +182,8 @@ similar <- c(5,9,10)
 
 # procedure will not always find a suitable donor
 dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
-dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
-                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],by="hid")
 
 # number of swapped households
 nrow(dat_compare[V1.x!=V1.y])
