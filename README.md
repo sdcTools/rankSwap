@@ -50,9 +50,15 @@ swaprate <- .05 # swaprate of households
 # set k_anonymity <- 0 to deactivate this feature
 k_anonymity <- 3
 
+
+# define similarity profile: hsize, htype, hincome
+similar <- c(5,9,10)
+
+# multiple similarity profiles with version > 0.1.0
 # first similarity profile: hsize, htype, hincome
 # second similarity profile: hsize
-similar <- list(c(5,9,10),c(5))
+# similar <- list(c(5,9,10),c(5))
+
 
 # call recodSwap()
 dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)

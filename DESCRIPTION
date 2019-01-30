@@ -15,7 +15,11 @@ LinkingTo: Rcpp
 Depends:
     R (>= 3.4),data.table
 Suggests:
-    testthat,microbenchmark,wrswoR
+    testthat,
+    microbenchmark,
+    wrswoR,
+    knitr,
+    rmarkdown
 Imports:
     Rcpp
 License: GPL-2
