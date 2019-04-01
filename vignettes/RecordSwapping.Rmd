@@ -40,7 +40,7 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> s
 + **risk** vector of vector containing the risk of each individual for each hierarchy level. `risk[0]` corresponds to the risks of the first record for all hierachy levels, `risk[1]` for the second record and so on.
 + **seed** integer defining the seed for the random number generator, for reproducability.
 
-**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses the first column and `data[0][0]` the first entry in the first column. The same logic hold for the argument `risk`.
+**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses variables of the first record and `data[0][0]` the first column of the first record. The same logic hold for the argument `risk`.
 
 
 ### Some differences to SAS-Code
