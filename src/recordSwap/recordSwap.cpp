@@ -72,9 +72,9 @@ std::vector<int> setLevels(std::vector< std::vector<double> > &risk, double risk
 
 
 /*
-* Function to set to set risk for each individual 
+* Function to set the risk for each individual 
 * in each hierarchy level
-* this is then used as smapling probability
+* this is then used as sampling probability
 */
 std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > &data, std::vector<int> &hierarchy, std::vector<int> &risk_variables, int &hid){
   
@@ -428,7 +428,6 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   ////////////////////////////////////////////////////  
   
   ////////////////////////////////////////////////////
-  // this part will be moved further up after testing
   // initialise map for household size
   std::unordered_map<int,int> map_hsize;
   // loop over data and ...
