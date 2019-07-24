@@ -1,4 +1,4 @@
-# surveysd 0.2.0
+# recordSwapping 0.2.0
 
 * Some parameter changes to the `C++` function `recordSwap()`:
 
@@ -20,7 +20,7 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> s
 `data[1]` or `risk[1]` contain the micro data or risk, over all hierarchies, for the second individual, and so on.
 * Documentation and paramter description have been updated in the corresponding help files.
 
-# surveysd 0.1.0
+# recordSwapping 0.1.0
 
 * First prototype version of record swapping 
 * Contains the function `recordSwap()` as the main function of this package
