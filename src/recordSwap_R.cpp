@@ -264,6 +264,52 @@ std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, Rcpp::Lis
 
 
 /*
+ * test randomly distributing stuff
+ */
+//' @title Distribute 
+//' 
+//' @description Distribute `totalDraws` using ratio/probability vector `inputRatio` and randomly round each entry up or down such that the distribution results in an integer vector.
+//' Returns an integer vector containing the number of units in `totalDraws` distributetd according to proportions in `inputRatio`.
+//' 
+//' \cr
+//' \strong{NOTE:} This is an internal function used for testing the C++-function \code{distributeRandom} which is used inside the C++-function \code{recordSwap()}.
+//' 
+//' @param inputRatio vector containing ratios which are used to distribute number units in `totalDraws`.
+//' @param totalDraws number of units to distribute
+//' @param seed integer setting the sampling seed
+//' 
+// [[Rcpp::export]]
+std::vector<int> distributeRandom_cpp(std::vector<double> inputRatio, int totalDraws,
+                                      int seed){
+  
+  // prep input
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  
+  std::vector<int> help_i(1,0);
+  std::map<std::vector<int>,double> ratioDraws;
+  for(int i;i<inputRatio.size();i++){
+    help_i[0] = i;
+    ratioDraws[help_i] = inputRatio[i];
+  }
+  
+  // output
+  std::map<std::vector<int>,int> numberDraws;
+  
+  numberDraws = distributeRandom(ratioDraws, totalDraws,mersenne_engine);
+  
+  // return output
+  std::vector<int> output(numberDraws.size());
+  int z = 0;
+  for(auto const&x : numberDraws){
+    output[z] = x.second;
+    z++;
+  }
+  return output;
+}
+
+
+/*
  * Some test functions
  * NOT USED AS OF RIGHT NOW!
  */
@@ -341,3 +387,6 @@ std::vector<int> test_comparator(std::vector<int> x_vec,std::vector<double> prob
   sampleID.resize(n);
   return sampleID;
 }
+
+
+

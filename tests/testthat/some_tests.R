@@ -369,3 +369,33 @@ plot(p1)
 
 library(plotly)
 ggplotly(p1)
+
+
+
+##### test stuff
+seed <- sample(1:1e6,1)
+ratios <- runif(100)
+ratios <- ratios/sum(ratios)
+totalDraws <- sample(100:1e6,1)
+
+output <- recordSwapping:::distributeRandom_cpp(ratios,totalDraws,seed)
+sum(output)-totalDraws
+
+B <- 1000
+check <- rep(FALSE,B)
+for(i in 1:B){
+  
+  seed <- sample(1:1e6,1)
+  ratios <- runif(sample(10:1000,1))
+  ratios <- ratios/sum(ratios)
+  totalDraws <- sample(100:1e6,1)
+  
+  output <- recordSwapping:::distributeRandom_cpp(ratios,totalDraws,seed)
+  check[i] <- abs(sum(output)-totalDraws)<1e-10
+  if(any(output<0)){
+    stop()
+  }
+}
+all(check)
+
+microbenchmark(recordSwapping:::distributeRandom_cpp(ratios,totalDraws,seed))

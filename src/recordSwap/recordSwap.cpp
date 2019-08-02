@@ -218,6 +218,170 @@ std::vector<int> randSample(std::unordered_set<int> &ID, int N, std::vector<doub
 }
 
 
+// help function to randomly distribute number of units to draw
+std::map<std::vector<int>,int> distributeRandom(std::map<std::vector<int>,double> &ratioDraws, int &totalDraws,
+                                                std::mt19937 &mersenne_engine){
+  
+  // ratioDraws map containing ratio of units to draw for each map entry
+  // totalDraws integer containing total number of units to draw
+  // mersenne_engine random number generator engine
+  
+  // output
+  std::map<std::vector<int>,int> numberDraws;
+  
+  ///////////////
+  // distribute draws at lowest level hierarchy
+  double draw_excess_help = 0;
+  double x_excess = 0;
+  for(auto const&x : ratioDraws){
+    
+    x_excess = ratioDraws[x.first]*(double)totalDraws;
+    
+    numberDraws[x.first] = floor(x_excess);
+    
+    x_excess = x_excess-floor(x_excess);
+    draw_excess_help = draw_excess_help + x_excess;
+    
+  }
+  
+  int draw_excess = std::round(draw_excess_help);
+  // randomly shuffeld index vector
+  // this is similar to randomly round up and down in each group so on average swaprate will be reached
+  std::vector<int> add_extra(ratioDraws.size());
+  std::iota(add_extra.begin(),add_extra.end(),0);
+  std::shuffle(add_extra.begin(),add_extra.end(),mersenne_engine);
+  std::sort(add_extra.begin(),add_extra.begin()+draw_excess); // sort first draw_excess elemets in vector
+  
+  // pick first draw_excess values and add one to them
+  int z = 0;
+  int v = 0;
+  int count_swaps=0;
+  // certain groups will get one more draw
+  for(auto const&x : numberDraws){
+    if(add_extra[v]==z){
+      numberDraws[x.first]++;
+      v++;
+    }
+    count_swaps = count_swaps+numberDraws[x.first];
+    if(v>(draw_excess-1)){
+      break; // if all draw_excess have been distributed break procedure
+    }
+    z++;
+  }
+  
+  // return output
+  return numberDraws;
+}
+
+
+int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
+                                                               std::vector<std::vector<double>> risk,
+                                                               int &nhid, double &swaprate,
+                                                               std::uniform_int_distribution<std::mt19937::result_type> &runif01,
+                                                               std::mt19937 &mersenne_engine){
+  
+  // group_hier map which contains all household indices per hierarchy level (only all hierarchy levels are used atm)
+  // nhid int containing number of households in total
+  // swaprate double containing the swaprate
+  // runif01 & mersenne_engine for sampling procedures
+  
+  ///////////////
+  // OUTPUT:
+  // draw_group[key].first correponds to number of households
+  // draw_group[key].second to number of swaps
+  std::map<std::vector<int>,std::pair<int,int>> draw_group;
+  ///////////////
+  
+  
+  ///////////////
+  // define total number of swaps according to swaprate
+  // swaprate/2 ensures that in the end this percentage of households is swapped
+  // so 1 swap is counted double since with each swap 2 households are swapped
+  int totalDraws = 0; 
+  if(runif01(mersenne_engine)==0){
+    totalDraws = ceil(nhid*(swaprate/2));
+  }else{
+    totalDraws = floor(nhid*(swaprate/2));
+  }
+  
+  ///////////////
+  // sum of risk in each hierarchy
+  int nhier = risk[0].size();
+  std::vector<double> sumRiskHierarchy(nhier,0.0); 
+  for (auto& risk_h : risk){
+    std::transform(sumRiskHierarchy.begin(),sumRiskHierarchy.end(),risk_h.begin(),risk_h.end(),std::plus<double>());
+  }
+
+  ///////////////
+  // define number of units to swap at lowest level hierarchy
+  // loop through all lowest level hierarchies
+  std::map<std::vector<int>,double > ratioRisk; // get ratio of numbers to draw in lowest level hierarchy
+  std::map<std::vector<int>,double > sumRisk; // sum of Risk in each hierarchy level
+  std::map<std::vector<int>,int > unitsHierarchy; // number of units in each hierarchy
+  double sumRatio = 0.0; //help variable for ratio
+  double helpRatio = 0.0; //help variable for ratio
+  
+  // calcualte sum of risk in each hierarchy level
+  for(auto const&x : group_hier){
+    
+    std::vector<int> hl = x.first;
+    for(int h=nhier;--h;){
+      for (const auto& indexI: x.second){
+        sumRisk[hl] += risk[indexI][h];
+      }
+      hl.pop_back();
+    }
+    
+    // get draw ratio ~ percentage of units to draw in each lowest level hierarchy
+    helpRatio = std::max((double)x.second.size()/(double)nhid,sumRisk[x.first]/sumRiskHierarchy[nhier]);
+    sumRatio += helpRatio;
+    ratioRisk[x.first] = helpRatio;
+  }
+  
+  // normalize ratioRiskH
+  for(auto const&x : ratioRisk){
+    ratioRisk[x.first] = ratioRisk[x.first]/sumRatio;  
+  }
+
+  // distribute totalDraws over ratioRiskH
+  std::map<std::vector<int>,int> numberDraws = distributeRandom(ratioRisk, totalDraws,mersenne_engine);
+  
+  // loop over hierarchy and distribute each entry in numberDraws
+  // over the hierarchies
+  std::vector<int> mapIndex(1,0);
+  std::map<std::vector<int>,double > ratioHelp;
+  double helpRisk = 0.0;
+  for(auto const&x : group_hier){
+    
+    std::vector<int> hl = x.first;
+    
+    // get sum of Risk going up the hierarchy levels
+    for(int h=nhier;--h;){
+      helpRisk += sumRisk[hl];
+      ratioHelp[hl] = sumRisk[hl];
+      hl.pop_back();
+    }
+    
+    hl = x.first;
+    for(int h=nhier;--h;){
+      ratioHelp[hl] = sumRisk[hl]/helpRisk;
+      hl.pop_back();
+    }
+    
+    std::map<std::vector<int>,int> helpDist = distributeRandom(ratioHelp, numberDraws[x.first],mersenne_engine);
+    
+    for(auto const&hd : helpDist){
+      numberDraws[hd.first] = hd.second;
+    }
+    helpRisk = 0.0;
+  }
+  
+  return 1;
+}
+
+
+
+
 /*
  * Function to distribute n draws over a given number of groups
  * the distribution is always proportional to group size
@@ -379,20 +543,18 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   
   
   // initialise parameters
-  int n = data.size();
-  int nhier = hierarchy.size();
+  int n = data.size(); // number of obesrvations
+  int nhier = hierarchy.size(); // number of hierarchy levels
   std::unordered_set<int> IDnotUsed;
   // needed for running random number generator and
   // set random seed according to input parameter
   std::mt19937 mersenne_engine;
   mersenne_engine.seed(seed);
-  // initialise lambda para for exp distribution
+  
+  // initialise random number generator for exponential distribution
   std::exponential_distribution<double> exp_dist(1.0);
-  
-  // initialize random number generator rounding up and down in the procedure
+  // initialize random number generator for uniform distribution
   std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
-  
-  std::vector<int> levels(n);
   
   ////////////////////////////////////////////////////
   // order data by hid 
@@ -422,12 +584,12 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       risk_threshold = 1.0/(double)k_anonymity;
     }
   }
-  levels = setLevels(prob,risk_threshold);
-  
+  std::vector<int> levels = setLevels(prob,risk_threshold);
 
   ////////////////////////////////////////////////////  
   
   ////////////////////////////////////////////////////
+  // get household size for each household ID
   // initialise map for household size
   std::unordered_map<int,int> map_hsize;
   // loop over data and ...
@@ -444,7 +606,6 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // swapp at each higher level the number of households that have to be swapped at that level according to "k_anonymity" (see setLevels())
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
-  
   std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
   std::unordered_map<int,std::unordered_set<int> > group_levels; // map containing all IDs which must be swapped at a certain level (~key of map)
   std::vector<int> hier_help(nhier); // help vector to get hierarchy groups

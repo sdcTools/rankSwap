@@ -110,6 +110,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// distributeRandom_cpp
+std::vector<int> distributeRandom_cpp(std::vector<double> inputRatio, int totalDraws, int seed);
+RcppExport SEXP _recordSwapping_distributeRandom_cpp(SEXP inputRatioSEXP, SEXP totalDrawsSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type inputRatio(inputRatioSEXP);
+    Rcpp::traits::input_parameter< int >::type totalDraws(totalDrawsSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(distributeRandom_cpp(inputRatio, totalDraws, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
 // test_prioqueue
 std::vector<int> test_prioqueue(std::vector<int> x_vec, std::vector<double> prob, std::vector<int> mustSwap_vec, int n, int seed);
 RcppExport SEXP _recordSwapping_test_prioqueue(SEXP x_vecSEXP, SEXP probSEXP, SEXP mustSwap_vecSEXP, SEXP nSEXP, SEXP seedSEXP) {
@@ -149,6 +162,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_randSample_cpp", (DL_FUNC) &_recordSwapping_randSample_cpp, 5},
     {"_recordSwapping_distributeDraws_cpp", (DL_FUNC) &_recordSwapping_distributeDraws_cpp, 5},
     {"_recordSwapping_sampleDonor_cpp", (DL_FUNC) &_recordSwapping_sampleDonor_cpp, 7},
+    {"_recordSwapping_distributeRandom_cpp", (DL_FUNC) &_recordSwapping_distributeRandom_cpp, 3},
     {"_recordSwapping_test_prioqueue", (DL_FUNC) &_recordSwapping_test_prioqueue, 5},
     {"_recordSwapping_test_comparator", (DL_FUNC) &_recordSwapping_test_comparator, 5},
     {NULL, NULL, 0}

@@ -121,6 +121,22 @@ sampleDonor_cpp <- function(data, similar_cpp, hid, IDswap, IDswap_pool_vec, pro
     .Call(`_recordSwapping_sampleDonor_cpp`, data, similar_cpp, hid, IDswap, IDswap_pool_vec, prob, seed)
 }
 
+#' @title Distribute 
+#' 
+#' @description Distribute `totalDraws` using ratio/probability vector `inputRatio` and randomly round each entry up or down such that the distribution results in an integer vector.
+#' Returns an integer vector containing the number of units in `totalDraws` distributetd according to proportions in `inputRatio`.
+#' 
+#' \cr
+#' \strong{NOTE:} This is an internal function used for testing the C++-function \code{distributeRandom} which is used inside the C++-function \code{recordSwap()}.
+#' 
+#' @param inputRatio vector containing ratios which are used to distribute number units in `totalDraws`.
+#' @param totalDraws number of units to distribute
+#' @param seed integer setting the sampling seed
+#' 
+distributeRandom_cpp <- function(inputRatio, totalDraws, seed) {
+    .Call(`_recordSwapping_distributeRandom_cpp`, inputRatio, totalDraws, seed)
+}
+
 test_prioqueue <- function(x_vec, prob, mustSwap_vec, n, seed) {
     .Call(`_recordSwapping_test_prioqueue`, x_vec, prob, mustSwap_vec, n, seed)
 }
