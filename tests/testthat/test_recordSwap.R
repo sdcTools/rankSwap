@@ -1,5 +1,5 @@
 #################################
-# test recalib()
+# test recordSwap
 #
 
 context("recalib()")

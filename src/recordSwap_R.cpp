@@ -320,22 +320,24 @@ std::vector<int> test_comparator(std::vector<int> x_vec,std::vector<double> prob
   std::mt19937 mersenne_engine;
   mersenne_engine.seed(seed);
   int N = x.size();
+  std::vector<int> sampleID(x.begin(),x.end());
 
   // apply prob[i]/exp_dist(mersenne_engine) over whole prob vector
   std::for_each(prob.begin(),prob.end(), [&exp_dist, &mersenne_engine](double& d) {d = d/exp_dist(mersenne_engine);});
   // define highest sampling value and give all elements in mustSwap this probabilits (they will always be selected)
-  std::vector<int> x_return(x.begin(),x.end());
+
+  // sort x by prob
+  std::partial_sort(sampleID.begin(),sampleID.begin()+n,sampleID.end(),Comp(prob));
+
+  // include must swapped values if necessary
   int z=0;
-  for(int i=0;i<N;i++){
-    if(mustSwap.find(x_return[i])!=mustSwap.end()){
-      iter_swap(x_return.begin() + z, x_return.begin() + i);
+  for(auto s : mustSwap){
+    if(x.find(s)!=x.end() && std::find(sampleID.begin(), sampleID.begin()+n, s) == sampleID.begin()+n){
+      sampleID[n-(z+1)] = s;
       z++;
     }
   }
 
-  // sort x by prob
-  std::partial_sort(x_return.begin()+z,x_return.begin()+n-z,x_return.end(),Comp(prob));
-  x_return.resize(n);
-  
-  return x_return;
+  sampleID.resize(n);
+  return sampleID;
 }

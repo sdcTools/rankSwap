@@ -321,7 +321,7 @@ N <- 10000
 n <- 500
 x <- sample(1:N)
 x <- 1:N
-mustSwap <- c(1:100)
+mustSwap <- c(200:300)
 prob <- c(rnorm(N-n,mean=5),rnorm(n,mean=30))
 seed <- sample(1:1e6,1)
 recordSwapping:::test_comparator(x,prob,mustSwap,n,seed)
@@ -342,8 +342,10 @@ out_mat <- replicate(b,{
   seed <- sample(1:1e6,1)
   comp <- recordSwapping:::test_comparator(x,prob,mustSwap,n,seed)
   queue <- recordSwapping:::test_prioqueue(x,prob,mustSwap,n,seed)
-  R <- sample(x,n,prob=prob)
-  wrswoR <-  x[wrswoR::sample_int_crank(N,n,prob)]
+  R <- sample(x[-mustSwap],n-length(mustSwap),prob=prob[-mustSwap])
+  R <- c(mustSwap,R)
+  wrswoR <-  x[-mustSwap][wrswoR::sample_int_crank(N-length(mustSwap),n-length(mustSwap),prob[-mustSwap])]
+  wrswoR <- c(mustSwap,wrswoR)
   cbind(comp,queue,R,wrswoR)
 })
 
@@ -358,6 +360,12 @@ out_data <- rbindlist(out_data)
 out_data <- melt(out_data,id.vars="run")
 out_data
 library(ggplot2)
-ggplot(out_data[variable%in%c("value.comp","value.queue")],aes(value))+
+p1 <- ggplot(out_data,aes(value))+
   geom_density(aes(color=variable))
+plot(p1)
+p1 <- ggplot(out_data[value>9200],aes(value))+
+  geom_bar(aes(color=variable,fill=variable))
+plot(p1)
 
+library(plotly)
+ggplotly(p1)

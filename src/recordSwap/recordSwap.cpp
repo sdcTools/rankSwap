@@ -289,7 +289,7 @@ std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vect
 
 /*
  * Function to sample from donor set
- * this is done differently than the inital sampling to make procedure more efficient
+ * this is done differently than the inital sampling to make the procedure more efficient
  */
 std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<std::vector<int>> &similar,
                                     std::vector<int> &IDswap, std::unordered_set<int> &IDswap_pool,

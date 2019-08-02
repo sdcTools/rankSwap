@@ -35,10 +35,10 @@
 #' rounded up or down such that the number of households swapped in total is in coherence to the swaprate.
 #'  
 #' @param data micro data set containing only integer values.
-#' @param similar list of integer vectors containing similarity profiles, see details for more explanations.
-#' @param hierarchy column indices of variables in `data` which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-#' @param risk_variables column indices of variables in `data` which will be considered for estimating the risk.
-#' @param hid column index in `data` which refers to the household identifier.
+#' @param hid column index or column name in `data` which refers to the household identifier.
+#' @param similar list of integer vectors or column names containing similarity profiles, see details for more explanations.
+#' @param hierarchy column indices or column names of variables in `data` which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
+#' @param risk_variables column indices or column names of variables in `data` which will be considered for estimating the risk.
 #' @param k_anonymity integer defining the threshhold of high risk households (counts<k).
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
 #' @param seed integer defining the seed for the random number generator, for reproducability.
@@ -46,27 +46,153 @@
 #' @return Returns data set with swapped records.
 #' 
 #' @export recordSwap
-recordSwap <- function(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, seed = 123456L){
+recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, risk_threshold=0, k_anonymity=3, risk_variables=NULL, seed = 123456L){
   
-  cnames <- copy(colnames(data))
-  
-  # order data by hid
-  setkeyv(data,cnames[hid+1])
-  
-  # transpose data for cpp function
-  data <- transpose(data)
-  # default values since those parameters are not used yet
-  risk_threshold <- 0
-  risk <- data.frame()
-  
-  if(any(c(unlist(similar), hierarchy, risk_variables, hid)>=ncol(data))){
-    stop("Indices higher than column number in data")
+  # check data
+  if(all(!class(data)%in%c("data.table","data.frame","matrix"))){
+    stop("data must be either a data.table, data.frame or matrix!")
+  }
+  if(any(!is.integer(data))){
+    stop("data must contain only integer values at this point - this condition might get droped in a future release")
   }
   
+  data <- as.data.table(data)
+  cnames <- copy(colnames(data))
   
-  data <- recordSwap_cpp(data, similar, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed)
+  ##########################
+  # check inputs
+  data <- recordSwapping:::create.dat()
+  cnames <- copy(colnames(data))
+  hid <- "hid"
+  hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
+  similar <- list(c("hsize","ageGroup","gender"),
+                  c("hsize","ageGroup"),
+                  c("hsize"))
+  risk_variables <- c("gender","national","htype")
+  
+  # check hid
+  hid <- checkIndexString(hid,cnames,matchLength = 1)
+  
+  # check hierarchy
+  hierarchy <- checkIndexString(hierarchy,cnames,minLength = 1)
+  
+  # check similar
+  similar <- lapply(similar,checkIndexString,cnames=cnames,minLength = 1)
+  
+  # check risk_variables
+  risk_variables <- checkIndexString(risk_variables,cnames,minLength = 1)
+
+  # check k_anonymity
+  if(!(is.null(risk_variables)&&is.integer(k_anonymity)&&length(k_anonymity)==1&&k_anonymity>=0)){
+    stop("k_anonymity must be a positiv single integer!")
+  }
+  
+  # check risk_threshold
+  if(!(is.numeric(risk_threshold)&&length(risk_threshold)==1&&risk_threshold>=0)){
+    stop("risk_threshold must be a positiv single numeric!")
+  }
+  
+  # check swaprate
+  if((is.numeric(swaprate)&&length(swaprate)==1&&swaprate%between%c(0,1))){
+    stop("swaprate must be a single number between 0 and 1!")
+  }
+  
+  # check risk
+  if(is.null(risk)){
+    risk <- data.table()
+    risk_threshold <- 0
+  }
+  if(all(!class(risk)%in%c("data.table","data.frame","matrix"))){
+    stop("risk must be either a data.table, data.frame or matrix!")
+  }
+  if(ncol(risk)!=length(hierarchy)){
+    stop("number of columns in risk does not match number of hierarchies!")
+  }
+  cnamesrisk <- copy(colnames(risk))
+  risk <- data.table(risk)
+  
+  if(is.null(cnamesrisk)){
+    message("risk does not contain column names; the first column in risk will be used for the first hierarchy level, e.g ",cnames[hierarchy[1]+1]," and so on.")
+  }else{
+    if(!any(cnamesrisk)%in%cnames[hierarchy+1]){
+      setcolorder(risk,cnames[hierarchy+1])
+    }
+  }
+  if(any(risk<0)||any(!is.numeric(risk))){
+    stop("risk must contain positive real values only!")
+  }
+  
+  # check seed
+  if(!(is.integer(seed)&&length(seed)==1&&seed>0)){
+    stop("seed must be a single positive integer!")
+  }
+  
+  ##########################
+  # setup data and inputs for c++ function
+  
+  # order data
+  setkeyv(data,cnames[hid+1])
+  # transpose data for cpp function
+  data <- transpose(data)
+  
+  # transpose risk
+  risk <- transpose(risk)
+
+
+  data <- recordSwap_cpp(data=data, similar=similar, hierarchy=hierarchy,
+                         risk_variables=risk_variables, hid=hid, k_anonymity=k_anonymity,
+                         swaprate=swaprate, risk_threshold=risk_threshold,
+                         risk=risk, seed=seed)
   data <- transpose(as.data.table(data))
   setnames(data,colnames(data),cnames)
   
   return(data)
+}
+
+
+
+
+# helpfunction to check if inputs are correct
+checkIndexString <- function(x=NULL,cnames,matchLength=NULL,minLength=NULL){
+  
+  # return NULL of input is null
+  if(is.null(x)){
+    return(NULL)
+  }
+  
+  varName <- deparse(substitute(x))
+  
+  # check if integer or string and if length is appropriate
+  if(!is.null(matchLength)){
+    if(!((all(is.integer(x))|all(is.character(x)))&length(x)==matchLength)){
+      stop(varName," must be an integer (column index) or character (column name) of length ",matchLength)
+    }
+  }else{
+    if(!((all(is.integer(x))|all(is.character(x)))&length(x)>minLength)){
+      stop(varName," must contain integers, column indices, or characters, column names, of data")
+    }
+  }
+  
+  # check when string that names are in cnames
+  if(all(is.character(x))){
+    if(any(!x%in%cnames)){
+      stop("Columnname(s) in ",varName," are not found in data")
+    }
+    # initialize index
+    x <- which(cnames%in%x)
+  }
+  
+  # check when integer that index does not
+  # exceed number of column of data
+  # x must be integer from this point onwards
+  if(any(x>length(cnames))){
+    stop("Columnindex in ",varName," exceeds number of columns in data")
+  }
+  if(any(x==0)){
+    stop("Index in ",varName," does contain zero.\nIndexing in R starts with 1!")
+  }
+  
+  # indices start with 0 for c++ routine
+  x <- x-1
+  return(x)
 }
