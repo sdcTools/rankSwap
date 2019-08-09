@@ -93,6 +93,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// distributeDraws2_cpp
+std::vector<int> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk, std::vector<int> hierarchy, int hid, double swaprate, int seed);
+RcppExport SEXP _recordSwapping_distributeDraws2_cpp(SEXP dataSEXP, SEXP riskSEXP, SEXP hierarchySEXP, SEXP hidSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> > >::type risk(riskSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
+    Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
+    Rcpp::traits::input_parameter< double >::type swaprate(swaprateSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(distributeDraws2_cpp(data, risk, hierarchy, hid, swaprate, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sampleDonor_cpp
 std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, Rcpp::List similar_cpp, int hid, std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
 RcppExport SEXP _recordSwapping_sampleDonor_cpp(SEXP dataSEXP, SEXP similar_cppSEXP, SEXP hidSEXP, SEXP IDswapSEXP, SEXP IDswap_pool_vecSEXP, SEXP probSEXP, SEXP seedSEXP) {
@@ -120,6 +136,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type totalDraws(totalDrawsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     rcpp_result_gen = Rcpp::wrap(distributeRandom_cpp(inputRatio, totalDraws, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testLoop_cpp
+std::vector<double> testLoop_cpp(std::vector<std::vector<int>> inputGroup, std::vector<std::vector<double>> risk);
+RcppExport SEXP _recordSwapping_testLoop_cpp(SEXP inputGroupSEXP, SEXP riskSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::vector<int>> >::type inputGroup(inputGroupSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<double>> >::type risk(riskSEXP);
+    rcpp_result_gen = Rcpp::wrap(testLoop_cpp(inputGroup, risk));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -161,8 +189,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_recordSwapping_setRisk_cpp", (DL_FUNC) &_recordSwapping_setRisk_cpp, 4},
     {"_recordSwapping_randSample_cpp", (DL_FUNC) &_recordSwapping_randSample_cpp, 5},
     {"_recordSwapping_distributeDraws_cpp", (DL_FUNC) &_recordSwapping_distributeDraws_cpp, 5},
+    {"_recordSwapping_distributeDraws2_cpp", (DL_FUNC) &_recordSwapping_distributeDraws2_cpp, 6},
     {"_recordSwapping_sampleDonor_cpp", (DL_FUNC) &_recordSwapping_sampleDonor_cpp, 7},
     {"_recordSwapping_distributeRandom_cpp", (DL_FUNC) &_recordSwapping_distributeRandom_cpp, 3},
+    {"_recordSwapping_testLoop_cpp", (DL_FUNC) &_recordSwapping_testLoop_cpp, 2},
     {"_recordSwapping_test_prioqueue", (DL_FUNC) &_recordSwapping_test_prioqueue, 5},
     {"_recordSwapping_test_comparator", (DL_FUNC) &_recordSwapping_test_comparator, 5},
     {NULL, NULL, 0}

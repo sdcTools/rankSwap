@@ -245,6 +245,12 @@ std::map<std::vector<int>,int> distributeRandom(std::map<std::vector<int>,double
   }
   
   int draw_excess = std::round(draw_excess_help);
+
+  if(draw_excess==0){
+    // return output of nothing need to be distributed
+    return numberDraws;
+  }
+
   // randomly shuffeld index vector
   // this is similar to randomly round up and down in each group so on average swaprate will be reached
   std::vector<int> add_extra(ratioDraws.size());
@@ -255,14 +261,12 @@ std::map<std::vector<int>,int> distributeRandom(std::map<std::vector<int>,double
   // pick first draw_excess values and add one to them
   int z = 0;
   int v = 0;
-  int count_swaps=0;
   // certain groups will get one more draw
   for(auto const&x : numberDraws){
     if(add_extra[v]==z){
       numberDraws[x.first]++;
       v++;
     }
-    count_swaps = count_swaps+numberDraws[x.first];
     if(v>(draw_excess-1)){
       break; // if all draw_excess have been distributed break procedure
     }
@@ -274,8 +278,8 @@ std::map<std::vector<int>,int> distributeRandom(std::map<std::vector<int>,double
 }
 
 
-int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
-                                                               std::vector<std::vector<double>> risk,
+std::map<std::vector<int>,int> distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
+                                                               std::vector<std::vector<double>> &risk,
                                                                int &nhid, double &swaprate,
                                                                std::uniform_int_distribution<std::mt19937::result_type> &runif01,
                                                                std::mt19937 &mersenne_engine){
@@ -286,18 +290,10 @@ int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_
   // runif01 & mersenne_engine for sampling procedures
   
   ///////////////
-  // OUTPUT:
-  // draw_group[key].first correponds to number of households
-  // draw_group[key].second to number of swaps
-  std::map<std::vector<int>,std::pair<int,int>> draw_group;
-  ///////////////
-  
-  
-  ///////////////
   // define total number of swaps according to swaprate
   // swaprate/2 ensures that in the end this percentage of households is swapped
   // so 1 swap is counted double since with each swap 2 households are swapped
-  int totalDraws = 0; 
+  int totalDraws = 0;
   if(runif01(mersenne_engine)==0){
     totalDraws = ceil(nhid*(swaprate/2));
   }else{
@@ -309,7 +305,7 @@ int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_
   int nhier = risk[0].size();
   std::vector<double> sumRiskHierarchy(nhier,0.0); 
   for (auto& risk_h : risk){
-    std::transform(sumRiskHierarchy.begin(),sumRiskHierarchy.end(),risk_h.begin(),risk_h.end(),std::plus<double>());
+    std::transform(sumRiskHierarchy.begin(),sumRiskHierarchy.end(),risk_h.begin(),sumRiskHierarchy.begin(),std::plus<double>());
   }
 
   ///////////////
@@ -317,7 +313,6 @@ int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_
   // loop through all lowest level hierarchies
   std::map<std::vector<int>,double > ratioRisk; // get ratio of numbers to draw in lowest level hierarchy
   std::map<std::vector<int>,double > sumRisk; // sum of Risk in each hierarchy level
-  std::map<std::vector<int>,int > unitsHierarchy; // number of units in each hierarchy
   double sumRatio = 0.0; //help variable for ratio
   double helpRatio = 0.0; //help variable for ratio
   
@@ -333,11 +328,11 @@ int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_
     }
     
     // get draw ratio ~ percentage of units to draw in each lowest level hierarchy
-    helpRatio = std::max((double)x.second.size()/(double)nhid,sumRisk[x.first]/sumRiskHierarchy[nhier]);
+    helpRatio = std::max((double)x.second.size()/(double)nhid,sumRisk[x.first]/sumRiskHierarchy.back());
     sumRatio += helpRatio;
     ratioRisk[x.first] = helpRatio;
   }
-  
+
   // normalize ratioRiskH
   for(auto const&x : ratioRisk){
     ratioRisk[x.first] = ratioRisk[x.first]/sumRatio;  
@@ -345,38 +340,94 @@ int distributeDraws2(std::map<std::vector<int>,std::unordered_set<int> > &group_
 
   // distribute totalDraws over ratioRiskH
   std::map<std::vector<int>,int> numberDraws = distributeRandom(ratioRisk, totalDraws,mersenne_engine);
+  std::cout << "number of swaps: " << totalDraws << "\n";
+  
+  int help3 =0;
+  for(auto const&i : numberDraws){
+    help3 = help3 + i.second;
+  }
+  std::cout << "number of swaps dist: " << help3 << "\n";
+  
   
   // loop over hierarchy and distribute each entry in numberDraws
   // over the hierarchies
-  std::vector<int> mapIndex(1,0);
-  std::map<std::vector<int>,double > ratioHelp;
   double helpRisk = 0.0;
+  int help =0;
+  std::vector<int> hl;
+
   for(auto const&x : group_hier){
     
-    std::vector<int> hl = x.first;
-    
+    hl = x.first;
+    std::map<std::vector<int>,double > ratioHelp;
     // get sum of Risk going up the hierarchy levels
-    for(int h=nhier;--h;){
+    for(int h=nhier;h-- >0;){
       helpRisk += sumRisk[hl];
-      ratioHelp[hl] = sumRisk[hl];
       hl.pop_back();
     }
     
     hl = x.first;
-    for(int h=nhier;--h;){
+    for(int h=nhier;h-- >0;){
       ratioHelp[hl] = sumRisk[hl]/helpRisk;
       hl.pop_back();
     }
-    
+
     std::map<std::vector<int>,int> helpDist = distributeRandom(ratioHelp, numberDraws[x.first],mersenne_engine);
     
+    help = numberDraws[x.first];
+    // insert helpDist into numberDraws
+    // cant use insert because Index in helpDist can
+    // already exist in numberDraws
+    // if(help>0){
+    //   std::cout << "number of Draws: " << numberDraws[x.first] << "\n";
+    //   for(auto const&hd : helpDist){
+    //     for(auto const&i : hd.first){
+    //       std::cout << i << " ";
+    //     }
+    //     std::cout << "              n: "<< hd.second << "\n";
+    //   }
+    // }
+    
     for(auto const&hd : helpDist){
-      numberDraws[hd.first] = hd.second;
+      if(nhier!=hd.first.size()){
+        // for higher hierarchies
+        // add to existing values
+        numberDraws[hd.first] += hd.second;
+      }else{
+        // for lowest hierarchy overwrite value
+        numberDraws[hd.first] = hd.second;
+      }
+      
+      
+      // if(numberDrawsOutput[hd.first]>0){
+      //   for(auto const&i : hd.first){
+      //     std::cout << i << " ";
+      //   }
+      //   std::cout << "               n: " << numberDrawsOutput[hd.first]<<"\n";
+      // }
     }
+   
     helpRisk = 0.0;
   }
   
-  return 1;
+  // std::cout << "\n\ncheck before return:\n";
+  // 
+  // for(auto const&x : numberDrawsOutput){
+  //   
+  //   if(x.second>0){
+  //     std::cout << "\n";
+  //     for(auto const&i : x.first){
+  //       std::cout << i << " ";
+  //     }
+  //     std::cout << "          n : " << x.second <<"\n";
+  //   }
+  //   // for( auto const&i : x.first){
+  //   //   std::cout << i;
+  //   // }
+  //   // std::cout << "           n:" << x.second<<"\n";
+  // }
+  
+  
+  return numberDraws;
 }
 
 

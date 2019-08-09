@@ -205,7 +205,58 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
   return output;
 }
 
-
+// [[Rcpp::export]]
+std::vector<int> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk,
+                                                    std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
+  
+  // define parameter
+  int n = data.size();
+  int nhier = hierarchy.size();
+  int nhid = 0;
+  int currentID = -1;
+  
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  // initialize random number generator for distributeDraws()
+  std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
+  
+  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
+  std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
+  
+  for(int i=0;i<n;i++){
+    
+    if(currentID==data[i][hid]){
+      continue; // go to next iteration if statement is true
+    }
+    
+    currentID = data[i][hid];
+    // ... define hierarchy group
+    for(int j=0;j<nhier;j++){
+      hier_help[j] = data[i][hierarchy[j]];
+    }
+    
+    // supply new household index to each group
+    // use only indices to speed up construction of output data
+    group_hier[hier_help].insert(i);
+    
+    // count number of households
+    nhid++;
+    // skip all other household member, only need first one
+  }
+  std::cout << "number of households: " << nhid << "\n";
+  std::map<std::vector<int>,int> draw_group =  distributeDraws2(group_hier, risk, nhid, swaprate, runif01, mersenne_engine);
+  
+  
+  // iterate over map to generate output
+  // implementation good enough for testing purposes
+  std::vector<int> output(draw_group.size());
+  int z = 0;
+  for(auto const&x : draw_group){
+    output[z] = x.second;
+    z++;
+  }
+  return output;
+}
 
 
 /*
@@ -306,6 +357,72 @@ std::vector<int> distributeRandom_cpp(std::vector<double> inputRatio, int totalD
     z++;
   }
   return output;
+}
+
+
+// [[Rcpp::export]]
+std::vector<double> testLoop_cpp(std::vector<std::vector<int>> inputGroup,  std::vector<std::vector<double>> risk){
+  
+  int n = inputGroup.size();
+  int nhier = inputGroup[0].size();
+  
+  std::map<std::vector<int>,std::unordered_set<int>> mapGroup;
+  std::vector<int> hier_help(nhier);
+  for(int i =0;i<n;i++){
+    // ... define hierarchy group
+    for(int j=0;j<nhier;j++){
+      hier_help[j] = inputGroup[i][j];
+    }
+    
+    // supply new household index to each group
+    mapGroup[hier_help].insert(i);
+  }
+  
+  // std::map<std::vector<int>,double > ratioRisk; // get ratio of numbers to draw in lowest level hierarchy
+  std::map<std::vector<int>,double > sumRisk; // sum of Risk in each hierarchy level
+  std::map<std::vector<int>,int > unitsHierarchy; // number of units in each hierarchy
+  double sumRatio = 0.0; //help variable for ratio
+  double helpRatio = 0.0; //help variable for ratio
+  
+  // calcualte sum of risk in each hierarchy level
+  std::vector<int> maxIndex(nhier,0); 
+  for(auto const&x : mapGroup){
+    
+    std::vector<int> hl = x.first;
+    
+    // for (auto const& i: hl) {
+    //   std::cout << i << " ";
+    // }
+    // std::cout << "\n";
+    
+    for(int h=nhier; h-- >0; ){
+      for (const auto& indexI: x.second){
+        sumRisk[hl] += risk[indexI][h];
+      }
+      
+      // for (auto const& i: hl) {
+      //   std::cout << i << " ";
+      // }
+      
+      maxIndex[h] = max(maxIndex[h],hl.back());
+      
+      hl.pop_back();
+
+      // std::cout << "\n";
+      
+    }
+  }
+  
+  std::vector<double> output(sumRisk.size());
+  
+  int z=0;
+  for(auto const&x : sumRisk){
+    output[z] = x.second;
+    z++;
+  } 
+
+  return output;
+
 }
 
 

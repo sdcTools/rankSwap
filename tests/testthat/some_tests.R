@@ -169,6 +169,36 @@ cond3 <- nrow(comp_dist[abs(draw-i.draw)>1])==0
 cond1&cond2&cond3
 
 ############################
+# distribute draws2
+Nh <- 60000
+dat <- recordSwapping:::create.dat(Nh)
+dat_t <- transpose(dat)
+hierarchy <- 0:3
+swaprate <- .1
+hid <- 4
+
+risk <- matrix(rnorm(4*nrow(dat),mean=sample(50:100,10,replace=TRUE),sd=sample(5:10,10,replace=TRUE)),ncol=4,nrow=nrow(dat))
+risk <- as.data.table(risk)
+
+risk_t <- transpose(risk)
+
+seed.base <- 1:1e6
+
+distdraw2 <- as.data.table(recordSwapping:::distributeDraws2_cpp(dat_t,risk_t,hierarchy,hid,swaprate,sample(seed.base,1)))
+
+# build same in R
+datComp <- cbind(dat,risk)
+totalSwaps <- recordSwapping:::randomRound(Nh*swaprate/2)
+
+# get ratios for lowest level hierarchies
+riskSum <- colSums(risk)
+riskRatio <- datComp[,.(ratio=max(sum(V4)/riskSum[4],uniqueN(hid)/Nh)),by=c(paste0("nuts",1:4))]
+riskRatio[,ratio:=ratio/sum(ratio)]
+riskRatio[,n:=recordSwapping:::randomRound(totalSwaps*ratio)]
+riskRatio
+
+
+############################
 # test sampling of donor
 # make this more modular and more efficient
 # sampling in different hierarchies should be easy when using just the std::vector<std::vector<double>> risk
@@ -388,14 +418,50 @@ for(i in 1:B){
   seed <- sample(1:1e6,1)
   ratios <- runif(sample(10:1000,1))
   ratios <- ratios/sum(ratios)
-  totalDraws <- sample(100:1e6,1)
+  totalDraws <- sample(0:10000,1)
   
   output <- recordSwapping:::distributeRandom_cpp(ratios,totalDraws,seed)
   check[i] <- abs(sum(output)-totalDraws)<1e-10
-  if(any(output<0)){
+  if(!check[i]){
     stop()
   }
 }
 all(check)
 
 microbenchmark(recordSwapping:::distributeRandom_cpp(ratios,totalDraws,seed))
+
+############
+# test loop
+library(data.table)
+library(recordSwapping)
+
+B <- 1000
+check <- rep(FALSE,B)
+for(i in 1:B){
+  
+  N <- sample(1000:1e6,1)
+  dat <- recordSwapping:::create.dat(1000)
+  dat <- dat[,mget(paste0("nuts",1:4))]
+  
+  risk <- matrix(rnorm(prod(dim(dat)),mean=sample(50:100,10,replace=TRUE),sd=sample(5:10,10,replace=TRUE)),ncol=ncol(dat),nrow=nrow(dat))
+  risk <- as.data.table(risk)
+  
+  risk_t <- transpose(risk)
+  dat_t <- transpose(dat)
+  
+  Cppres <- recordSwapping:::testLoop_cpp(dat_t,  risk_t)
+  
+  Rcomp <- cbind(dat,risk)
+  Rres <- list()
+  for(h in 1:4){
+    Rcomp_h <- Rcomp[,sum(get(paste0("V",h))),by=c(paste0("nuts",1:h))]
+    Rres <- c(Rres,list(Rcomp_h))
+  }
+  
+  Rres <- rbindlist(Rres,use.names=TRUE,fill=TRUE)
+  setorderv(Rres,paste0("nuts",1:4))
+  Rres[,cpp:=Cppres]
+  check[i] <- nrow(Rres[abs(V1-cpp)>1e-9])==0
+}
+
+table(check)

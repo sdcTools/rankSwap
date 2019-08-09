@@ -103,6 +103,10 @@ distributeDraws_cpp <- function(data, hierarchy, hid, swaprate, seed = 123456L) 
     .Call(`_recordSwapping_distributeDraws_cpp`, data, hierarchy, hid, swaprate, seed)
 }
 
+distributeDraws2_cpp <- function(data, risk, hierarchy, hid, swaprate, seed = 123456L) {
+    .Call(`_recordSwapping_distributeDraws2_cpp`, data, risk, hierarchy, hid, swaprate, seed)
+}
+
 #' @title Random sample for donor records
 #' 
 #' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
@@ -135,6 +139,10 @@ sampleDonor_cpp <- function(data, similar_cpp, hid, IDswap, IDswap_pool_vec, pro
 #' 
 distributeRandom_cpp <- function(inputRatio, totalDraws, seed) {
     .Call(`_recordSwapping_distributeRandom_cpp`, inputRatio, totalDraws, seed)
+}
+
+testLoop_cpp <- function(inputGroup, risk) {
+    .Call(`_recordSwapping_testLoop_cpp`, inputGroup, risk)
 }
 
 test_prioqueue <- function(x_vec, prob, mustSwap_vec, n, seed) {
