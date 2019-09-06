@@ -195,7 +195,13 @@ riskSum <- colSums(risk)
 riskRatio <- datComp[,.(ratio=max(sum(V4)/riskSum[4],uniqueN(hid)/Nh)),by=c(paste0("nuts",1:4))]
 riskRatio[,ratio:=ratio/sum(ratio)]
 riskRatio[,n:=recordSwapping:::randomRound(totalSwaps*ratio)]
+
 riskRatio
+
+
+
+setorderv(riskRatio,paste0("nuts",1:4))
+
 
 
 ############################

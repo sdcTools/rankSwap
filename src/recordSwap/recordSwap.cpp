@@ -218,7 +218,7 @@ std::vector<int> randSample(std::unordered_set<int> &ID, int N, std::vector<doub
 }
 
 
-// help function to randomly distribute number of units to draw
+// help function to randomly distribute number of units to draw from
 std::map<std::vector<int>,int> distributeRandom(std::map<std::vector<int>,double> &ratioDraws, int &totalDraws,
                                                 std::mt19937 &mersenne_engine){
   
@@ -749,10 +749,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       
       // get higher hierarchy
       std::copy(x.first.begin(),x.first.begin()+h+1,hier_help.begin());
-      // for(int i=0;i<h+1;i++){
-      //   hier_help[i] = x.first[i];
-      // }
-      
+
       // discard every index that has already been used
       // more efficient to do this at this step then later on in the code
       for(auto s : x.second){
