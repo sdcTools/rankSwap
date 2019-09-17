@@ -54,9 +54,9 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> s
 
 + **C++-Code**: Sampling probability is directly derived from the counts over the risk and each geographic variables, by 
 $$
-p_{i,h}=\frac{1}{counts_{i,h}}
+p_{i,h}=\max\limits_{j \in H_i}\frac{1}{counts_{j,h}}
 $$
-where $counts_{i,h}$ is the number of counts for record $i$ in hierarchy $h$. This sampling probability is used for selecting households as well as donor households. 
+where $counts_{j,h}$ is the number of counts for member $j$ in household $i$ in hierarchy $h$. This sampling probability is used for selecting households as well as donor households. 
 
 + **SAS-Code**: Sampling probability is derived from the multiple factors.
     
