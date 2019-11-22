@@ -6,12 +6,12 @@
 using namespace Rcpp;
 
 // recordSwap_cpp
-std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, int seed);
+std::vector< std::vector<double> > recordSwap_cpp(std::vector< std::vector<double> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, int seed);
 RcppExport SEXP _recordSwapping_recordSwap_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> > >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type similar(similarSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type risk(riskSEXP);
@@ -36,24 +36,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // orderData_cpp
-std::vector< std::vector<int> > orderData_cpp(std::vector< std::vector<int> >& data, int orderIndex);
+std::vector< std::vector<double> > orderData_cpp(std::vector< std::vector<double> >& data, int orderIndex);
 RcppExport SEXP _recordSwapping_orderData_cpp(SEXP dataSEXP, SEXP orderIndexSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector< std::vector<int> >& >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> >& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< int >::type orderIndex(orderIndexSEXP);
     rcpp_result_gen = Rcpp::wrap(orderData_cpp(data, orderIndex));
     return rcpp_result_gen;
 END_RCPP
 }
 // setRisk_cpp
-std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid);
+std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<double> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid);
 RcppExport SEXP _recordSwapping_setRisk_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP risk_variablesSEXP, SEXP hidSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<double> > >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type risk_variables(risk_variablesSEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
@@ -77,12 +77,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // distributeDraws_cpp
-std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int> > data, std::vector<int> hierarchy, int hid, double swaprate, int seed);
+std::vector< std::vector<double> > distributeDraws_cpp(std::vector< std::vector<double> > data, std::vector<int> hierarchy, int hid, double swaprate, int seed);
 RcppExport SEXP _recordSwapping_distributeDraws_cpp(SEXP dataSEXP, SEXP hierarchySEXP, SEXP hidSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> > >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type hierarchy(hierarchySEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
     Rcpp::traits::input_parameter< double >::type swaprate(swaprateSEXP);
@@ -92,12 +92,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleDonor_cpp
-std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, int hid, std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
+std::vector<int> sampleDonor_cpp(std::vector< std::vector<double> > data, std::vector<int> similar, int hid, std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed);
 RcppExport SEXP _recordSwapping_sampleDonor_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hidSEXP, SEXP IDswapSEXP, SEXP IDswap_pool_vecSEXP, SEXP probSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector< std::vector<int> > >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< std::vector< std::vector<double> > >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type similar(similarSEXP);
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type IDswap(IDswapSEXP);

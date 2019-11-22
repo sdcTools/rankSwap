@@ -25,12 +25,12 @@ using namespace Rcpp;
 //' 
 //' @return Returns data set with swapped records.
 // [[Rcpp::export]]
-std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar,
+std::vector< std::vector<double> > recordSwap_cpp(std::vector< std::vector<double> > data, std::vector<int> similar,
                                                std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
                                                int seed = 123456){
 
   // call recrodSwap()
-  std::vector< std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
+  std::vector< std::vector<double> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
   return output;
 }
 
@@ -63,8 +63,8 @@ std::vector<int> setLevels_cpp(std::vector< std::vector<double> > risk, double r
 //' 
 //' @return ordered data set.
 // [[Rcpp::export]]
-std::vector< std::vector<int> > orderData_cpp(std::vector< std::vector<int> > &data, int orderIndex){
-  std::vector< std::vector<int> > output = orderData(data,orderIndex) ;
+std::vector< std::vector<double> > orderData_cpp(std::vector< std::vector<double> > &data, int orderIndex){
+  std::vector< std::vector<double> > output = orderData(data,orderIndex) ;
   return output ;
 }
 
@@ -82,7 +82,7 @@ std::vector< std::vector<int> > orderData_cpp(std::vector< std::vector<int> > &d
 //' @param hid column index in \code{data} which refers to the household identifier.
 //' 
 // [[Rcpp::export]]
-std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<int> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid){
+std::vector< std::vector<double> > setRisk_cpp(std::vector<std::vector<double> > data, std::vector<int> hierarchy, std::vector<int> risk_variables, int hid){
   std::vector< std::vector<double> > output = setRisk(data,hierarchy,risk_variables,hid);
   return output;
 }
@@ -131,7 +131,7 @@ std::vector<int> randSample_cpp(std::vector<int> ID, int N, std::vector<double> 
 //' @param seed integer setting the sampling seed
 //' 
 // [[Rcpp::export]]
-std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int> > data,
+std::vector< std::vector<double> > distributeDraws_cpp(std::vector< std::vector<double> > data,
                                                     std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
   
   // define parameter
@@ -145,8 +145,8 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
   // initialize random number generator for distributeDraws()
   std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
   
-  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
-  std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
+  std::map<std::vector<double>,std::unordered_set<int> > group_hier; //
+  std::vector<double> hier_help(nhier); // help vector to get hierarchy groups
   
   for(int i=0;i<n;i++){
     
@@ -169,13 +169,13 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
     // skip all other household member, only need first one
   }
   
-  std::map<std::vector<int>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
+  std::map<std::vector<double>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
                                                                               runif01, mersenne_engine);
   
   
   // iterate over map to generate output
   // implementation good enough for testing purposes
-  std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+2));
+  std::vector<std::vector<double>> output(draw_group.size(),std::vector<double>(nhier+2));
   int z = 0;
   for(auto const&x : draw_group){
     for(int j=0;j<(nhier+2);j++){
@@ -213,7 +213,7 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
 //' @param seed integer setting the sampling seed
 //' 
 // [[Rcpp::export]]
-std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, int hid,
+std::vector<int> sampleDonor_cpp(std::vector< std::vector<double> > data, std::vector<int> similar, int hid,
                                  std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
   
   

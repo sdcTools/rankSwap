@@ -213,7 +213,7 @@ table(level_cpp)
 
 # run recordSwap()
 dat_swapped <- copy(dat)
-dat_swapped <-recordSwap(dat_swapped,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- recordSwap(dat_swapped,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
 
 dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
                      dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")

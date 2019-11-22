@@ -13,7 +13,7 @@ using namespace std;
 /*
 * Function to reorder data-set given one index vector 
 */
-std::vector< std::vector<int> > orderData(std::vector< std::vector<int> > &data, int orderIndex){
+std::vector< std::vector<double> > orderData(std::vector< std::vector<double> > &data, int orderIndex){
   
   // initialise ordering vector
   std::vector<int> orderVec(data[0].size());
@@ -75,7 +75,7 @@ std::vector<int> setLevels(std::vector< std::vector<double> > &risk, double risk
  * in each hierarchy level
  * this is then used as smapling probability
  */
-std::vector< std::vector<double> > setRisk(std::vector<std::vector<int> > &data, std::vector<int> &hierarchy, std::vector<int> &risk_variables, int &hid){
+std::vector< std::vector<double> > setRisk(std::vector<std::vector<double> > &data, std::vector<int> &hierarchy, std::vector<int> &risk_variables, int &hid){
   
   // data: data input
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
@@ -220,7 +220,7 @@ std::vector<int> randSample(std::unordered_set<int> &ID, int N, std::vector<doub
  * Function to distribute n draws over a given number of groups
  * the distribution is always proportional to group size
  */
-std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vector<int>,std::unordered_set<int> > &group_hier,
+std::map<std::vector<double>,std::pair<int,int>> distributeDraws(std::map<std::vector<double>,std::unordered_set<int> > &group_hier,
                                                               int &nhid, double &swaprate,
                                                               std::uniform_int_distribution<std::mt19937::result_type> &runif01,
                                                               std::mt19937 &mersenne_engine){
@@ -242,7 +242,7 @@ std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vect
   // distribute them among smallest hierarchy level
   // draw_group[key].first correponds to number of households
   // draw_group[key].second to number of swaps
-  std::map<std::vector<int>,std::pair<int,int>> draw_group;
+  std::map<std::vector<double>,std::pair<int,int>> draw_group;
   double draw_excess_help = 0;
   double x_excess = 0;
   for(auto const&x : group_hier){
@@ -289,7 +289,7 @@ std::map<std::vector<int>,std::pair<int,int>> distributeDraws(std::map<std::vect
 * Function to sample from donor set
 * this is done differently than the inital sampling to make procedure more efficient
 */
-std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<int> &similar,
+std::vector<int> sampleDonor(std::vector< std::vector<double> > &data, std::vector<int> &similar,
                              std::vector<int> &IDswap, std::unordered_set<int> &IDswap_pool,
                              std::map<double,int> &IDdonor_pool, std::vector<int> &IDused, int &hid){
   
@@ -354,7 +354,7 @@ std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<
 /*
 * Function to perform record swapping
 */
-std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
+std::vector< std::vector<double> > recordSwap(std::vector< std::vector<double> > data, std::vector<int> similar,
                                          std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
                                          int seed = 123456){
   
@@ -419,7 +419,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   ////////////////////////////////////////////////////
   // this part will be moved further up after testing
   // initialise map for household size
-  std::unordered_map<int,int> map_hsize;
+  std::unordered_map<double,int> map_hsize;
   // loop over data and ...
   for(int i=0;i<n;i++){
     // ... get household size map
@@ -434,9 +434,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
   
-  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
+  std::map<std::vector<double>,std::unordered_set<int> > group_hier; //
   std::unordered_map<int,std::unordered_set<int> > group_levels; // map containing all IDs which must be swapped at a certain level (~key of map)
-  std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
+  std::vector<double> hier_help(nhier); // help vector to get hierarchy groups
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
   std::vector<int> IDused(n,0); // 0-1 vector if 1 this index was already swapped and cant be swapped again
   std::unordered_set<int> IDdonor_all; // set for all IDs for quick lookup
@@ -487,7 +487,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // this is only used at lowest hierarchy level
   // draw_group[].first -> number of households in lowest level hierarchy
   // draw_group[].second -> number of swaps in lowest level hierarchy
-  std::map<std::vector<int>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
+  std::map<std::vector<double>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
                                                                               runif01, mersenne_engine);
   
   /////////////////////////////
@@ -516,7 +516,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       mustSwap = group_levels[h];
     }
     
-    std::map<std::vector<int>,unordered_set<int> > group_hier_help;
+    std::map<std::vector<double>,unordered_set<int> > group_hier_help;
     hier_help.resize(h+1);
     
     /////////////////
