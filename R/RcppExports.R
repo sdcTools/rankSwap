@@ -109,7 +109,7 @@ distributeDraws2_cpp <- function(data, risk, hierarchy, hid, swaprate, seed = 12
 
 #' @title Random sample for donor records
 #' 
-#' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
+#' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \code{\link{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
 #' \cr
 #' \strong{NOTE:} This is an internal function used for testing the C++-function \code{sampleDonor} which is used inside the C++-function \code{recordSwap()}.
 #' 
