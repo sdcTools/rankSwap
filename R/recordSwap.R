@@ -52,8 +52,18 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   if(all(!class(data)%in%c("data.table","data.frame","matrix"))){
     stop("data must be either a data.table, data.frame or matrix!")
   }
-  if(any(!unlist(apply(data,2,is.integer)))){
+  
+  
+  # check if any non numeric values are present in data
+  if(any(!unlist(apply(data,2,is.numeric)))){
     stop("data must contain only integer values at this point - this condition might get droped in a future release")
+  }
+  
+  # check if any values with decimal values are present in data
+  decOccured <- apply(data,2,function(z){any((z%%1)!=0)})
+  if(any(decOccured)){
+    decOccured <- names(decOccured)[decOccured]
+    stop("data must contain only integer values.\nColumn(s)\n    ",paste(decOccured,collapse=", "),"\ncontain decimal numbers")
   }
   
   data <- as.data.table(data)
