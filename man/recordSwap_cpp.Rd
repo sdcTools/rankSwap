@@ -4,8 +4,18 @@
 \alias{recordSwap_cpp}
 \title{Targeted Record Swapping}
 \usage{
-recordSwap_cpp(data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity,
-  swaprate, risk_threshold, risk, seed = 123456L)
+recordSwap_cpp(
+  data,
+  similar_cpp,
+  hierarchy,
+  risk_variables,
+  hid,
+  k_anonymity,
+  swaprate,
+  risk_threshold,
+  risk,
+  seed = 123456L
+)
 }
 \arguments{
 \item{data}{micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.

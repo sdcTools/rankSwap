@@ -4,8 +4,15 @@
 \alias{sampleDonor_cpp}
 \title{Random sample for donor records}
 \usage{
-sampleDonor_cpp(data, similar_cpp, hid, IDswap, IDswap_pool_vec, prob,
-  seed = 123456L)
+sampleDonor_cpp(
+  data,
+  similar_cpp,
+  hid,
+  IDswap,
+  IDswap_pool_vec,
+  prob,
+  seed = 123456L
+)
 }
 \arguments{
 \item{data}{micro data containing the hierarchy levels and household ID}
