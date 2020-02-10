@@ -52,7 +52,7 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   if(all(!class(data)%in%c("data.table","data.frame","matrix"))){
     stop("data must be either a data.table, data.frame or matrix!")
   }
-  if(any(!is.integer(data))){
+  if(any(!unlist(apply(data,2,is.integer)))){
     stop("data must contain only integer values at this point - this condition might get droped in a future release")
   }
   
