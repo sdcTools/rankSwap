@@ -30,7 +30,7 @@ create.dat <- function(N=10000){
   national <- sample(1:5,length(hsize),replace=TRUE)
   
   dat <- data.table(nuts1,nuts2,nuts3,nuts4,hid,hsize,ageGroup,gender,national,htype,hincome)
-  dat <- lapply(dat,as.integer)
+  dat[,colnames(dat):=lapply(.SD,as.integer)]
   
   return(dat)
 }
