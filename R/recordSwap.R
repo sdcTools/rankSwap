@@ -73,12 +73,12 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   # check inputs
   data <- recordSwapping:::create.dat()
   cnames <- copy(colnames(data))
-  hid <- "hid"
-  hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
-  similar <- list(c("hsize","ageGroup","gender"),
-                  c("hsize","ageGroup"),
-                  c("hsize"))
-  risk_variables <- c("gender","national","htype")
+  # hid <- "hid"
+  # hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
+  # similar <- list(c("hsize","ageGroup","gender"),
+  #                 c("hsize","ageGroup"),
+  #                 c("hsize"))
+  # risk_variables <- c("gender","national","htype")
   
   # check hid
   hid <- checkIndexString(hid,cnames,matchLength = 1)
