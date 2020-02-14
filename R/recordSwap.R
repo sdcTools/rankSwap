@@ -74,6 +74,7 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   # data <- create.dat()
   # cnames <- copy(colnames(data))
   # hid <- "hid"
+  # hid <- 5
   # hierarchy <- c("nuts1","nuts2","nuts3","nuts4")
   # similar <- list(c("hsize","ageGroup","gender"),
   #                 c("hsize","ageGroup"),
@@ -93,17 +94,19 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   risk_variables <- checkIndexString(risk_variables,cnames,minLength = 1)
 
   # check k_anonymity
-  if(!(is.null(risk_variables)&&is.integer(k_anonymity)&&length(k_anonymity)==1&&k_anonymity>=0)){
+  if(!((!is.null(risk_variables))&&checkInteger(k_anonymity)&&length(k_anonymity)==1&&k_anonymity>=0)){
     stop("k_anonymity must be a positiv single integer!")
   }
   
   # check risk_threshold
-  if(!(is.numeric(risk_threshold)&&length(risk_threshold)==1&&risk_threshold>=0)){
-    stop("risk_threshold must be a positiv single numeric!")
+  if(is.null(risk_variables)){
+    if(!(is.numeric(risk_threshold)&&length(risk_threshold)==1&&risk_threshold>=0)){
+      stop("risk_threshold must be a positiv numeric value")
+    }
   }
-  
+
   # check swaprate
-  if((is.numeric(swaprate)&&length(swaprate)==1&&swaprate%between%c(0,1))){
+  if(!(is.numeric(swaprate)&&length(swaprate)==1&&swaprate%between%c(0,1))){
     stop("swaprate must be a single number between 0 and 1!")
   }
   
@@ -115,23 +118,30 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   if(all(!class(risk)%in%c("data.table","data.frame","matrix"))){
     stop("risk must be either a data.table, data.frame or matrix!")
   }
-  if(ncol(risk)!=length(hierarchy)){
-    stop("number of columns in risk does not match number of hierarchies!")
+  
+  if(nrow(risk)>0){
+    if(ncol(risk)!=length(hierarchy)){
+      stop("number of columns in risk does not match number of hierarchies!")
+    }
   }
+
   cnamesrisk <- copy(colnames(risk))
   risk <- data.table(risk)
   
-  if(is.null(cnamesrisk)){
-    message("risk does not contain column names; the first column in risk will be used for the first hierarchy level, e.g ",cnames[hierarchy[1]+1]," and so on.")
-  }else{
-    if(!any(cnamesrisk)%in%cnames[hierarchy+1]){
-      setcolorder(risk,cnames[hierarchy+1])
+  if(nrow(risk)>0){
+    if(is.null(cnamesrisk)){
+      message("risk does not contain column names; the first column in risk will be used for the first hierarchy level, e.g ",cnames[hierarchy[1]+1]," and so on.")
+    }else{
+      if(!any(cnamesrisk)%in%cnames[hierarchy+1]){
+        setcolorder(risk,cnames[hierarchy+1])
+      }
+    }
+    
+    if(any(risk<0)||any(!is.numeric(risk))){
+      stop("risk must contain positive real values only!")
     }
   }
-  if(any(risk<0)||any(!is.numeric(risk))){
-    stop("risk must contain positive real values only!")
-  }
-  
+
   # check seed
   if(!(is.integer(seed)&&length(seed)==1&&seed>0)){
     stop("seed must be a single positive integer!")
@@ -146,13 +156,14 @@ recordSwap <- function(data, hid, hierarchy, similar, swaprate=0.05, risk=NULL, 
   data <- transpose(data)
   
   # transpose risk
-  risk <- transpose(risk)
-
+  if(nrow(risk)>0){
+    risk <- transpose(risk)
+  }
 
   data <- recordSwap_cpp(data=data, similar=similar, hierarchy=hierarchy,
                          risk_variables=risk_variables, hid=hid, k_anonymity=k_anonymity,
-                         swaprate=swaprate, risk_threshold=risk_threshold,
-                         risk=risk, seed=seed)
+                         swaprate=swaprate, risk_threshold=0,
+                         risk=numeric(0), seed=seed)
   data <- transpose(as.data.table(data))
   setnames(data,colnames(data),cnames)
   
@@ -173,13 +184,20 @@ checkIndexString <- function(x=NULL,cnames,matchLength=NULL,minLength=NULL){
   varName <- deparse(substitute(x))
   
   # check if integer or string and if length is appropriate
+  checkInteger <- function(x){
+    if(is.numeric(x)){
+      return(all(x%%1==0))
+    }else{
+      return(FALSE)
+    }
+  }
   if(!is.null(matchLength)){
-    if(!((all(is.integer(x))|all(is.character(x)))&length(x)==matchLength)){
+    if(!((checkInteger(x)|is.character(x))&length(x)==matchLength)){
       stop(varName," must be an integer (column index) or character (column name) of length ",matchLength)
     }
   }else{
-    if(!((all(is.integer(x))|all(is.character(x)))&length(x)>minLength)){
-      stop(varName," must contain integers, column indices, or characters, column names, of data")
+    if(!((checkInteger(x)|is.character(x))&length(x)>=minLength)){
+      stop(varName," must contain integers (column indices) or characters (~column name of data)")
     }
   }
   
