@@ -96,5 +96,5 @@ dat_swapped[,.(hid,hid_swapped,nuts1,nuts2,nuts3)]
 More detailed information can be found through the help-pages (`?recordSwap`) or when calling the vignette
 
 ```r
-
+vignette("recordSwapping")
 ```
