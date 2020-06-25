@@ -6,14 +6,15 @@
 \usage{
 recordSwap_cpp(
   data,
-  similar_cpp,
-  hierarchy,
-  risk_variables,
   hid,
-  k_anonymity,
+  hierarchy,
+  similar_cpp,
   swaprate,
-  risk_threshold,
   risk,
+  risk_threshold,
+  k_anonymity,
+  risk_variables,
+  carry_along,
   seed = 123456L
 )
 }
@@ -21,19 +22,23 @@ recordSwap_cpp(
 \item{data}{micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.
 \strong{NOTE:} \emph{data has to be ordered by hid beforehand.}}
 
-\item{hierarchy}{column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.}
-
-\item{risk_variables}{column indices of variables in \code{data} which will be considered for estimating the risk.}
-
 \item{hid}{column index in \code{data} which refers to the household identifier.}
 
-\item{k_anonymity}{integer defining the threshhold of high risk households (k-anonymity). This is used as k_anonymity <= counts.}
+\item{hierarchy}{column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.}
 
 \item{swaprate}{double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations}
 
+\item{risk}{vector of vectors containing risks of each individual in each hierarchy level.}
+
 \item{risk_threshold}{double indicating risk threshold above every household needs to be swapped.}
 
-\item{risk}{vector of vectors containing risks of each individual in each hierarchy level.}
+\item{k_anonymity}{integer defining the threshhold of high risk households (k-anonymity). This is used as k_anonymity <= counts.}
+
+\item{risk_variables}{column indices of variables in \code{data} which will be considered for estimating the risk.}
+
+\item{carry_along}{integer vector indicating additional variables to swap besides to hierarchy variables.
+These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+This parameter is only used at the end of the procedure when swapping the hierarchies.}
 
 \item{seed}{integer defining the seed for the random number generator, for reproducability.}
 

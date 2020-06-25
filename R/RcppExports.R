@@ -17,11 +17,14 @@
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
 #' @param risk_threshold double indicating risk threshold above every household needs to be swapped.
 #' @param risk vector of vectors containing risks of each individual in each hierarchy level.
+#' @param carry_along integer vector indicating additional variables to swap besides to hierarchy variables.
+#' These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+#' This parameter is only used at the end of the procedure when swapping the hierarchies.
 #' @param seed integer defining the seed for the random number generator, for reproducability.
 #' 
 #' @return Returns data set with swapped records.
-recordSwap_cpp <- function(data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed = 123456L) {
-    .Call(`_recordSwapping_recordSwap_cpp`, data, similar_cpp, hierarchy, risk_variables, hid, k_anonymity, swaprate, risk_threshold, risk, seed)
+recordSwap_cpp <- function(data, hid, hierarchy, similar_cpp, swaprate, risk, risk_threshold, k_anonymity, risk_variables, carry_along, seed = 123456L) {
+    .Call(`_recordSwapping_recordSwap_cpp`, data, hid, hierarchy, similar_cpp, swaprate, risk, risk_threshold, k_anonymity, risk_variables, carry_along, seed)
 }
 
 #' @title Define Swap-Levels

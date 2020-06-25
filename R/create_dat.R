@@ -1,17 +1,20 @@
-#' @useDynLib recordSwapping, .registration=TRUE
-#' @importFrom Rcpp evalCpp
-#' @import data.table
-#' 
-###########################################
-# help functions
-#
-
-# create dummy data
+#' @title Create dummy data
+#'
+#' Create dummy data to illustrate targeted record swapping.
+#' Generated data contains household id (`hid`), geographic variables (`nuts1`, `nuts2`, `nuts3`, `lau1`, `lau2`)
+#' as well as some other household or personal variables.
+#'
+#' @param N integer, number of household to generate 
+#'
+#' @return `data.table` containing dummy data
+#' @export
+#'
 create.dat <- function(N=10000){
   nuts1 <- sample(1:5,N,replace=TRUE)
   nuts2 <- sample(1:10,N,replace=TRUE)
   nuts3 <- sample(1:15,N,replace=TRUE)
-  nuts4 <- sample(1:25,N,replace=TRUE)
+  lau1 <- sample(1:25,N,replace=TRUE)
+  lau2 <- sample(1:5,N,replace=TRUE)
   hsize <- sample(1:6,N,replace=TRUE)
   htype <- sample(1:10,N,replace=TRUE)
   hincome <- sample(1:10,N,replace=TRUE)
@@ -21,7 +24,8 @@ create.dat <- function(N=10000){
   nuts1 <- rep(nuts1,times=hsize)
   nuts2 <- rep(nuts2,times=hsize)
   nuts3 <- rep(nuts3,times=hsize)
-  nuts4 <- rep(nuts4,times=hsize)
+  lau1 <- rep(lau1,times=hsize)
+  lau2 <- rep(lau2,times=hsize)
   htype <- rep(htype,times=hsize)
   hincome <- rep(hincome,times=hsize)
   hsize <- rep(hsize,times=hsize)
@@ -29,11 +33,18 @@ create.dat <- function(N=10000){
   ageGroup <- sample(1:7,length(hsize),replace=TRUE)
   national <- sample(1:5,length(hsize),replace=TRUE)
   
-  dat <- data.table(nuts1,nuts2,nuts3,nuts4,hid,hsize,ageGroup,gender,national,htype,hincome)
+  dat <- data.table(nuts1,nuts2,nuts3,lau1,lau2,hid,hsize,ageGroup,gender,national,htype,hincome)
   dat[,colnames(dat):=lapply(.SD,as.integer)]
   
   return(dat)
 }
+
+###########################################
+# help functions
+#
+#' @useDynLib recordSwapping, .registration=TRUE
+#' @importFrom Rcpp evalCpp
+#' @import data.table
 
 # resample integer
 resample <- function(x, ...){

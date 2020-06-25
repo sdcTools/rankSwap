@@ -576,20 +576,27 @@ std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<
 /*
 * Function to perform record swapping
 */
-std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<std::vector<int>> similar,
-                                           std::vector<int> hierarchy, std::vector<int> risk_variables, int hid, int k_anonymity, double swaprate,
-                                           double risk_threshold, std::vector<std::vector<double>> risk,
+std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, int hid,
+                                           std::vector<int> hierarchy, 
+                                           std::vector< std::vector<int> > similar,
+                                           double swaprate,
+                                           std::vector< std::vector<double> > risk, double risk_threshold,
+                                           int k_anonymity, std::vector<int> risk_variables,  
+                                           std::vector<int> carry_along,
                                            int seed = 123456){
   
   // data: data input data.size() ~ number of records - data.[0].size ~ number of varaibles per record
+  // hid: int correspondig to column index in data which holds the household ID
   // hierarchy: column indices in data corresponding to geo hierarchy of data read left to right (left highest level - right lowest level)
   // similar: column indices in data corresponding to variables (household/personal) which should be considered when swapping,
   // e.g. swapping onlys household with same houshoeld size 
-  // risk_variables: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
-  // hid: int correspondig to column index in data which holds the household ID
-  // k_anonymity: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
   // swaprate: double defining the ratio of households to be swapped
-  // risk_threshold: vector of vectors containing the risk for each individual in each record - risk_record[0] risk for first record an each hierarchy level
+  // risk: double vector of vectors containing the risk for each individual in each record - risk_record[0] risk for first record an each hierarchy level
+  // risk_threshold: double cutoff for defining highrisk households. if risk>risk_threshold then household is high risk is will definitely be swapped
+  // k_anonymity: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
+  // risk_variables: column indices in data corresponding to risk variables which will be considered for estimating counts in the population
+  // carry_along: swap additional variables in addition to hierarchy variable. These variables do not interfere with the procedure of 
+  // finding a record to swap with. This parameter is only used at the end of the procedure when swapping the hierarchies.
   // seed: integer seed for random number generator
   
   
@@ -841,7 +848,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
 
   ////////////////////////////////////////////////////
   // Create output using swappedIndex
-  int swap_hierarchy,swap_hierarchy_with;
+  carry_along.insert( carry_along.end(), hierarchy.begin(), hierarchy.end() );
+  int nvalues = carry_along.size();
+  int swap_value,swap_value_with;
   int hsize=0;
   int hsizewith=0;
   for(auto const&x : swappedIndex){
@@ -854,18 +863,18 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     IDnotUsed.erase(x.first);
     IDnotUsed.erase(x.second);
     
-    // loop over hierarchy
-    for(int j=0;j<nhier;j++){
-      swap_hierarchy = data[x.first][hierarchy[j]];
-      swap_hierarchy_with = data[x.second][hierarchy[j]];
+    // loop over variables to swapp
+    for(int j=0;j<nvalues;j++){
+      swap_value = data[x.first][carry_along[j]];
+      swap_value_with = data[x.second][carry_along[j]];
       for(int h=0;h<max(hsize,hsizewith);h++){
-        // swap hierarchy for every household member in x.first
+        // swap variable value for every household member in x.first
         if(h<hsize){
-          data[x.first+h][hierarchy[j]] = swap_hierarchy_with;
+          data[x.first+h][carry_along[j]] = swap_value_with;
         }
-        // swap hierarchy for every household member in x.second
+        // swap variable value for every household member in x.second
         if(h<hsizewith){
-          data[x.second+h][hierarchy[j]] = swap_hierarchy;
+          data[x.second+h][carry_along[j]] = swap_value;
         }
       }
     }

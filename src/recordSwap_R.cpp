@@ -23,13 +23,19 @@ using namespace Rcpp;
 //' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
 //' @param risk_threshold double indicating risk threshold above every household needs to be swapped.
 //' @param risk vector of vectors containing risks of each individual in each hierarchy level.
+//' @param carry_along integer vector indicating additional variables to swap besides to hierarchy variables.
+//' These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+//' This parameter is only used at the end of the procedure when swapping the hierarchies.
 //' @param seed integer defining the seed for the random number generator, for reproducability.
 //' 
 //' @return Returns data set with swapped records.
 // [[Rcpp::export]]
-std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, Rcpp::List similar_cpp,
-                                               std::vector<int> hierarchy, std::vector<int> risk_variables, int hid, int k_anonymity, double swaprate,
-                                               double risk_threshold, std::vector<std::vector<double>> risk,
+std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, int hid,
+                                               std::vector<int> hierarchy, Rcpp::List similar_cpp,
+                                               double swaprate, 
+                                               std::vector<std::vector<double>> risk, double risk_threshold,
+                                               int k_anonymity, std::vector<int> risk_variables,
+                                               std::vector<int> carry_along,
                                                int seed = 123456){
   // prep inputs for the call to recordSwap()
   // some formats can not directly be transformed to stl-containers
@@ -43,7 +49,13 @@ std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > d
   }
   
   // call recrodSwap()
-  std::vector< std::vector<int> > output = recordSwap(data,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate,risk_threshold,risk,seed);
+  std::vector< std::vector<int> > output = recordSwap(data, hid,
+                                                      hierarchy, similar,
+                                                      swaprate,
+                                                      risk, risk_threshold,
+                                                      k_anonymity, risk_variables,  
+                                                      carry_along,
+                                                      seed);
   return output;
 }
 
