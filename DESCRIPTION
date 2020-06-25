@@ -2,7 +2,7 @@ Package: recordSwapping
 Type: Package
 Title: Record Swapping
 Version: 0.3.0
-Date: 2018-07-19
+Date: 2020-06-25
 Authors@R: c(
   person("Johannes", "Gussenbauer", email="Johannes.Gussenbauer@statistik.gv.at", role = c("aut", "cre")),
   person("Bernhard", "Meindl", email = "Bernhard.Meindl@statistik.gv.at", role = c("aut")),

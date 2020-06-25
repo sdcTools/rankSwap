@@ -1,9 +1,18 @@
 ---
 title: "Targeted Record Swapping"
 author: "Johannes Gussenbauer"
-date: "3 9 2018"
-output: html_document
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{recordSwapping}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
+
+
+
+
+
 
 ```{r setup, include=FALSE}
 library(data.table)
@@ -120,6 +129,7 @@ with $H_m$ as the proportion of high risk households in municipality $m$.
 
 The package was tested on randomly generated data, which contained 5 geographic levels and some other soziodemographic variables.
 ```{r}
+library(recordSwapping)
 dat <- create.dat(N=100000)
 dat
 ```
@@ -243,7 +253,7 @@ With the parameter `similar` multiple similarity profiles can be defined, if the
 Using multiple similarity profiles makes it easy to supply fall-back profiles if the initial profile is too specific.
 
 ```{r}
-# similarity additianal profil containig only hsize
+# additional profile contains only hsize
 similar <- list(similar)
 similar[[2]] <- "hsize"
 similar
@@ -373,6 +383,8 @@ dat_swapped3[!duplicated(hid),.N,by=.(id_swapped = hid!=hid_swapped)]
 ## Benchmarking
 
 ```{r benchmark, include=FALSE}
+library(ggplot2)
+
 load(paste0("../R/benchmark_cpp.RData"))
 mb_all <- rbindlist(mb_all)
 
