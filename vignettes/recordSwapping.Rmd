@@ -385,7 +385,7 @@ dat_swapped3[!duplicated(hid),.N,by=.(id_swapped = hid!=hid_swapped)]
 ```{r benchmark, include=FALSE}
 library(ggplot2)
 
-load(paste0("../R/benchmark_cpp.RData"))
+load(paste0("../data/benchmark_cpp.RData"))
 mb_all <- rbindlist(mb_all)
 
 mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]

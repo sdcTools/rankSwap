@@ -246,7 +246,7 @@ checkIndexString <- function(x=NULL,cnames,matchLength=NULL,minLength=NULL){
       stop("Columnname(s) in ",varName," are not found in data")
     }
     # initialize index
-    x <- which(cnames%in%x)
+    x <- match(x,cnames)
   }
   
   # check when integer that index does not
