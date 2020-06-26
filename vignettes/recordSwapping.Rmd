@@ -95,7 +95,7 @@ with $SA$ as the sample size, $N_{high}$ as the number of high risk households i
 
 + **C++-Code**: Swaps are made in every hierarchy level and records wich do not fullfill the k-anonymity are swapped. The donor set of records to be swapped with is always made out of every record wich do not belong to the same geographic area as the swapped households. At the lowest hierarchy level an additional number of households is swapped such that the proportion of households swapped is equal the number in `swaprate`. If the proportion of already swapped households succeeds this values then only records wich do not fullfill the k-anonymity are swapped.
 
-![Example for swapping households. The number represent the number of high risk households at each hierachy level.](Examplecpp.png)
+![Example for swapping households. The number represent the number of high risk households at each hierachy level.](../docs/Examplecpp.png)
 
 Figure 1 displays an example with hierarchy levels county > municipality > district where the number of high risk households are displayed at the end of the edges. For instance in the first county there are 5 high risk households which will be swapped with households from county 2. In the first municipality there are 10 high risk households which will be swapped with households which are not in the first municipality. At the lowest level, the districts, the number of swaps, $n_{swaps}$ is for the first district is defined by
 
