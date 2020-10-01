@@ -17,9 +17,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
 
 * added parameter `std::vector<int> carry_along` to `C++` function `recordSwap()`. Like the paramter `hierarchy`, `carry_along` expects column indices of `data` and swaps these values in addition to the ones defined in `hierarchy`. These variables do however not interfere with risk calculation, sampling or finding a donor.
 
-* added parameter `carry_along` to `R` function `recordSwap()`, expects either column indices or 
+* added parameter `carry_along` to `R` function `recordSwap()`, expects either column indices or column names
 
-* added parameter `return_swapped_id` to `R` function `recordSwap()`. If `return_swapped_id` and additional column will be returned which holds the `hid` with which each record was swapped with. If this new column has the same value as `hid` the record was not swapped.
+* added parameter `return_swapped_id` to `R` function `recordSwap()`. If `return_swapped_id` is `TRUE` an additional column will be returned which holds the `hid` with which each record was swapped with. If this new column has the same value as `hid` the record was not swapped.
 
 * Improved documentation and vignette
 
