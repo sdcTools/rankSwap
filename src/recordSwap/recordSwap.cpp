@@ -638,11 +638,11 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       for(int h=0;h<max(hsize,hsizewith);h++){
         // swap carry_along for every household member in x.first
         if(h<hsize){
-          data[hierarchy[j]][x.first+h] = swap_value_with;
+          data[carry_along[j]][x.first+h] = swap_value_with;
         }
-        // swap hierarchy for every household member in x.second
+        // swap carry_along for every household member in x.second
         if(h<hsizewith){
-          data[hierarchy[j]][x.second+h] = swap_value;
+          data[carry_along[j]][x.second+h] = swap_value;
         }
       }
     }

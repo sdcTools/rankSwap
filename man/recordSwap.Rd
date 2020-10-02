@@ -12,7 +12,7 @@ recordSwap(
   hid,
   th,
   swaprate,
-  carry_along = NULL,
+  carry_along = numeric(0),
   seed = 123456L
 )
 }
