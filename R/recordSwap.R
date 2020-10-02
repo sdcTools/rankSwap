@@ -43,7 +43,7 @@
 #' @return Returns data set with swapped records.
 #' 
 #' @export recordSwap
-recordSwap <- function(data, similar, hierarchy, risk, hid, th, swaprate, carry_along = NULL, seed = 123456L){
+recordSwap <- function(data, similar, hierarchy, risk, hid, th, swaprate, carry_along = numeric(0), seed = 123456L){
   
   cnames <- copy(colnames(data))
   
