@@ -54,8 +54,8 @@ swaprate <- .05 # swaprate of households
 k_anonymity <- 3
 
 
-# define similarity profile: hsize, htype, hincome
-similar <- c(5,9,10)
+# define similarity profile: hsize
+similar <- c(5)
 
 # multiple similarity profiles with version > 0.1.0
 # first similarity profile: hsize, htype, hincome
