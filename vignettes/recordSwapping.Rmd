@@ -277,7 +277,7 @@ nrow(dat_compare[V1.x!=V1.y])
 ### Carry along variables
 
 Using the function `recordSwap()` like above always results in swapping the variables defined through variable `hierarchy`.
-Sometimes it might however be useful to swap more variables then the ones stated in hierarchy.
+Sometimes it might be useful to swap more variables then the ones stated in hierarchy.
 
 Consider the following case where the variable `nuts3` is not a single digit integer but an integer which is unique across `nuts1` and `nuts2` levels
 
@@ -290,7 +290,7 @@ dat[,nuts3:=as.numeric(factor(nuts3))]
 dat
 ```
 
-If we would apply the record swapping using `hierarchy`-levels `nuts1` and `nuts2` then the `nuts3`-variable in our data set will stay the same. Thus for the resulting data set the variables `nuts1` and `nuts2` are no ´longer coherent with `nuts3`.
+If we would apply the record swapping using `hierarchy`-levels `nuts1` and `nuts2` then the `nuts3`-variable in our data set will stay the same. Thus for the resulting data set the variables `nuts1` and `nuts2` are no longer coherent with `nuts3`.
 
 Let's have a more detailed look at the problem
 
@@ -347,7 +347,7 @@ all.equal(dat_geo,dat_geo_swapped)
 ```
 
 Both the original and swapped data set have the same value combinations for `nuts1`, `nuts2` and `nuts3`.
-Setting this parameter did however not interfere with swapping procedure
+Setting this parameter did however not interfere with the swapping procedure
 
 ```{r}
 dat_compare2 <- merge(dat[,.(paste(nuts1[1],nuts2[1])),by=hid],
@@ -372,6 +372,8 @@ dat_swapped3 <- recordSwap(data = copy(dat),
                         return_swapped_id = TRUE,
                         seed=1234L)
 ```
+
+The output now has an additional column named `hid_swapped` which contains the household ID with which a household was swapped with.
 
 
 Number of swapped `hid`s
