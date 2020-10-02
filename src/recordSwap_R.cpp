@@ -27,10 +27,11 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar,
                                                std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
+                                               std::vector<int> carry_along,
                                                int seed = 123456){
 
   // call recrodSwap()
-  std::vector< std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
+  std::vector< std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,carry_along,seed);
   return output;
 }
 
