@@ -356,6 +356,7 @@ std::vector<int> sampleDonor(std::vector< std::vector<int> > &data, std::vector<
 */
 std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
                                          std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
+                                         std::vector<int> carry_along,
                                          int seed = 123456){
   
   // data: data input
@@ -366,6 +367,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // hid: int correspondig to column index in data which holds the household ID
   // th: int defining a threshold, each group with counts lower than the threshold will automatically be swapped.
   // swaprate: double defining the ratio of households to be swapped
+  // carry_along: swap additional variables in addition to hierarchy variable. These variables do not interfere with the procedure of 
   // seed: integer seed for random number generator
   
   
@@ -620,34 +622,27 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   
   ////////////////////////////////////////////////////
   // Create output using swappedIndex
-
-  int swap_hierarchy,swap_hierarchy_with;
+  carry_along.insert( carry_along.end(), hierarchy.begin(), hierarchy.end() );
+  int nvalues = carry_along.size();
+  int swap_value,swap_value_with;
   int hsize=0;
   int hsizewith=0;
   for(auto const&x : swappedIndex){
     hsize = map_hsize[data[hid][x.first]];
     hsizewith = map_hsize[data[hid][x.second]];
 
-    // loop over hierarchy
-    for(int j=0;j<nhier;j++){
-      swap_hierarchy = data[hierarchy[j]][x.first];
-      swap_hierarchy_with = data[hierarchy[j]][x.second];
+    // loop over hierarchy and carry along
+    for(int j=0;j<nvalues;j++){
+      swap_value = data[carry_along[j]][x.first];
+      swap_value_with = data[carry_along[j]][x.second];
       for(int h=0;h<max(hsize,hsizewith);h++){
-        // swap hierarchy for every household member in x.first
-        if(x.first+h>=n){
-          cout<<data[hid][x.first]<<endl;
-          break;
-        }
-        if(x.second+h>=n){
-          cout<<data[hid][x.second]<<endl;
-          break;
-        }
+        // swap carry_along for every household member in x.first
         if(h<hsize){
-          data[hierarchy[j]][x.first+h] = swap_hierarchy_with;
+          data[hierarchy[j]][x.first+h] = swap_value_with;
         }
         // swap hierarchy for every household member in x.second
         if(h<hsizewith){
-          data[hierarchy[j]][x.second+h] = swap_hierarchy;
+          data[hierarchy[j]][x.second+h] = swap_value;
         }
       }
     }
