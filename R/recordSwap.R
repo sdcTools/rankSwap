@@ -35,6 +35,9 @@
 #' @param hid column index in `data` which refers to the household identifier.
 #' @param th integer defining the threshhold of high risk households (counts<k).
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
+#' @param carry_along integer vector indicating additional variables to swap besides to hierarchy variables.
+#' These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+#' This parameter is only used at the end of the procedure when swapping the hierarchies.
 #' @param seed integer defining the seed for the random number generator, for reproducability.
 #' 
 #' @return Returns data set with swapped records.
