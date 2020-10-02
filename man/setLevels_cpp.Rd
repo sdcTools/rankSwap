@@ -4,22 +4,19 @@
 \alias{setLevels_cpp}
 \title{Define Swap-Levels}
 \usage{
-setLevels_cpp(data, hierarchy, risk, hid, th)
+setLevels_cpp(risk, risk_threshold)
 }
 \arguments{
-\item{data}{micro data set containing only numeric values.}
+\item{risk}{vector of vectors containing risks of each individual in each hierarchy level. \code{risk[0]} returns the vector of risks for the first unit over all hierarchy levels.
+\code{risk[1]} the vector if risks for all hierarchy level of unit 2, and so on.}
 
-\item{hierarchy}{column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.}
-
-\item{risk}{column indices of variables in \code{data} which will be considered for estimating the risk.}
-
-\item{hid}{column index in \code{data} which refers to the household identifier.}
-
-\item{th}{integer defining the threshhold of high risk households (k-anonymity).}
+\item{risk_threshold}{double defining the risk threshold beyond which a record/household needs to be swapped. This is understood as risk>=risk_threshhold.}
 }
 \value{
 Integer vector with hierarchy level over which record needs to be swapped with.
 }
 \description{
 Define hierarchy levels over which record needs to be swapped according to risk variables.
+\cr
+\strong{NOTE:} This is an internal function used for testing the C++-function \code{setLevels()} which is applied inside \code{recordSwap()}.
 }

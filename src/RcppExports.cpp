@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // recordSwap_cpp
-std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, int seed);
-RcppExport SEXP _recordSwapping_recordSwap_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
+std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate, std::vector<int> carry_along, int seed);
+RcppExport SEXP _recordSwapping_recordSwap_cpp(SEXP dataSEXP, SEXP similarSEXP, SEXP hierarchySEXP, SEXP riskSEXP, SEXP hidSEXP, SEXP thSEXP, SEXP swaprateSEXP, SEXP carry_alongSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -18,8 +18,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type hid(hidSEXP);
     Rcpp::traits::input_parameter< int >::type th(thSEXP);
     Rcpp::traits::input_parameter< double >::type swaprate(swaprateSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type carry_along(carry_alongSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(recordSwap_cpp(data, similar, hierarchy, risk, hid, th, swaprate, seed));
+    rcpp_result_gen = Rcpp::wrap(recordSwap_cpp(data, similar, hierarchy, risk, hid, th, swaprate, carry_along, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -140,7 +141,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 8},
+    {"_recordSwapping_recordSwap_cpp", (DL_FUNC) &_recordSwapping_recordSwap_cpp, 9},
     {"_recordSwapping_setLevels_cpp", (DL_FUNC) &_recordSwapping_setLevels_cpp, 2},
     {"_recordSwapping_orderData_cpp", (DL_FUNC) &_recordSwapping_orderData_cpp, 2},
     {"_recordSwapping_setRisk_cpp", (DL_FUNC) &_recordSwapping_setRisk_cpp, 4},
