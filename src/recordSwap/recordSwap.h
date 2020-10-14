@@ -38,6 +38,7 @@
 */
 std::vector<std::vector<int> > recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
                                           std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
+                                          std::vector<int> carry_along,
                                           int seed);
 
 //private:
