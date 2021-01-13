@@ -2,6 +2,7 @@
 
 * Fixed bug where less than households than indicated through the swaprate were drawn
 * added version number to header file
+* developed different method for distributing number of draws over all geographic hierarchies
 
 # recordSwapping 0.3.0
 
