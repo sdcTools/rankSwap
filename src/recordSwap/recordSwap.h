@@ -12,6 +12,10 @@
  * warranties or conditions of any kind, either express or implied.
  */
 
+/*
+ * Version: 0.3.1
+ */
+
 /* 
 * Header file for shared library recordSwap.dll
 * with source code recordSwap.cpp

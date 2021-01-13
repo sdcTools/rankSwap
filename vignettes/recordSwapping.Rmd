@@ -224,7 +224,7 @@ dat <- create.dat(N=10000)
 hierarchy <- c("nuts1","nuts2")
 risk_variables <- "gender"
 # similarity profile contains:
-# nuts2 + hsize + htype + hincome
+# nuts1 + hsize + htype + hincome
 similar <- c("nuts1","hsize","htype","hincome")
 
 # procedure will not always find a suitable donor

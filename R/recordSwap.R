@@ -249,8 +249,8 @@ checkIndexString <- function(x=NULL,cnames,matchLength=NULL,minLength=NULL){
     x <- match(x,cnames)
   }
   
-  # check when integer that index does not
-  # exceed number of column of data
+  # check that index does not
+  # - exceed number of column of data
   # x must be integer from this point onwards
   if(any(x>length(cnames))){
     stop("Columnindex in ",varName," exceeds number of columns in data")

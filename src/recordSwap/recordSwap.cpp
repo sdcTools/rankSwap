@@ -1,3 +1,8 @@
+/*
+ * Algorithm for targeted record swapping
+ * Version: 0.3.1
+ */
+
 #include <iostream>     
 #include <algorithm>    // std::count
 #include <vector>       // std::vector
@@ -301,132 +306,82 @@ std::map<std::vector<int>,int> distributeDraws2(std::map<std::vector<int>,std::u
   }
   
   ///////////////
-  // sum of risk in each hierarchy
-  int nhier = risk[0].size();
-  std::vector<double> sumRiskHierarchy(nhier,0.0); 
-  for (auto& risk_h : risk){
-    std::transform(sumRiskHierarchy.begin(),sumRiskHierarchy.end(),risk_h.begin(),sumRiskHierarchy.begin(),std::plus<double>());
-  }
-
-  ///////////////
   // define number of units to swap at lowest level hierarchy
-  // loop through all lowest level hierarchies
+  // loop through all hierarchies
+  // and estimate distribution ratio only at lowest level hierarchy
   std::map<std::vector<int>,double > ratioRisk; // get ratio of numbers to draw in lowest level hierarchy
-  std::map<std::vector<int>,double > sumRisk; // sum of Risk in each hierarchy level
-  double sumRatio = 0.0; //help variable for ratio
-  double helpRatio = 0.0; //help variable for ratio
+  std::map<std::vector<int>, std::vector<double> > sumRisk; // sum of Risk in each hierarchy level
+  int nhier = risk[0].size(); // number of hierarchies
   
   // calcualte sum of risk in each hierarchy level
   for(auto const&x : group_hier){
     
-    std::vector<int> hl = x.first;
-    for(int h=nhier;--h;){
+    std::vector<double> sumRisk_help(nhier); // help vector to fill sumRisk
+    for(int h=nhier;--h >=0;){
+      //std::cout<<"h= "<<h<<"\n";
       for (const auto& indexI: x.second){
-        sumRisk[hl] += risk[indexI][h];
+        sumRisk_help[h] += risk[indexI][h];
       }
-      hl.pop_back();
     }
     
+    sumRisk[x.first] = sumRisk_help;
+    
     // get draw ratio ~ percentage of units to draw in each lowest level hierarchy
-    helpRatio = std::max((double)x.second.size()/(double)nhid,sumRisk[x.first]/sumRiskHierarchy.back());
-    sumRatio += helpRatio;
-    ratioRisk[x.first] = helpRatio;
+    ratioRisk[x.first] = sumRisk[x.first].back();
   }
-
-  // normalize ratioRiskH
+  
+  //normalize ratioRisk
+  double sum_ratioRisk = 0.0;
   for(auto const&x : ratioRisk){
-    ratioRisk[x.first] = ratioRisk[x.first]/sumRatio;  
+    sum_ratioRisk += x.second;
   }
-
-  // distribute totalDraws over ratioRiskH
+  for(auto const&x : ratioRisk){
+    ratioRisk[x.first] = x.second/sum_ratioRisk;
+  }
+  
+  // calculate number of draws on lowest level hierarchy
   std::map<std::vector<int>,int> numberDraws = distributeRandom(ratioRisk, totalDraws,mersenne_engine);
-  std::cout << "number of swaps: " << totalDraws << "\n";
-  
-  int help3 =0;
-  for(auto const&i : numberDraws){
-    help3 = help3 + i.second;
-  }
-  std::cout << "number of swaps dist: " << help3 << "\n";
-  
+
   
   // loop over hierarchy and distribute each entry in numberDraws
-  // over the hierarchies
-  double helpRisk = 0.0;
-  int help =0;
+  // over the hierarchies vertically
+  double helpSum = 0.0;
+  double ratioHelp = 0.0;
   std::vector<int> hl;
 
   for(auto const&x : group_hier){
     
-    hl = x.first;
-    std::map<std::vector<int>,double > ratioHelp;
-    // get sum of Risk going up the hierarchy levels
-    for(int h=nhier;h-- >0;){
-      helpRisk += sumRisk[hl];
-      hl.pop_back();
+    // sum over risks vertically
+    helpSum = 0.0;
+    for (auto& r : sumRisk[x.first]){
+      helpSum += r;
     }
     
+    std::map<std::vector<int>,double > ratioHelp;
     hl = x.first;
-    for(int h=nhier;h-- >0;){
-      ratioHelp[hl] = sumRisk[hl]/helpRisk;
-      hl.pop_back();
+    hl.push_back(1);
+    for(int h=0;h<nhier;h++){
+      hl.back() = h+1;
+      ratioHelp[hl] = sumRisk[x.first][h]/helpSum;
     }
 
     std::map<std::vector<int>,int> helpDist = distributeRandom(ratioHelp, numberDraws[x.first],mersenne_engine);
-    
-    help = numberDraws[x.first];
-    // insert helpDist into numberDraws
-    // cant use insert because Index in helpDist can
-    // already exist in numberDraws
-    // if(help>0){
-    //   std::cout << "number of Draws: " << numberDraws[x.first] << "\n";
-    //   for(auto const&hd : helpDist){
-    //     for(auto const&i : hd.first){
-    //       std::cout << i << " ";
-    //     }
-    //     std::cout << "              n: "<< hd.second << "\n";
-    //   }
-    // }
-    
-    for(auto const&hd : helpDist){
-      if(nhier!=hd.first.size()){
+
+    for(auto const&x : helpDist){
+      
+      std::vector<int> help_hier(x.first.begin(),x.first.begin() + x.first.back());
+      if(nhier!=x.first.back()){
         // for higher hierarchies
         // add to existing values
-        numberDraws[hd.first] += hd.second;
+        numberDraws[help_hier] += x.second;
       }else{
         // for lowest hierarchy overwrite value
-        numberDraws[hd.first] = hd.second;
+        numberDraws[help_hier] = x.second;
       }
-      
-      
-      // if(numberDrawsOutput[hd.first]>0){
-      //   for(auto const&i : hd.first){
-      //     std::cout << i << " ";
-      //   }
-      //   std::cout << "               n: " << numberDrawsOutput[hd.first]<<"\n";
-      // }
+
     }
-   
-    helpRisk = 0.0;
   }
-  
-  // std::cout << "\n\ncheck before return:\n";
-  // 
-  // for(auto const&x : numberDrawsOutput){
-  //   
-  //   if(x.second>0){
-  //     std::cout << "\n";
-  //     for(auto const&i : x.first){
-  //       std::cout << i << " ";
-  //     }
-  //     std::cout << "          n : " << x.second <<"\n";
-  //   }
-  //   // for( auto const&i : x.first){
-  //   //   std::cout << i;
-  //   // }
-  //   // std::cout << "           n:" << x.second<<"\n";
-  // }
-  
-  
+
   return numberDraws;
 }
 
@@ -598,8 +553,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // carry_along: swap additional variables in addition to hierarchy variable. These variables do not interfere with the procedure of 
   // finding a record to swap with. This parameter is only used at the end of the procedure when swapping the hierarchies.
   // seed: integer seed for random number generator
-  
-  
+
   // initialise parameters
   int n = data.size(); // number of obesrvations
   int nhier = hierarchy.size(); // number of hierarchy levels
@@ -665,6 +619,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // at lowest level swap remaining number of households (according to swap) if not enough households have been swapped
   // every household can only be swapped once 
   std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
+  std::map<std::vector<int>,int> countSwaps; // count swaps already done in each hierarchy
   std::unordered_map<int,std::unordered_set<int> > group_levels; // map containing all IDs which must be swapped at a certain level (~key of map)
   std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
   std::unordered_map<int,int> swappedIndex; // map for indices that have already been used -> unorderd map constant time access
@@ -704,7 +659,6 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       samp_order_donor[j][prob[z][j]/exp_dist(mersenne_engine)] = z;
     }
 
-    
     // count number of households
     nhid++;
     // skip all other household member, only need first one
@@ -720,11 +674,10 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   // draw_group[].second -> number of swaps in lowest level hierarchy
   std::map<std::vector<int>,std::pair<int,int>> draw_group =  distributeDraws(group_hier, nhid, swaprate, 
                                                                               runif01, mersenne_engine);
- 
+  //std::map<std::vector<int>,int> draw_group =  distributeDraws2(group_hier, risk, nhid, swaprate,
+  //                                                              runif01, mersenne_engine);
   /////////////////////////////
-  int check_donor = 0;
-  int check_sample = 0;
-  
+
   /////////
   // this is needed only for the lowest hierarchy
   // will be changed for the final version
@@ -740,7 +693,8 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   for(int h=0;h<nhier;h++){
     // int h=3;
     // values of map element that must be swapped at current stage
-    // if no elements need to be swapped than skipp this step
+    // if no elements need to be swapped than skip this step
+
     std::unordered_set<int> mustSwap;
 
     if(group_levels.find(h)!=group_levels.end()){
@@ -762,11 +716,15 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
       for(auto s : x.second){
         if(IDused[s]==0){
           group_hier_help[hier_help].insert(s);
+        }else if(swappedIndex.find(s) != swappedIndex.end()){
+          // count how many IDs were already swapped inside this hierarchy
+          // used IDswap not used in IDdonor
+          countSwaps[hier_help]++;
         }
       }
     }
     /////////////////
-    
+
     
     /////////////////
     int sampSize=0;
@@ -775,15 +733,15 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
     /////////////////
     // loop over levels of hierarchy
     for(auto &x : group_hier_help){
+
       // std::vector<int> xfirst = group_hier_help.begin()->first;
       // std::vector<int> xsecond = group_hier_help.begin()->second;
       // get values that need to be swapped at this hierarchy level and which are
       // in this hierarchy stage
       std::vector<int> IDswap(x.second.size());
-      
-      
+
       if(h<(nhier-1)){
-        // in all but the last hierarchy level do the follwing: 
+        // in all but the last hierarchy level do the follwing:
         if(mustSwap.size()>0){
           // loop over values in x.second
           z=0;
@@ -803,15 +761,13 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         // if at lowest level get number of households that need to be swapped
         // according to swap and check if this number was already reached
         // by previous swappings
-        
-        countUsed = draw_group[x.first].first - x.second.size();
-        
+
         // not enough households have been swapped
         // when checking at lowest level
         // Number of IDs that need to be swapped - already swapped IDs - IDs that have to be swapped at lowest level:
-        countRest = draw_group[x.first].second - countUsed;
+        countRest = draw_group[x.first].second - countSwaps[x.first];
         countRest = std::max(0,countRest);
-        
+
         std::unordered_set<int> IDswap_draw = x.second;
         
         // apply sampling here -> should still be quick because IDswap_draw will not be extremely large
@@ -821,6 +777,7 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
         IDswap = IDswap_help; 
       }
       
+
       // if any IDs need to be swapped:
       if(IDswap.size()>0){
 
@@ -881,9 +838,9 @@ std::vector< std::vector<int> > recordSwap(std::vector< std::vector<int> > data,
   }
   
   // if(IDnotUsed.size()==0){
-  //   cout<<"Recordswapping was successful!"<<endl;
+  //    cout<<"Recordswapping was successful!"<<endl;
   // }else{
-  //   cout<<"Donor household was not found in "<<IDnotUsed.size()<<" cases."<<endl;
+  //    cout<<"Donor household was not found in "<<IDnotUsed.size()<<" cases."<<endl;
   // }
   
   return data;

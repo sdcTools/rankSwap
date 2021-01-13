@@ -95,7 +95,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // distributeDraws2_cpp
-std::vector<int> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk, std::vector<int> hierarchy, int hid, double swaprate, int seed);
+std::vector<std::vector<int>> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk, std::vector<int> hierarchy, int hid, double swaprate, int seed);
 RcppExport SEXP _recordSwapping_distributeDraws2_cpp(SEXP dataSEXP, SEXP riskSEXP, SEXP hierarchySEXP, SEXP hidSEXP, SEXP swaprateSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

@@ -47,8 +47,9 @@ std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > d
       similar[i].push_back(sublist[j]);
     }
   }
-  
-  // call recrodSwap()
+ 
+    
+   // call recrodSwap()
   std::vector< std::vector<int> > output = recordSwap(data, hid,
                                                       hierarchy, similar,
                                                       swaprate,
@@ -203,12 +204,16 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
   std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+2));
   int z = 0;
   for(auto const&x : draw_group){
+    std::cout<<"hierarchy:" << " ";
     for(int j=0;j<(nhier+2);j++){
       if(j<nhier){
+        std::cout<<x.first[j] << " ";
         output[z][j] = x.first[j];
       }else if(j==nhier){
+        std::cout<<"\n n1: "<<x.second.first;
         output[z][j] = x.second.first;
       }else{
+        std::cout<<"\n n2: "<<x.second.second<<"\n";
         output[z][j] = x.second.second;
       }
     }
@@ -218,7 +223,7 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
 }
 
 // [[Rcpp::export]]
-std::vector<int> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk,
+std::vector<std::vector<int>> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk,
                                                     std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
   
   // define parameter
@@ -261,12 +266,25 @@ std::vector<int> distributeDraws2_cpp(std::vector< std::vector<int> > data, std:
   
   // iterate over map to generate output
   // implementation good enough for testing purposes
-  std::vector<int> output(draw_group.size());
+  // iterate over map to generate output
+  // implementation good enough for testing purposes
+  std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+1));
   int z = 0;
   for(auto const&x : draw_group){
-    output[z] = x.second;
+    //std::cout<<"hierarchy:" << " ";
+    for(int j=0;j<(nhier+1);j++){
+      if(j<nhier & j<x.first.size()){
+        //std::cout<<x.first[j] << " ";
+        output[z][j] = x.first[j];
+      }else if(j==nhier){
+        //std::cout<<"\n n1: "<<x.second;
+        output[z][j] = x.second;
+      }
+    }
+    //std::cout<<"\n";
     z++;
   }
+  
   return output;
 }
 

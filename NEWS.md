@@ -1,3 +1,8 @@
+# recordSwapping 0.3.1
+
+* Fixed bug where less than households than indicated through the swaprate were drawn
+* added version number to header file
+
 # recordSwapping 0.3.0
 
 * Changed parameter order in `R` and `C++` function `recordSwap()` to have a more consistent documentation. Function call to `C++` function changed to 
