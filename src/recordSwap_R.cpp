@@ -13,24 +13,50 @@ using namespace Rcpp;
 //' \cr
 //' \strong{NOTE:} This is an internal function called by the R-function \code{recordSwap()}. It's only purpose is to include the C++-function recordSwap() using Rcpp.
 //' 
-//' @param data micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of variables - data.[0].size ~ number of records per record.
+//' @param data micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.
 //' \strong{NOTE:} \emph{data has to be ordered by hid beforehand.}
 //' @param similar List where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households.
 //' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-//' @param risk column indices of variables in \code{data} which will be considered for estimating the risk.
+//' @param risk_variables column indices of variables in \code{data} which will be considered for estimating the risk.
 //' @param hid column index in \code{data} which refers to the household identifier.
-//' @param th integer defining the threshhold of high risk households (k-anonymity). This is used as th <= counts.
+//' @param k_anonymity integer defining the threshhold of high risk households (k-anonymity). This is used as k_anonymity <= counts.
 //' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
+//' @param risk_threshold double indicating risk threshold above every household needs to be swapped.
+//' @param risk vector of vectors containing risks of each individual in each hierarchy level.
+//' @param carry_along integer vector indicating additional variables to swap besides to hierarchy variables.
+//' These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+//' This parameter is only used at the end of the procedure when swapping the hierarchies.
 //' @param seed integer defining the seed for the random number generator, for reproducability.
 //' 
 //' @return Returns data set with swapped records.
 // [[Rcpp::export]]
-std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, std::vector<int> similar,
-                                               std::vector<int> hierarchy, std::vector<int> risk, int hid, int th, double swaprate,
+std::vector< std::vector<int> > recordSwap_cpp(std::vector< std::vector<int> > data, int hid,
+                                               std::vector<int> hierarchy, Rcpp::List similar_cpp,
+                                               double swaprate, 
+                                               std::vector<std::vector<double>> risk, double risk_threshold,
+                                               int k_anonymity, std::vector<int> risk_variables,
+                                               std::vector<int> carry_along,
                                                int seed = 123456){
-
-  // call recrodSwap()
-  std::vector< std::vector<int> > output = recordSwap(data,similar,hierarchy,risk,hid,th,swaprate,seed);
+  // prep inputs for the call to recordSwap()
+  // some formats can not directly be transformed to stl-containers
+  std::vector<std::vector<int>> similar(similar_cpp.size());
+  for(int i=0;i<similar_cpp.size();i++){
+    Rcpp::List sublist = similar_cpp[i];
+    int m = sublist.size();
+    for(int j=0;j<m;j++){
+      similar[i].push_back(sublist[j]);
+    }
+  }
+ 
+    
+   // call recrodSwap()
+  std::vector< std::vector<int> > output = recordSwap(data, hid,
+                                                      hierarchy, similar,
+                                                      swaprate,
+                                                      risk, risk_threshold,
+                                                      k_anonymity, risk_variables,  
+                                                      carry_along,
+                                                      seed);
   return output;
 }
 
@@ -65,7 +91,7 @@ std::vector<int> setLevels_cpp(std::vector< std::vector<double> > risk, double r
 // [[Rcpp::export]]
 std::vector< std::vector<int> > orderData_cpp(std::vector< std::vector<int> > &data, int orderIndex){
   std::vector< std::vector<int> > output = orderData(data,orderIndex) ;
-  return output ;
+ return output ;
 }
 
 
@@ -132,10 +158,10 @@ std::vector<int> randSample_cpp(std::vector<int> ID, int N, std::vector<double> 
 //' 
 // [[Rcpp::export]]
 std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int> > data,
-                                                    std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
+                                                     std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
   
   // define parameter
-  int n = data[0].size();
+  int n = data.size();
   int nhier = hierarchy.size();
   int nhid = 0;
   int currentID = -1;
@@ -150,14 +176,14 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
   
   for(int i=0;i<n;i++){
     
-    if(currentID==data[hid][i]){
+    if(currentID==data[i][hid]){
       continue; // go to next iteration if statement is true
     }
     
-    currentID = data[hid][i];
+    currentID = data[i][hid];
     // ... define hierarchy group
     for(int j=0;j<nhier;j++){
-      hier_help[j] = data[hierarchy[j]][i];
+      hier_help[j] = data[i][hierarchy[j]];
     }
     
     // supply new household index to each group
@@ -178,12 +204,16 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
   std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+2));
   int z = 0;
   for(auto const&x : draw_group){
+    std::cout<<"hierarchy:" << " ";
     for(int j=0;j<(nhier+2);j++){
       if(j<nhier){
+        std::cout<<x.first[j] << " ";
         output[z][j] = x.first[j];
       }else if(j==nhier){
+        std::cout<<"\n n1: "<<x.second.first;
         output[z][j] = x.second.first;
       }else{
+        std::cout<<"\n n2: "<<x.second.second<<"\n";
         output[z][j] = x.second.second;
       }
     }
@@ -192,15 +222,79 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
   return output;
 }
 
-
+// [[Rcpp::export]]
+std::vector<std::vector<int>> distributeDraws2_cpp(std::vector< std::vector<int> > data, std::vector< std::vector<double> > risk,
+                                                    std::vector<int> hierarchy, int hid, double swaprate, int seed = 123456){
+  
+  // define parameter
+  int n = data.size();
+  int nhier = hierarchy.size();
+  int nhid = 0;
+  int currentID = -1;
+  
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  // initialize random number generator for distributeDraws()
+  std::uniform_int_distribution<std::mt19937::result_type> runif01(0,1);
+  
+  std::map<std::vector<int>,std::unordered_set<int> > group_hier; //
+  std::vector<int> hier_help(nhier); // help vector to get hierarchy groups
+  
+  for(int i=0;i<n;i++){
+    
+    if(currentID==data[i][hid]){
+      continue; // go to next iteration if statement is true
+    }
+    
+    currentID = data[i][hid];
+    // ... define hierarchy group
+    for(int j=0;j<nhier;j++){
+      hier_help[j] = data[i][hierarchy[j]];
+    }
+    
+    // supply new household index to each group
+    // use only indices to speed up construction of output data
+    group_hier[hier_help].insert(i);
+    
+    // count number of households
+    nhid++;
+    // skip all other household member, only need first one
+  }
+  std::cout << "number of households: " << nhid << "\n";
+  std::map<std::vector<int>,int> draw_group =  distributeDraws2(group_hier, risk, nhid, swaprate, runif01, mersenne_engine);
+  
+  
+  // iterate over map to generate output
+  // implementation good enough for testing purposes
+  // iterate over map to generate output
+  // implementation good enough for testing purposes
+  std::vector<std::vector<int>> output(draw_group.size(),std::vector<int>(nhier+1));
+  int z = 0;
+  for(auto const&x : draw_group){
+    //std::cout<<"hierarchy:" << " ";
+    for(int j=0;j<(nhier+1);j++){
+      if(j<nhier & j<x.first.size()){
+        //std::cout<<x.first[j] << " ";
+        output[z][j] = x.first[j];
+      }else if(j==nhier){
+        //std::cout<<"\n n1: "<<x.second;
+        output[z][j] = x.second;
+      }
+    }
+    //std::cout<<"\n";
+    z++;
+  }
+  
+  return output;
+}
 
 
 /*
-* Function to test sampleDonor
-*/
+ * Function to test sampleDonor
+ */
 //' @title Random sample for donor records
 //' 
-//' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
+//' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \code{\link{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
 //' \cr
 //' \strong{NOTE:} This is an internal function used for testing the C++-function \code{sampleDonor} which is used inside the C++-function \code{recordSwap()}.
 //' 
@@ -213,14 +307,23 @@ std::vector< std::vector<int> > distributeDraws_cpp(std::vector< std::vector<int
 //' @param seed integer setting the sampling seed
 //' 
 // [[Rcpp::export]]
-std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vector<int> similar, int hid,
-                                 std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
+std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, Rcpp::List similar_cpp, int hid,
+                                  std::vector<int> IDswap, std::vector<int> IDswap_pool_vec, std::vector<double> prob, int seed=123456){
   
   
   // prep inputs for the call to sampleDonor()
-
+  // some formats can not directly be transformed to stl-containers
+  std::vector<std::vector<int>> similar(similar_cpp.size());
+  for(int i=0;i<similar_cpp.size();i++){
+    Rcpp::List sublist = similar_cpp[i];
+    int m = sublist.size();
+    for(int j=0;j<m;j++){
+      similar[i].push_back(sublist[j]);
+    }
+  }
+  
   // generate paramters
-  int n = data[0].size();
+  int n = data.size();
   std::vector<int> IDused(n);
   std::unordered_set<int> IDswap_pool(IDswap_pool_vec.begin(),IDswap_pool_vec.end());
   
@@ -242,12 +345,124 @@ std::vector<int> sampleDonor_cpp(std::vector< std::vector<int> > data, std::vect
 
 
 /*
-* Some test functions
-* NOT USED AS OF RIGHT NOW!
-*/
+ * test randomly distributing stuff
+ */
+//' @title Distribute 
+//' 
+//' @description Distribute `totalDraws` using ratio/probability vector `inputRatio` and randomly round each entry up or down such that the distribution results in an integer vector.
+//' Returns an integer vector containing the number of units in `totalDraws` distributetd according to proportions in `inputRatio`.
+//' 
+//' \cr
+//' \strong{NOTE:} This is an internal function used for testing the C++-function \code{distributeRandom} which is used inside the C++-function \code{recordSwap()}.
+//' 
+//' @param inputRatio vector containing ratios which are used to distribute number units in `totalDraws`.
+//' @param totalDraws number of units to distribute
+//' @param seed integer setting the sampling seed
+//' 
+// [[Rcpp::export]]
+std::vector<int> distributeRandom_cpp(std::vector<double> inputRatio, int totalDraws,
+                                      int seed){
+  
+  // prep input
+  std::mt19937 mersenne_engine;
+  mersenne_engine.seed(seed);
+  
+  std::vector<int> help_i(1,0);
+  std::map<std::vector<int>,double> ratioDraws;
+  for(int i;i<inputRatio.size();i++){
+    help_i[0] = i;
+    ratioDraws[help_i] = inputRatio[i];
+  }
+  
+  // output
+  std::map<std::vector<int>,int> numberDraws;
+  
+  numberDraws = distributeRandom(ratioDraws, totalDraws,mersenne_engine);
+  
+  // return output
+  std::vector<int> output(numberDraws.size());
+  int z = 0;
+  for(auto const&x : numberDraws){
+    output[z] = x.second;
+    z++;
+  }
+  return output;
+}
+
+
+// [[Rcpp::export]]
+std::vector<double> testLoop_cpp(std::vector<std::vector<int>> inputGroup,  std::vector<std::vector<double>> risk){
+  
+  int n = inputGroup.size();
+  int nhier = inputGroup[0].size();
+  
+  std::map<std::vector<int>,std::unordered_set<int>> mapGroup;
+  std::vector<int> hier_help(nhier);
+  for(int i =0;i<n;i++){
+    // ... define hierarchy group
+    for(int j=0;j<nhier;j++){
+      hier_help[j] = inputGroup[i][j];
+    }
+    
+    // supply new household index to each group
+    mapGroup[hier_help].insert(i);
+  }
+  
+  // std::map<std::vector<int>,double > ratioRisk; // get ratio of numbers to draw in lowest level hierarchy
+  std::map<std::vector<int>,double > sumRisk; // sum of Risk in each hierarchy level
+  std::map<std::vector<int>,int > unitsHierarchy; // number of units in each hierarchy
+  double sumRatio = 0.0; //help variable for ratio
+  double helpRatio = 0.0; //help variable for ratio
+  
+  // calcualte sum of risk in each hierarchy level
+  std::vector<int> maxIndex(nhier,0); 
+  for(auto const&x : mapGroup){
+    
+    std::vector<int> hl = x.first;
+    
+    // for (auto const& i: hl) {
+    //   std::cout << i << " ";
+    // }
+    // std::cout << "\n";
+    
+    for(int h=nhier; h-- >0; ){
+      for (const auto& indexI: x.second){
+        sumRisk[hl] += risk[indexI][h];
+      }
+      
+      // for (auto const& i: hl) {
+      //   std::cout << i << " ";
+      // }
+      
+      maxIndex[h] = max(maxIndex[h],hl.back());
+      
+      hl.pop_back();
+
+      // std::cout << "\n";
+      
+    }
+  }
+  
+  std::vector<double> output(sumRisk.size());
+  
+  int z=0;
+  for(auto const&x : sumRisk){
+    output[z] = x.second;
+    z++;
+  } 
+
+  return output;
+
+}
+
+
+/*
+ * Some test functions
+ * NOT USED AS OF RIGHT NOW!
+ */
 // [[Rcpp::export]]
 std::vector<int> test_prioqueue(std::vector<int> x_vec,std::vector<double> prob,std::vector<int> mustSwap_vec,int n,int seed){
-  
+
   std::unordered_set<int> mustSwap(mustSwap_vec.begin(),mustSwap_vec.end());
   std::unordered_set<int> x(x_vec.begin(),x_vec.end());
   
@@ -256,7 +471,7 @@ std::vector<int> test_prioqueue(std::vector<int> x_vec,std::vector<double> prob,
   std::exponential_distribution<double> exp_dist(1.0);
   std::mt19937 mersenne_engine;
   mersenne_engine.seed(seed);
-  
+
   int z=0;
   for(auto s : x){
     if(mustSwap.find(s)!=mustSwap.end()){
@@ -269,13 +484,13 @@ std::vector<int> test_prioqueue(std::vector<int> x_vec,std::vector<double> prob,
   
   n = max(0,min<int>(q.size(),n-z));
   sampleID.resize(n+z);
-  
+
   // select index of top elements from priority_queue
   for(int i=0;i<n;i++){
     sampleID[i+z] = q.top().second; //.top() access top element in queue
     q.pop(); // remove top element in queue
   }
-  
+
   return sampleID;
 }
 
@@ -298,22 +513,27 @@ std::vector<int> test_comparator(std::vector<int> x_vec,std::vector<double> prob
   std::mt19937 mersenne_engine;
   mersenne_engine.seed(seed);
   int N = x.size();
-  
+  std::vector<int> sampleID(x.begin(),x.end());
+
   // apply prob[i]/exp_dist(mersenne_engine) over whole prob vector
   std::for_each(prob.begin(),prob.end(), [&exp_dist, &mersenne_engine](double& d) {d = d/exp_dist(mersenne_engine);});
   // define highest sampling value and give all elements in mustSwap this probabilits (they will always be selected)
-  std::vector<int> x_return(x.begin(),x.end());
+
+  // sort x by prob
+  std::partial_sort(sampleID.begin(),sampleID.begin()+n,sampleID.end(),Comp(prob));
+
+  // include must swapped values if necessary
   int z=0;
-  for(int i=0;i<N;i++){
-    if(mustSwap.find(x_return[i])!=mustSwap.end()){
-      iter_swap(x_return.begin() + z, x_return.begin() + i);
+  for(auto s : mustSwap){
+    if(x.find(s)!=x.end() && std::find(sampleID.begin(), sampleID.begin()+n, s) == sampleID.begin()+n){
+      sampleID[n-(z+1)] = s;
       z++;
     }
   }
-  
-  // sort x by prob
-  std::partial_sort(x_return.begin()+z,x_return.begin()+n-z,x_return.end(),Comp(prob));
-  x_return.resize(n);
-  
-  return x_return;
+
+  sampleID.resize(n);
+  return sampleID;
 }
+
+
+

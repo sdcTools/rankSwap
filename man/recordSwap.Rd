@@ -4,47 +4,89 @@
 \alias{recordSwap}
 \title{Targeted Record Swapping}
 \usage{
-recordSwap(data, similar, hierarchy, risk, hid, th, swaprate, seed = 123456L)
+recordSwap(
+  data,
+  hid,
+  hierarchy,
+  similar,
+  swaprate = 0.05,
+  risk = NULL,
+  risk_threshold = 0,
+  k_anonymity = 3,
+  risk_variables = NULL,
+  carry_along = NULL,
+  return_swapped_id = FALSE,
+  seed = NULL
+)
 }
 \arguments{
-\item{data}{micro data set containing only integer values.}
+\item{data}{micro data set containing only integer values, must be either `data.table` or `data.frame`.}
 
-\item{similar}{column indices of variables in \code{data} which should be considered when swapping households, see details for more explanations}
+\item{hid}{column index or column name in `data` which refers to the household identifier.}
 
-\item{hierarchy}{column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.}
+\item{hierarchy}{column indices or column names of variables in `data` which refer to the geographic hierarchy in the micro data set. For instance county > municipality > district.}
 
-\item{risk}{column indices of variables in \code{data} which will be considered for estimating the risk.}
-
-\item{hid}{column index in \code{data} which refers to the household identifier.}
-
-\item{th}{integer defining the threshhold of high risk households (k-anonymity).}
+\item{similar}{vector or list of integer vectors or column names containing similarity profiles, see details for more explanations.}
 
 \item{swaprate}{double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations}
 
-\item{seed}{integer defining the seed for the random number generator, for reproducability.}
+\item{risk}{`data.table`, `data.frame` or `matrix` indicating risk of each record at each hierarchy level. If `risk`-matrix is supplied to swapping procedure will
+not use the k-anonymity rule but the values found in this matrix for swapping.
+ATTENTION: This is not fully implemented yet and currently ignored by the underlying c++ functions until tested properly}
+
+\item{risk_threshold}{single numeric value indicating when a household is considered "high risk", e.g. when this household must be swapped.
+Is only used when `risk` is not `NULL`.
+ATTENTION: This is fully implemented yet and currently ignored by the underlying c++ functions until tested properly}
+
+\item{k_anonymity}{integer defining the threshold of high risk households (counts<k) for using k-anonymity rule}
+
+\item{risk_variables}{column indices or column names of variables in `data` which will be considered for estimating the risk.
+Only used when k-anonymity rule is applied.}
+
+\item{carry_along}{integer vector indicating additional variables to swap besides to hierarchy variables.
+These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+This parameter is only used at the end of the procedure when swapping the hierarchies.}
+
+\item{return_swapped_id, }{boolean if `TRUE` the output includes an additional column showing the `hid` with which a record was swapped with.
+The new column will have the name `paste0(hid,"_swapped")`.}
+
+\item{seed}{integer defining the seed for the random number generator, for reproducibility. if `NULL` a random seed will be set using `sample(1e5,1)`.}
 }
 \value{
-Returns data set with swapped records.
+`data.table` with swapped records.
 }
 \description{
 Applies targeted record swapping on micro data considering the identification risk of each record as well the geographic topology.
 }
 \details{
-The procedure accepts a rectanglar data set containing all necessary information for the record swapping, e.g parameter \code{hid}, \code{similar}, \code{hierarchy}, ect... \cr 
-First the micro data in \code{data} is ordered by \code{hid} and the identification risk is calculated for each record. As of right now only counts is used as 
-identification risk and the inverse of counts is used as sampling probability. \cr
+The procedure accepts a `data.frame` or `data.table` containing all necessary information for the record swapping, e.g parameter `hid`, `similar`, `hierarchy`, ect... \cr 
+First the micro data in `data` is ordered by `hid` and the identification risk is calculated for each record in each hierarchy level. As of right now only counts is used as 
+identification risk and the inverse of counts is used as sampling probability.\cr
+NOTE: It will be possible to supply an identification risk for each user and hierarchy level which will be passed down to the C++-function. This is however not fully implemented.
+\cr
 \cr 
-In addition each record gets an index corresponding to the hierarchy level over which the household must be swapped. For instance having a geographic hierarchy
-of county > municipality > district the risk is calculated for each geographic variable and defined risk variables. If a record falls below \code{th} for hierachy county then this record
-needs to be swapped accross counties. \cr
+With the parameter `k_anonymity` a k-anonymity rule is applied to define risky households in each hierarchy level. A household is set to risky if counts <= k_anonymity in any hierarchy level and the household needs to be swapped across this hierarchy level.
+For instance having a geographic hierarchy of county > municipality > district the counts are calculated for each geographic variable and defined `risk_variables`. If the counts for a record falls below `k_anonymity` for hierachy county then this record
+needs to be swapped across counties.\cr
+Setting `k_anonymity = 0` disables this feature and no risky households are defined.
 \cr 
 After that the targeted record swapping is applied starting from the highest to the lowest hierarchy level and cycling through all possible geographic areas at each hierarchy level, e.g every county, every municipality in ever county, ect...
 At each geographic area a set of values is created for records to be swapped.\cr
-In all but the lowest hierarchy level this is made out of all records which do not fullfill the k-anonymity and have not already been swapped.
-Those records are swapped with records not belonging to the same geographic area, which have not already been swapped before hand. Swapping referes to the interchange of geographic variables defined in \code{hierarchy}.
-When a record is swapped all other record containing the same \code{hid} are swapped as well. \cr
+In all but the lowest hierarchy level this is ONLY made out of all records which do not fulfil the k-anonymity and have not already been swapped.
+Those records are swapped with records not belonging to the same geographic area, which have not already been swapped before hand. Swapping refers to the interchange of geographic variables defined in `hierarchy`.
+When a record is swapped all other record containing the same `hid` are swapped as well. \cr
 \cr 
-At the lowest hierarchy level in every geographic area the set of records to be swapped is made up of all records which do not fullfill the k-anonymity as well as the remaining numer of records such
-that the proportion of swapped records of the geographic area is equal to \code{swaprate}. If, due to the k-anonymity condition, more records have already been swapped in this geographic area then only the 
-records which do not fullfill the k-anonymity are swapped.
+At the lowest hierarchy level in every geographic area the set of records to be swapped is made up of all records which do not fulfil the k-anonymity as well as the remaining numer of records such
+that the proportion of swapped records of the geographic area is in coherence with the `swaprate`. If, due to the k-anonymity condition, more records have already been swapped in this geographic area then only the 
+records which do not fulfil the k-anonymity are swapped.
+\cr
+Using the parameter `similar` one can define similarity profiles. `similar` needs to be a list of vectors with each list entry containing column indices of `data`. These entries are be used when searching for donor households,
+meaning that for a specific record the set of all donor records is made out of records which have the same values in `similar[[1]]`. IMPORTANT: These can only be household variables
+\cr
+If no suitable donor can be found the next similarity profile is used, `similar[[2]]` and
+the set of all donors is then made up out of all records which have the samle values in the column indices in `similar[[2]]`. This procedure continues until a donor record was found or all the similarity profiles have been used.
+\cr
+`swaprate` sets the swaprate of households to be swapped, where a single swap counts for swapping 2 households, the sampled household and the corresponding donor.
+Prior to the procedure the swaprate is applied on the lowest hierarchy level, to determine the target number of swapped households in each of the lowest hierarchies. If the target numbers of a decimal point they will randomly be 
+rounded up or down such that the number of households swapped in total is in coherence to the swaprate.
 }

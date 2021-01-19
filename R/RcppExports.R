@@ -7,19 +7,24 @@
 #' \cr
 #' \strong{NOTE:} This is an internal function called by the R-function \code{recordSwap()}. It's only purpose is to include the C++-function recordSwap() using Rcpp.
 #' 
-#' @param data micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of variables - data.[0].size ~ number of records per record.
+#' @param data micro data set containing only integer values. A data.frame or data.table from R needs to be transposed beforehand so that data.size() ~ number of records - data.[0].size ~ number of varaibles per record.
 #' \strong{NOTE:} \emph{data has to be ordered by hid beforehand.}
 #' @param similar List where each entry corresponds to column indices of variables in \code{data} which should be considered when swapping households.
 #' @param hierarchy column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-#' @param risk column indices of variables in \code{data} which will be considered for estimating the risk.
+#' @param risk_variables column indices of variables in \code{data} which will be considered for estimating the risk.
 #' @param hid column index in \code{data} which refers to the household identifier.
-#' @param th integer defining the threshhold of high risk households (k-anonymity). This is used as th <= counts.
+#' @param k_anonymity integer defining the threshhold of high risk households (k-anonymity). This is used as k_anonymity <= counts.
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
+#' @param risk_threshold double indicating risk threshold above every household needs to be swapped.
+#' @param risk vector of vectors containing risks of each individual in each hierarchy level.
+#' @param carry_along integer vector indicating additional variables to swap besides to hierarchy variables.
+#' These variables do not interfere with the procedure of finding a record to swap with or calculating risk.
+#' This parameter is only used at the end of the procedure when swapping the hierarchies.
 #' @param seed integer defining the seed for the random number generator, for reproducability.
 #' 
 #' @return Returns data set with swapped records.
-recordSwap_cpp <- function(data, similar, hierarchy, risk, hid, th, swaprate, seed = 123456L) {
-    .Call(`_recordSwapping_recordSwap_cpp`, data, similar, hierarchy, risk, hid, th, swaprate, seed)
+recordSwap_cpp <- function(data, hid, hierarchy, similar_cpp, swaprate, risk, risk_threshold, k_anonymity, risk_variables, carry_along, seed = 123456L) {
+    .Call(`_recordSwapping_recordSwap_cpp`, data, hid, hierarchy, similar_cpp, swaprate, risk, risk_threshold, k_anonymity, risk_variables, carry_along, seed)
 }
 
 #' @title Define Swap-Levels
@@ -101,9 +106,13 @@ distributeDraws_cpp <- function(data, hierarchy, hid, swaprate, seed = 123456L) 
     .Call(`_recordSwapping_distributeDraws_cpp`, data, hierarchy, hid, swaprate, seed)
 }
 
+distributeDraws2_cpp <- function(data, risk, hierarchy, hid, swaprate, seed = 123456L) {
+    .Call(`_recordSwapping_distributeDraws2_cpp`, data, risk, hierarchy, hid, swaprate, seed)
+}
+
 #' @title Random sample for donor records
 #' 
-#' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \link{\code{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
+#' @description Randomly select donor records given a probability weight vector. This sampling procedure is implemented differently than \code{\link{randSample_cpp}} to speed up performance of C++-function \code{recordSwap()}.
 #' \cr
 #' \strong{NOTE:} This is an internal function used for testing the C++-function \code{sampleDonor} which is used inside the C++-function \code{recordSwap()}.
 #' 
@@ -115,8 +124,28 @@ distributeDraws_cpp <- function(data, hierarchy, hid, swaprate, seed = 123456L) 
 #' @param prob a vector of probability weights for obtaining the elements of the vector being sampled.
 #' @param seed integer setting the sampling seed
 #' 
-sampleDonor_cpp <- function(data, similar, hid, IDswap, IDswap_pool_vec, prob, seed = 123456L) {
-    .Call(`_recordSwapping_sampleDonor_cpp`, data, similar, hid, IDswap, IDswap_pool_vec, prob, seed)
+sampleDonor_cpp <- function(data, similar_cpp, hid, IDswap, IDswap_pool_vec, prob, seed = 123456L) {
+    .Call(`_recordSwapping_sampleDonor_cpp`, data, similar_cpp, hid, IDswap, IDswap_pool_vec, prob, seed)
+}
+
+#' @title Distribute 
+#' 
+#' @description Distribute `totalDraws` using ratio/probability vector `inputRatio` and randomly round each entry up or down such that the distribution results in an integer vector.
+#' Returns an integer vector containing the number of units in `totalDraws` distributetd according to proportions in `inputRatio`.
+#' 
+#' \cr
+#' \strong{NOTE:} This is an internal function used for testing the C++-function \code{distributeRandom} which is used inside the C++-function \code{recordSwap()}.
+#' 
+#' @param inputRatio vector containing ratios which are used to distribute number units in `totalDraws`.
+#' @param totalDraws number of units to distribute
+#' @param seed integer setting the sampling seed
+#' 
+distributeRandom_cpp <- function(inputRatio, totalDraws, seed) {
+    .Call(`_recordSwapping_distributeRandom_cpp`, inputRatio, totalDraws, seed)
+}
+
+testLoop_cpp <- function(inputGroup, risk) {
+    .Call(`_recordSwapping_testLoop_cpp`, inputGroup, risk)
 }
 
 test_prioqueue <- function(x_vec, prob, mustSwap_vec, n, seed) {

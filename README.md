@@ -13,11 +13,11 @@
 *src/recordSwap* contains the pure `C++` (11) code `recordSwap.cpp` and `recordSwap.h`.
 In this package this code is called by an `Rcpp` wrapper which again is called from the top level `R`-function `recordSwap()`.
 The `C++` code is not directly embedded using `Rcpp` so that it can be more easily implemented into other projects which do not depend on `R` libraries.
-Using an additional top level `R`-functions as well as an `Rcpp` wrapper makes it more conventient to to call the pure `C++` code at the bottom as there is no mapping to every stl container from `R`.
+Using an additional top level `R`-functions as well as an `Rcpp` wrapper makes it more conventient to call the pure `C++` code at the bottom as there is no mapping to every stl container from `R`.
 
 ## Versions
 
-Information on the different versions can be found [here](https://github.com/sdcTools/recordSwapping/blob/master/NEWS.md)
+Information on the different versions can be found [here](https://github.com/sdcTools/recordSwapping/blob/Improvements/NEWS.md)
 
 ## Installation
 
@@ -34,13 +34,13 @@ The procedure can be applied as follows
 ```r
 library(recordSwapping)
 
-# create some dummy data (~ 100k households)
-dat <- recordSwapping:::create.dat(100000)
+# create some dummy data (~ 50k households)
+dat <- create.dat(50000)
 
-# define paramters - in C++ indexing starts with 0 (!)
-hierarchy <- 0:2 # nuts1 - nuts3
-risk_variables <- 5:7 # hsize - gender 
-hid <- 4 # column for hid
+# define paramters through column names or column indices
+hierarchy <- c("nuts1","nuts2") # c(1,2)
+risk_variables <- c("hszie") # c(7)
+hid <- "hid" # c(6)
 
 swaprate <- .05 # swaprate of households
 
@@ -50,21 +50,51 @@ swaprate <- .05 # swaprate of households
 # set k_anonymity <- 0 to deactivate this feature
 k_anonymity <- 3
 
-
-# define similarity profile: hsize, htype, hincome
-similar <- c(5,9,10)
-
-# multiple similarity profiles with version > 0.1.0
 # first similarity profile: hsize, htype, hincome
 # second similarity profile: hsize
-# similar <- list(c(5,9,10),c(5))
-
+similar <- c("hsize","htype","hincome")
 
 # call recodSwap()
-dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = k_anonymity,
+                          swaprate = swaprate)
 dat_swapped
 ```
 
 
+```r
+# multiple similarity profiles
+# additional profile contains only hsize
+similar <- list(similar)
+similar[[2]] <- "hsize"
+similar
 
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = k_anonymity,
+                          swaprate = swaprate)
+```
 
+```r
+# return ID of swapped household
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = k_anonymity,
+                          swaprate = swaprate,
+                          return_swapped_id = TRUE)
+                          
+dat_swapped[,.(hid,hid_swapped,nuts1,nuts2,nuts3)]
+```
+
+More detailed information can be found through the help-pages (`?recordSwap`) or when calling the vignette
+
+```r
+vignette("recordSwapping")
+```

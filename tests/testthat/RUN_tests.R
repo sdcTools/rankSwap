@@ -14,7 +14,9 @@ orderTRUE <- replicate(B,{
   dat <- recordSwapping:::create.dat(100000)
   
   dat_order <- dat[sample(.N)]
-  dat_order <- as.data.table(recordSwapping:::orderData_cpp(dat_order,4))
+  dat_transpose <- transpose(dat_order)
+  dat_order <- as.data.table(recordSwapping:::orderData_cpp(dat_transpose,4))
+  dat_order <- transpose(dat_order)
   setnames(dat_order,colnames(dat_order),colnames(dat))
   all.equal(dat$hid,dat_order$hid)
 })
@@ -26,10 +28,11 @@ table(orderTRUE)
 # test setRisk_cpp()
 setRiskTRUE <- replicate(B,{
   dat <- recordSwapping:::create.dat(100000)
+  dat_t <- transpose(dat)
   hierarchy <- 0:3
   risk_variables <- 5:8
   hid <- 4
-  risk <- recordSwapping:::setRisk_cpp(dat,hierarchy,risk_variables,hid)
+  risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
   risk <- as.data.table(transpose(risk))
   risk <- cbind(hid=dat$hid,risk)
   
@@ -51,10 +54,11 @@ table(setRiskTRUE)
 # test setLevels_cpp()
 setLevelsTRUE <- replicate(B,{
   dat <- recordSwapping:::create.dat(100000)
+  dat_t <- transpose(dat)
   hierarchy <- 0:3
   risk_variables <- 5:8
   hid <- 4
-  risk <- recordSwapping:::setRisk_cpp(dat,hierarchy,risk_variables,hid)
+  risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
   risk_threshold <- 1/3
   level_cpp <- recordSwapping:::setLevels_cpp(risk,risk_threshold)
   
@@ -123,12 +127,13 @@ ggplot(out_data,aes(value))+
 # test drawDistribution()
 drawDistrubtionTRUE <- replicate(B,{
   dat <- recordSwapping:::create.dat(100000)
+  dat_t <- transpose(dat)
   hierarchy <- 0:3
   swaprate <- .1
   hid <- 4
   
   seed.base <- 1:1e6
-  distdraw <- as.data.table(recordSwapping:::distributeDraws_cpp(dat,hierarchy,hid,swaprate,sample(seed.base,1)))
+  distdraw <- as.data.table(recordSwapping:::distributeDraws_cpp(dat_t,hierarchy,hid,swaprate,sample(seed.base,1)))
   distdraw <- transpose(distdraw)
   
   # compare with R solution
@@ -143,7 +148,7 @@ drawDistrubtionTRUE <- replicate(B,{
   cond1 <- nrow(comp_dist[ngroup!=i.ngroup])==0
   cond2 <- comp_dist[,sum(draw)==sum(i.draw)]
   cond3 <- nrow(comp_dist[abs(draw-i.draw)>1])==0
-
+  
   cond1&cond2&cond3
 })
 table(drawDistrubtionTRUE)
@@ -154,11 +159,12 @@ table(drawDistrubtionTRUE)
 
 dat <- recordSwapping:::create.dat(10000)
 dat[,hid:=.I]
+dat_t <- transpose(dat)
 hierarchy <- 0
 risk_variables <- 5:8
 hid <- 4
-similar <- c(5)
-risk <- recordSwapping:::setRisk_cpp(dat,hierarchy,risk_variables,hid)
+similar <- list(c(5))
+risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
 dat$prob <- unlist(transpose(risk))
 
 nsamp <- 300
@@ -168,15 +174,15 @@ IDswap_pool_vec <- dat[nuts1==swap_pool,which=TRUE]-1
 
 sim_names <- colnames(dat)[unlist(similar)+1]
 n_by_similar <- dat[IDswap_vec+1,.N,by=c(sim_names)]
-dat_R <- n_by_similar[dat,,on=c(sim_names)]
+dat <- n_by_similar[dat,,on=c(sim_names)]
 
 
 b <- 5000
 out_mat <- replicate(b,{
   seed <- sample(1:1e6,1)
   set.seed(seed)
-  IDdonor <- recordSwapping:::sampleDonor_cpp(dat,similar,hid,IDswap_vec,IDswap_pool_vec, dat$prob,seed)
-  IDdonor_R <- dat_R[nuts1!=swap_pool,sample(.I-1,N[1],prob=prob),by=c(sim_names)][,V1]
+  IDdonor <- recordSwapping:::sampleDonor_cpp(dat_t,similar,hid,IDswap_vec,IDswap_pool_vec, dat$prob,seed)
+  IDdonor_R <- dat[nuts1!=swap_pool,sample(.I-1,N[1],prob=prob),by=c(sim_names)][,V1]
   cbind(IDdonor,
         IDdonor_R)
 })
@@ -199,21 +205,21 @@ ggplot(out_data,aes(value))+
 # check recordSwap as a whole
 # 
 dat <- recordSwapping:::create.dat(100000)
+dat_t <- transpose(dat)
 hierarchy <- 0:2
 risk_variables <- 5:6
 k_anonymity <- 3
 swaprate <- .1
 hid <- 4
-similar <- c(5)
+similar <- list(c(5))
 
-risk <- recordSwapping:::setRisk_cpp(dat,hierarchy,risk_variables,hid)
+risk <- recordSwapping:::setRisk_cpp(dat_t,hierarchy,risk_variables,hid)
 risk_threshold <- 1/k_anonymity
 level_cpp <- recordSwapping:::setLevels_cpp(risk,risk_threshold)
 table(level_cpp)
 
 # run recordSwap()
-dat_swapped <- copy(dat)
-dat_swapped <-recordSwap(dat_swapped,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <-recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
 
 dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
                      dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
@@ -255,10 +261,25 @@ nrow(dat_compare[V1.x!=V1.y])
 
 # run recordSwap() with 
 # k_anonymity=0 and swaprate=0.1
+# with multiple similarity profiles
+dat <- recordSwapping:::create.dat(N=20000)
+hierarchy <- 0:2
+k_anonymity <- 0
+similar <- list(c(0,5,9,10),c(5,9))
+
+dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+
+dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],
+                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],nuts4[1],sep="_")),by=hid],by="hid")
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+
+# run recordSwap() with 
+# k_anonymity=0 and swaprate=0.1
 # where donor cannot be found
 hierarchy <- 0:2
 k_anonymity <- 0
-similar <- c(0,5,9,10)
+similar <- list(c(0,5,9,10))
 
 dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
 

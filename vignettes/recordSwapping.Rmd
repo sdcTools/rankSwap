@@ -2,16 +2,17 @@
 title: "Targeted Record Swapping"
 author: "Johannes Gussenbauer"
 date: "`r Sys.Date()`"
-output:
-  rmarkdown::html_vignette:
-  toc: true
-toc_depth: 5
-number_sections: false
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Targeted Record Swapping}
+  %\VignetteIndexEntry{recordSwapping}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
 ---
+
+
+
+
+
 
 ```{r setup, include=FALSE}
 library(data.table)
@@ -30,22 +31,31 @@ There are however substantial differences between the SAS- and C++-Code. Some of
 ## Functionality
 The targeted record swapping can be applied with the function `recordSwap()`. All other functions in the package are called from inside `recordSwap()` and are only exportet for testing purposes. The function has the following arguments:
 
-```{r cpp,include=TRUE,eval=FALSE}
-recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
-                                           std::vector<int> hierarchy, std::vector<int> risk, int hid, 
-                                           int th, double swaprate, int seed = 123456)
+```{rcpp,include=TRUE,eval=FALSE}
+recordSwap(std::vector< std::vector<int> > data, int hid,
+                                           std::vector<int> hierarchy, 
+                                           std::vector<std::vector<int>> similar,
+                                           double swaprate,
+                                           std::vector<std::vector<double>> risk, double risk_threshold,
+                                           int k_anonymity, std::vector<int> risk_variables,  
+                                           std::vector<int> carry_along,
+                                           int seed = 123456)
 ```
 
 + **data** micro data containing ONLY integer values, rectangular table format.
-+ **similar** vector containing the similarity profiles that is sets of variables in \code{data} which should be considered when swapping households. 
-+ **hierarchy** column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
-+ **risk** column indices of variables in \code{data} which will be considered for estimating the risk. This is only used if `risk` was not supplied.
 + **hid** column index in \code{data} which refers to the household identifier.
-+ **th** integer defining the threshhold of high risk households (k-anonymity). Right now this is implemented as `k_anonymity <= counts`.
++ **hierarchy** column indices of variables in \code{data} which refere to the geographic hierarchy in the micro data set. For instance county > municipality > district.
++ **similar** vector of vector containing the similarity profiles that is sets of variables in \code{data} which should be considered when swapping households. \code{similar[0]} corresponds to the first set similarity variables, \code{similar[1]} to the second set and so on. 
 + **swaprate** double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
-+ **seed** integer defining the seed for the random number generator, for reproducability.
++ **risk** vector of vector containing the risk of each individual for each hierarchy level. `risk[0]` corresponds to the risks of the first record for all hierachy levels, `risk[1]` for the second record and so on. Should be ignored for now, is not fully tested yet.
++ **risk_threshold** risk threshold which determines if a record has to be swapped and over which hierarchy level. This overwrites k_anonymity.
+Should be ignored for now, is not fully tested yet.
++ **k_anonymity** integer defining the threshhold of high risk households (k-anonymity). Right now this is implemented as `k_anonymity <= counts`.
++ **risk_variables** column indices of variables in \code{data} which will be considered for estimating the risk. This is only used if `risk` was not supplied.
++ **carry_along** column indices of variables in \code{data} which are additionally swapped. These variables do not interfere with the procedure of finding a record to swap with. This parameter is only used at the end of the procedure when swapping the hierarchies.
++ **seed** integer defining the seed for the random number generator, for reproducibility.
 
-**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses the first column and `data[0][0]` the first entry in the first column. 
+**IMPORTANT**: The argument `data` contains the micro data and can be understood as a vector of vectors. Inside the function, `data` is expected to contain each column of the input data as `std::vector<int>` which are then again stored in an `std::vector< std::vector<int> >`. So `data[0]` addresses variables of the first record and `data[0][0]` the first column of the first record. The same logic hold for the argument `risk`.
 
 
 ### Some differences to SAS-Code
@@ -59,9 +69,9 @@ recordSwap(std::vector< std::vector<int> > data, std::vector<int> similar,
 
 + **C++-Code**: Sampling probability is directly derived from the counts over the risk and each geographic variables, by 
 $$
-p_{i,h}=\frac{1}{counts_{i,h}}
+p_{i,h}=\max\limits_{j \in H_i}\frac{1}{counts_{j,h}}
 $$
-where $counts_{i,h}$ is the number of counts for record $i$ in hierarchy $h$. This sampling probability is used for selecting households as well as donor households. 
+where $counts_{j,h}$ is the number of counts for member $j$ in household $i$ in hierarchy $h$. This sampling probability is used for selecting households as well as donor households. 
 
 + **SAS-Code**: Sampling probability is derived from the multiple factors.
     
@@ -117,103 +127,279 @@ with $H_m$ as the proportion of high risk households in municipality $m$.
 
 ## Application
 
-The package was tested on randomly generated data, which contained 4 geographic levels and some other soziodemographic variables.
+The package was tested on randomly generated data, which contained 5 geographic levels and some other soziodemographic variables.
 ```{r}
-dat <- recordSwapping:::create.dat(N=250000)
+library(recordSwapping)
+dat <- create.dat(N=100000)
 dat
 ```
 
 Applying the record swapping to dat could look like this
 
 ```{r}
-hierarchy <- 0:2
-risk_variables <- 5:7
+hierarchy <- c("nuts1","nuts2")
+risk_variables <- c("hincome","ageGroup","gender")
 k_anonymity <- 3
 swaprate <- .05
-hid <- 4
-similar <- c(5)
+hid <- "hid"
+similar <- "hsize"
 
-dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = k_anonymity,
+                          swaprate = swaprate)
+
 dat_swapped
 ```
 
 Here the procedure was applied to `dat`
 
-+ using hierarchy levels `nuts1` to `nuts3` 
++ using every hierarchy level, `nuts1` and `nuts2` 
 + using `hsize` as the similarity variable (so only households with the same household size are swapped)
-+ using `hsize`, `ageGroup`, `gender` as risk variables
++ using `hIncome`, `ageGroup`, `gender` as risk variables
 + setting the k-anonymity rule to 3
 + setting the swaprate to 0.05
 
-Please note, that in C++ indexing starts with 0 but in R it starts with 1. Therefore the position of columns in `dat` are specified by `5`,`0:2`,ect...
-The data supplied to the function `recordSwap` should idealy be a data.table or data.frame. For more information on the function `recordSwap` one can call the the corresponding help page through
-
-```{r,eval=FALSE}
-?recordSwap
-```
-
-If `th <- 0` only the swaprate is considered. Then at most `th*100`% of the households are swapped. If the sample is very small the actual number of swaps can be smaller, however this can only happen if some regions have a very small number of households e.g. 1,2,3,...
+If `k_anonymity <- 0` only the swaprate is considered. Then at most `th*100`% of the households are swapped. If the sample is very small the actual number of swaps can be smaller, however this can only happen if some regions have a very small number of households e.g. 1,2,3,...
 
 ```{r}
 k_anonymity <- 0
 swaprate <- .05
-dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = k_anonymity,
+                          swaprate = swaprate)
 dat_swapped
 ```
 
 Comparing number of swapped households
 
 ```{r}
-dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],
-                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],by="hid")
+dat_compare <- merge(dat[,.(paste(nuts1[1],nuts2[1])),by=hid],
+                     dat_swapped[,.(paste(nuts1[1],nuts2[1])),by=hid],by="hid")
 
 # number of swapped households
 nrow(dat_compare[V1.x!=V1.y])
 ```
 ```{r}
 # swaprate times number of households in data
-swaprate*nrow(dat[!duplicated(hid)])
+dat[,uniqueN(hid)]*swaprate
 ```
 
-With the parameter `similar` multiple variables for similarity can be supplied to the function
+### Supplying index vectors
+
+Instead of column names index vectors can be supplied for parameters `hid`, `hierarchy`, `similar` and `risk_variables`.
+
+```{r}
+hierarchy <- c(1,2) # ~ c("nuts1","nuts2")
+risk_variables <- c(12,8,9) # ~ c("hincome","ageGroup","gender")
+hid <- 6 # ~ "hid"
+similar <- 7 # ~ "hsize"
+
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = k_anonymity,
+                          swaprate = swaprate)
+```
+
+Please note that the underlying `c++`-routines expect indices starting from 0 but in `R` indices start with 1.
+The wrapper function `recordSwap()` converts indices or column names in `R` into the correct format for the `c++` routines.
+So using column indices for this function call should be done in the usually `R`-fashion where indices start with 1.
+
+
+### Similarity profiles
+
+In some cases the condition of finding a *similar* household given by the parameter `similarity` might be too strict.
+And thus it is not possible to swap the necessary number of households due too lack of a siutable donor household.
 
 ```{r}
 # demonstrate on small data set
-dat <- recordSwapping:::create.dat(N=10000)
+dat <- create.dat(N=10000)
+hierarchy <- c("nuts1","nuts2")
+risk_variables <- "gender"
 # similarity profile contains:
-# hsize + htype + hincome
-hierarchy <- 0:1
-similar <- c(5,9,10)
+# nuts1 + hsize + htype + hincome
+similar <- c("nuts1","hsize","htype","hincome")
 
 # procedure will not always find a suitable donor
-dat_swapped <- recordSwap(dat,similar,hierarchy,risk_variables,hid,k_anonymity,swaprate)
-dat_compare <- merge(dat[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],
-                     dat_swapped[,.(paste(geo=nuts1[1],nuts2[1],nuts3[1],municipality[1],sep="_")),by=hid],by="hid")
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = 3,
+                          swaprate = 0.05,
+                          seed = 123456L)
+```
+
+The expected number of swapped households for a population of `r dat[,uniqueN(hid)]` households and a swapping rate of `r swaprate` is `r dat[,uniqueN(hid)]*swaprate`.
+The acutal number of swaps was however:
+```{r}
+dat_compare <- merge(dat[,.(paste(nuts1[1],nuts2[1])),by=hid],
+                     dat_swapped[,.(paste(nuts1[1],nuts2[1])),by=hid],by="hid")
 
 # number of swapped households
 nrow(dat_compare[V1.x!=V1.y])
 ```
 
-The use of multiple similarity profiles will be implemented for future versions of this package.
 
+With the parameter `similar` multiple similarity profiles can be defined, if the parameter input is a `list`. If a donor could not be found for the first similarity profile (`similar[[1]]`) then a donor is searched for using the next similarity profile (`similar[[2]]`) and so on.
+
+Using multiple similarity profiles makes it easy to supply fall-back profiles if the initial profile is too specific.
+
+```{r}
+# additional profile contains only hsize
+similar <- list(similar)
+similar[[2]] <- "hsize"
+similar
+```
+```{r}
+# procedure found donors for every record
+dat_swapped <- recordSwap(data = dat, hid = hid,
+                          hierarchy = hierarchy,
+                          similar = similar,
+                          risk_variables = risk_variables,
+                          k_anonymity = 3,
+                          swaprate = 0.05,
+                          seed = 123456L)
+dat_compare <- merge(dat[,.(paste(nuts1[1],nuts2[1])),by=hid],
+                     dat_swapped[,.(paste(nuts1[1],nuts2[1])),by=hid],by="hid")
+
+# number of swapped households
+nrow(dat_compare[V1.x!=V1.y])
+```
+
+### Carry along variables
+
+Using the function `recordSwap()` like above always results in swapping the variables defined through variable `hierarchy`.
+Sometimes it might be useful to swap more variables then the ones stated in hierarchy.
+
+Consider the following case where the variable `nuts3` is not a single digit integer but an integer which is unique across `nuts1` and `nuts2` levels
+
+```{r}
+set.seed(1234)
+dat <- create.dat(100000)
+
+dat[,nuts3:=do.call(paste,.SD),.SDcols=c(hierarchy,"nuts3")]
+dat[,nuts3:=as.numeric(factor(nuts3))]
+dat
+```
+
+If we would apply the record swapping using `hierarchy`-levels `nuts1` and `nuts2` then the `nuts3`-variable in our data set will stay the same. Thus for the resulting data set the variables `nuts1` and `nuts2` are no longer coherent with `nuts3`.
+
+Let's have a more detailed look at the problem
+
+```{r}
+hid <- "hid"
+hierarchy <- c("nuts1","nuts2")
+similar <- c("hsize")
+risk_variables <- c("hincome","htype")
+
+dat_swapped <- recordSwap(data = copy(dat),
+                        hid = hid,
+                        hierarchy = hierarchy,
+                        similar = similar,
+                        risk_variables = risk_variables,
+                        swaprate = 0.05,
+                        seed=1234L)
+
+# compare results
+dat_compare <- merge(dat[,.(paste(nuts1[1],nuts2[1])),by=hid],
+                     dat_swapped[,.(paste(nuts1[1],nuts2[1])),by=hid],by="hid")
+head(dat_compare[V1.x!=V1.y])
+```
+
+For `nuts1==2` and `nuts2==7` the `nuts3` variables takes on values
+```{r}
+dat[nuts1==2&nuts2==7,sort(unique(nuts3))]
+```
+
+In the swapped data set there are however many more values now
+```{r}
+dat_swapped[nuts1==2&nuts2==7,sort(unique(nuts3))]
+```
+
+With the use of parameter `carry_along` one can define certain variables which are additionally swapped but do not interfere with the risk calculation, sampling and procedure of finding a donor.
+
+```{r}
+dat_swapped2 <- recordSwap(data = copy(dat),
+                        hid = hid,
+                        hierarchy = hierarchy,
+                        similar = similar,
+                        risk_variables = risk_variables,
+                        swaprate = 0.05,
+                        carry_along = "nuts3", # <- swap nuts3 variable as well
+                        seed=1234L)
+
+geoVars <- c("nuts1", "nuts2", "nuts3")
+dat_geo <- dat[!duplicated(hid),..geoVars]
+setorderv(dat_geo,geoVars)
+dat_geo_swapped <- dat_swapped2[!duplicated(hid),..geoVars]
+setorderv(dat_geo_swapped,geoVars)
+
+# check of value combinations of swapped and original data are the same
+all.equal(dat_geo,dat_geo_swapped)
+```
+
+Both the original and swapped data set have the same value combinations for `nuts1`, `nuts2` and `nuts3`.
+Setting this parameter did however not interfere with the swapping procedure
+
+```{r}
+dat_compare2 <- merge(dat[,.(paste(nuts1[1],nuts2[1])),by=hid],
+                     dat_swapped[,.(paste(nuts1[1],nuts2[1])),by=hid],by="hid")
+
+# check if same hid were swapped in both cases
+all.equal(dat_compare2[order(hid),.(hid)],
+          dat_compare[order(hid),.(hid)])
+```
+
+
+Using the same idea one can set `return_swapped_id = TRUE` to return the `hid` with which the records were swapped with.
+
+```{r}
+dat_swapped3 <- recordSwap(data = copy(dat),
+                        hid = hid,
+                        hierarchy = hierarchy,
+                        similar = similar,
+                        risk_variables = risk_variables,
+                        swaprate = 0.05,
+                        carry_along = "nuts3",
+                        return_swapped_id = TRUE,
+                        seed=1234L)
+```
+
+The output now has an additional column named `hid_swapped` which contains the household ID with which a household was swapped with.
+
+
+Number of swapped `hid`s
+```{r}
+dat_swapped3[!duplicated(hid),.N,by=.(id_swapped = hid!=hid_swapped)]
+```
 
 
 ## Benchmarking
 
 ```{r benchmark, include=FALSE}
-load(paste0("../data/benchmark_cpp.RData"))
+library(ggplot2)
+
+load("../data/benchmark_cpp.RData")
 mb_all <- rbindlist(mb_all)
 
-mb_all<- mb_all[npop>=5e4,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
+mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
 mb_all[,Hierarchy.Levels:=factor(hier.levels)]
 ```
 
-The function applied on randomly generated household data with $n=8\cdot 10^4,1.6\cdot 10^5,3.2\cdot 10^5,5\cdot 10^5,10^6$ households.
-The parameter `swaprate` was set to 0.05 and the paramter `th` was set 2. In addition the targeted record swapping was applied using 1, 2 and 3 hierarchy levels.
-Using 3 hierarchy levels results in 750 distinct geographic areas.
-Figure 2 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 3 hierarchy levels the runtime is at roughly `r round(mb_all[hier.levels==3&npop==1000000,value])` Seconds. *Note: Benchmarks were run with the script `RUN_benchmark.R` in tests/testthat/*.
+The function applied on randomly generated household data with $n=10^3,10^4,2\cdot 10^4,8\cdot 10^4,1.6\cdot 10^5,3.2\cdot 10^5,5\cdot 10^5,10^6$ households.
+The parameter `swaprate` was set to 0.05 and the paramter `th` was set 3. In addition the targeted record swapping was applied using 2, 3 and 4 hierarchy levels.
+Using all 4 hierarchy levels results in over 18000 distinct geographic areas.
+Figure 2 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 4 hierarchy levels the runtime is at roughly `r round(mb_all[hier.levels==4&npop==1000000,value])` Seconds. *Note: Benchmarks were run with the script `RUN_benchmark.R` in tests/testthat/*.
 
-```{r benchmark_plot,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center",fig.width=7}
+```{r benchmark_plot,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center"}
 p1 <- ggplot(mb_all,aes(npop,value))+
   geom_point(aes(color=Hierarchy.Levels))+
   geom_line(aes(color=Hierarchy.Levels),alpha=0.4)+
