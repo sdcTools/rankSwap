@@ -382,33 +382,4 @@ dat_swapped3[!duplicated(hid),.N,by=.(id_swapped = hid!=hid_swapped)]
 ```
 
 
-## Benchmarking
-
-```{r benchmark, include=FALSE}
-library(ggplot2)
-
-load("../data/benchmark_cpp.RData")
-mb_all <- rbindlist(mb_all)
-
-mb_all<- mb_all[,.(value=median(time/1e9)),by=list(hier.levels,expr,npop)]
-mb_all[,Hierarchy.Levels:=factor(hier.levels)]
-```
-
-The function applied on randomly generated household data with $n=10^3,10^4,2\cdot 10^4,8\cdot 10^4,1.6\cdot 10^5,3.2\cdot 10^5,5\cdot 10^5,10^6$ households.
-The parameter `swaprate` was set to 0.05 and the paramter `th` was set 3. In addition the targeted record swapping was applied using 2, 3 and 4 hierarchy levels.
-Using all 4 hierarchy levels results in over 18000 distinct geographic areas.
-Figure 2 shows the runtime for different levels of $n$ and different number of geographic hierarchies, using the C++ implementation. Using 1 million households and 4 hierarchy levels the runtime is at roughly `r round(mb_all[hier.levels==4&npop==1000000,value])` Seconds. *Note: Benchmarks were run with the script `RUN_benchmark.R` in tests/testthat/*.
-
-```{r benchmark_plot,echo=FALSE,eval=TRUE,fig.cap="Runtime of procedure for different number of households and hierarchy levels.",fig.align="center"}
-p1 <- ggplot(mb_all,aes(npop,value))+
-  geom_point(aes(color=Hierarchy.Levels))+
-  geom_line(aes(color=Hierarchy.Levels),alpha=0.4)+
-  ylab("seconds")+
-  xlab("Number of Households")
-plot(p1)
-```
-
-
-
-
 
