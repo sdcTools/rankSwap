@@ -39,7 +39,7 @@ dat <- create.dat(50000)
 
 # define paramters through column names or column indices
 hierarchy <- c("nuts1","nuts2") # c(1,2)
-risk_variables <- c("hszie") # c(7)
+risk_variables <- c("hsize") # c(7)
 hid <- "hid" # c(6)
 
 swaprate <- .05 # swaprate of households
