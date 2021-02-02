@@ -1,3 +1,9 @@
+# recordSwapping 0.3.2
+
+* extended testing suit
+* Argument `data` for R-function `recordSwap()` does no longer need to have only integer values. Only variables needed for underlying C++ function defined through parameter `hid`, `hierarchy`, `risk_variables`, `similar`, `carry_along` need to be integer type.
+
+
 # recordSwapping 0.3.1
 
 * Fixed bug where less than households than indicated through the swaprate were drawn

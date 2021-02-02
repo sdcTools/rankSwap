@@ -30,13 +30,13 @@ recordSwap(
 
 \item{swaprate}{double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations}
 
-\item{risk}{`data.table`, `data.frame` or `matrix` indicating risk of each record at each hierarchy level. If `risk`-matrix is supplied to swapping procedure will
+\item{risk}{either column indices or column names in `data` or `data.table`, `data.frame` or `matrix` indicating risk of each record at each hierarchy level. If `risk`-matrix is supplied to swapping procedure will
 not use the k-anonymity rule but the values found in this matrix for swapping.
-ATTENTION: This is not fully implemented yet and currently ignored by the underlying c++ functions until tested properly}
+ATTENTION: This is NOT fully implemented yet and currently ignored by the underlying c++ functions until tested properly}
 
 \item{risk_threshold}{single numeric value indicating when a household is considered "high risk", e.g. when this household must be swapped.
 Is only used when `risk` is not `NULL`.
-ATTENTION: This is fully implemented yet and currently ignored by the underlying c++ functions until tested properly}
+ATTENTION: This is NOT fully implemented yet and currently ignored by the underlying c++ functions until tested properly}
 
 \item{k_anonymity}{integer defining the threshold of high risk households (counts<k) for using k-anonymity rule}
 

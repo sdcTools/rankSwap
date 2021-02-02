@@ -31,7 +31,7 @@ There are however substantial differences between the SAS- and C++-Code. Some of
 ## Functionality
 The targeted record swapping can be applied with the function `recordSwap()`. All other functions in the package are called from inside `recordSwap()` and are only exportet for testing purposes. The function has the following arguments:
 
-```{rcpp,include=TRUE,eval=FALSE}
+```{Rcpp,include=TRUE,eval=FALSE}
 recordSwap(std::vector< std::vector<int> > data, int hid,
                                            std::vector<int> hierarchy, 
                                            std::vector<std::vector<int>> similar,

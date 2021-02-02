@@ -39,7 +39,7 @@
 #' @param hierarchy column indices or column names of variables in `data` which refer to the geographic hierarchy in the micro data set. For instance county > municipality > district.
 #' @param similar vector or list of integer vectors or column names containing similarity profiles, see details for more explanations.
 #' @param swaprate double between 0 and 1 defining the proportion of households which should be swapped, see details for more explanations
-#' @param risk `data.table`, `data.frame` or `matrix` indicating risk of each record at each hierarchy level. If `risk`-matrix is supplied to swapping procedure will
+#' @param risk either column indices or column names in `data` or `data.table`, `data.frame` or `matrix` indicating risk of each record at each hierarchy level. If `risk`-matrix is supplied to swapping procedure will
 #' not use the k-anonymity rule but the values found in this matrix for swapping.
 #' ATTENTION: This is NOT fully implemented yet and currently ignored by the underlying c++ functions until tested properly
 #' @param risk_threshold single numeric value indicating when a household is considered "high risk", e.g. when this household must be swapped.
@@ -68,18 +68,6 @@ recordSwap <- function(data, hid, hierarchy, similar,
   # check data
   if(all(!class(data)%in%c("data.table","data.frame"))){
     stop("data must be either a data.table, data.frame")
-  }
-  
-  # check if any non numeric values are present in data
-  if(any(!unlist(apply(data,2,is.numeric)))){
-    stop("data must contain only integer values at this point - this condition might get droped in a future release")
-  }
-  
-  # check if any values with decimal values are present in data
-  decOccured <- apply(data,2,function(z){any((z%%1)!=0)})
-  if(any(decOccured)){
-    decOccured <- names(decOccured)[decOccured]
-    stop("data must contain only integer values.\nColumn(s)\n    ",paste(decOccured,collapse=", "),"\ncontain(s) decimal numbers")
   }
   
   data <- as.data.table(data)
@@ -144,10 +132,18 @@ recordSwap <- function(data, hid, hierarchy, similar,
     risk <- data.table()
     risk_threshold <- 0
   }
-  if(all(!class(risk)%in%c("data.table","data.frame","matrix"))){
-    stop("risk must be either a data.table, data.frame or matrix!")
+  if(is.vector(risk)){
+    if(length(risk)!=length(hierarchy)){
+      stop("risk and hierarchy need to address the same number of columns!")
+    }
+    risk <- checkIndexString(risk,cnames,minLength = 1)
+    risk <- data[,c(risk+1)]
+  }else{
+    if(all(!class(risk)%in%c("data.table","data.frame","matrix"))){
+      stop("If risk is not a vector containing column indices or column names in data then risk must be either a data.table, data.frame or matrix!")
+    }
   }
-  
+
   if(nrow(risk)>0){
     if(ncol(risk)!=length(hierarchy)){
       stop("number of columns in risk does not match number of hierarchies!")
@@ -184,8 +180,57 @@ recordSwap <- function(data, hid, hierarchy, similar,
   
   # order data
   setkeyv(data,cnames[hid+1])
+  # take sub data 
+  data[,helpVariableforMergingAfterTRS:=.I]
+  sim_vars <- sort(unique(unlist(similar)))
+  original_cols <- unique(c(hid,hierarchy,risk_variables,sim_vars,carry_along))
+  select_cols <- unique(c(original_cols+1,ncol(data)))
+  data_sw <- copy(data[,..select_cols])
+  cnames_sw <- colnames(data_sw) # save column names for later use
+  # remove columns from original data except help variable for merging
+  drop_cols <- cnames_sw[-length(cnames_sw)]
+  data[,c(drop_cols):=NULL]
+  
+  # remap column indices
+  hid <- which(hid %in% original_cols)-1
+  hierarchy <- sapply(hierarchy,function(z){
+    which(original_cols %in% z) -1
+  })
+
+  if(length(similar)>0){
+    # remap all similarity variables
+    similar <- lapply(similar,function(z){
+      sapply(z,function(z.s){
+        which(original_cols %in% z) -1
+      })
+    })
+  }
+  if(length(risk_variables)>0){
+    risk_variables <- sapply(risk_variables,function(z){
+      which(original_cols %in% z) -1
+    })
+  }
+  if(length(carry_along)>0){
+    carry_along <- sapply(carry_along,function(z){
+      which(original_cols %in% z) -1
+    })
+  }
+  
+  # check if any non numeric values are present in data
+  if(any(!unlist(apply(data_sw,2,is.numeric)))){
+    stop("Columns specified in hid, hierarchy, similar and carry_along must contain only integer values at this point")
+  }
+  
+  # check if any values with decimal values are present in data
+  decOccured <- apply(data_sw,2,function(z){any((z%%1)!=0)})
+  if(any(decOccured)){
+    decOccured <- names(decOccured)[decOccured]
+    stop("data must contain only integer values.\nColumn(s)\n    ",paste(decOccured,collapse=", "),"\ncontain(s) decimal numbers")
+  }
+  
+  
   # transpose data for cpp function
-  data <- transpose(data)
+  data_sw <- transpose(data_sw)
   
   # transpose risk
   if(nrow(risk)>0){
@@ -195,15 +240,20 @@ recordSwap <- function(data, hid, hierarchy, similar,
   }
   risk <- numeric(0) # drop this if risk was tested enough
 
-  data <- recordSwap_cpp(data=data, similar=similar, hierarchy=hierarchy,
+  data_sw <- recordSwap_cpp(data=data_sw, similar=similar, hierarchy=hierarchy,
                          risk_variables=risk_variables, hid=hid, k_anonymity=k_anonymity,
                          swaprate=swaprate,
                          risk_threshold=0, risk=risk,
                          carry_along = carry_along,
                          seed=seed)
-  data <- transpose(as.data.table(data))
-  setnames(data,colnames(data),cnames)
-
+  setDT(data_sw)
+  data_sw <- transpose(data_sw)
+  setnames(data_sw,colnames(data_sw),cnames_sw)
+  data[data_sw,c(drop_cols):=mget(drop_cols),on=.(helpVariableforMergingAfterTRS)]
+  rm(data_sw)
+  setcolorder(data,cnames)
+  data[,helpVariableforMergingAfterTRS:=NULL]
+  
   return(data)
 }
 
@@ -236,14 +286,14 @@ checkIndexString <- function(x=NULL,cnames,matchLength=NULL,minLength=NULL){
     }
   }else{
     if(!((checkInteger(x)|is.character(x))&length(x)>=minLength)){
-      stop(varName," must contain integers (column indices) or characters (~column name of data)")
+      stop(varName," must contain integers (column indices) or characters (~column names) of data")
     }
   }
   
   # check when string that names are in cnames
   if(all(is.character(x))){
     if(any(!x%in%cnames)){
-      stop("Columnname(s) in ",varName," are not found in data")
+      stop("Column name(s) in ",varName," are not found in data")
     }
     # initialize index
     x <- match(x,cnames)
@@ -253,10 +303,13 @@ checkIndexString <- function(x=NULL,cnames,matchLength=NULL,minLength=NULL){
   # - exceed number of column of data
   # x must be integer from this point onwards
   if(any(x>length(cnames))){
-    stop("Columnindex in ",varName," exceeds number of columns in data")
+    stop("Column index in ",varName," exceeds number of columns in data")
   }
   if(any(x==0)){
     stop("Index in ",varName," does contain zero.\nIndexing in R starts with 1!")
+  }
+  if(any(x<0)){
+    stop("Column indices cannot be negative")
   }
   
   # indices start with 0 for c++ routine
